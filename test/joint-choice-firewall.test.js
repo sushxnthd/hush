@@ -75,3 +75,16 @@ test('same released choice across a fresh task adds zero joint knowledge',()=>{
   assert.equal(second.joint.marginalKnowledgeBits,0);
   assert.equal(second.capacity.marginalBits,0);
 });
+
+test('public joint-choice footprint does not reveal the selected result',()=>{
+  const bits=Array(WIDTH).fill(1);
+  bits[0]=0;
+  const runtime=runtimeFor(bits);
+  const out=run(runtime,probeProgram());
+  assert.equal(out.decision,'allow');
+  const footprint=runtime.jointChoiceFootprint();
+  assert.equal(footprint.length,1);
+  assert.equal('result' in footprint[0],false);
+  assert.equal(JSON.stringify(footprint).includes('fallback'),false);
+  assert.deepEqual(footprint[0].fields,Array.from({length:WIDTH},(_,i)=>`secret.bit${i}`).sort());
+});
