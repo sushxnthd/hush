@@ -150,6 +150,7 @@ button:not(:disabled), summary { cursor: pointer; }
 @keyframes flow { to { stroke-dashoffset: -368; } }
 .lnode { position: absolute; display: flex; align-items: center; justify-content: center; gap: 8px; width: 22%; height: 16%; background: #fff; border: 1px solid var(--rule); color: var(--ink68); font: 10px/1.4 var(--mono); }
 .lnode svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.mobile-break { display: none; }
 .l1 { left: 3%; top: 25%; }.l2 { left: 3%; top: 64%; }.l3 { right: 3%; top: 25%; }.l4 { right: 3%; top: 64%; }
 .kernel { left: 50%; top: 50%; transform: translate(-50%, -50%); width: 18%; height: 34%; flex-direction: column; background: var(--blue); color: #fff; border-color: var(--blue); gap: 12px; }
 .kernel svg { width: 30px; height: 24px; stroke-width: 2.5; }
@@ -286,13 +287,14 @@ html.motion-ready .figure[data-reveal] { translate: 0; }
   .field { aspect-ratio: 16 / 9; }
   .field-label { font-size: 9px; left: 14px; right: 14px; bottom: 12px; }
   .memo { margin-top: 36px; gap: 20px; }
-  .loop-canvas { aspect-ratio: 640 / 340; }
+  .loop-canvas { aspect-ratio: 1.8; min-height: 230px; }
   .loop-tag { top: 12px; left: 12px; font-size: 8px; }
-  .lnode { width: 25%; font-size: 8px; height: 20%; flex-direction: column; gap: 5px; }
+  .lnode { width: 25%; font-size: 10px; line-height: 1.2; height: 20%; flex-direction: column; gap: 4px; text-align: center; }
+  .mobile-break { display: initial; }
   .lnode svg { width: 16px; height: 16px; }
   .l1, .l2 { left: 0; }.l3, .l4 { right: 0; }
   .l1, .l3 { top: 23%; }.l2, .l4 { top: 62%; }
-  .kernel { width: 22%; height: 36%; font-size: 8px; gap: 10px; }
+  .kernel { width: 22%; height: 36%; font-size: 10px; gap: 10px; }
   .kernel svg { width: 26px; height: 20px; }
   .caption { font-size: 12px; }
   .row { grid-template-columns: 56px minmax(0, 1fr); column-gap: 16px; }
