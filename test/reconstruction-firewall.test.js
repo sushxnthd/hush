@@ -55,8 +55,9 @@ test('same deterministic query is globally free but new audience is separately a
 test('firewall state can be snapshotted and restored',()=>{
   const {r,firewall}=runtime(1,1);
   assert.equal(ask(r,500000).decision,'allow');
-  const restored=new PersistentReconstructionFirewall({fieldBudgetBits:1,audienceBudgetBits:1}).restore(firewall.snapshot());
-  const r2=new PrivateDecisionRuntime({firewall:restored});
+  let restoredNow=2000;
+  const restored=new PersistentReconstructionFirewall({now:()=>restoredNow++,fieldBudgetBits:1,audienceBudgetBits:1}).restore(firewall.snapshot());
+  const r2=new PrivateDecisionRuntime({now:()=>restoredNow++,firewall:restored});
   r2.setPrivate('finance.balance',734219);
   const t=r2.beginTrajectory({purpose:'new-task',maxBits:1,sinkMaxBits:1});
   const out=r2.run({trajectoryId:t.trajectoryId,agent:'new-agent',sink:'bank.example',program:{kind:'predicate',private:'finance.balance',op:'gt',value:700000}});
