@@ -41,31 +41,35 @@ export function mcpActionRequest({agent='unknown-agent',purpose='unspecified',pa
   };
 }
 
-export function evaluateMcpCall({agent,purpose,params,catalog,policy,preapprovedHash=null}){
+export function evaluateMcpCall({agent,purpose,params,catalog,policy,preapprovedHash=null,trustAnnotations=false}){
   const tool=catalog?.get(params?.name);
   const request=mcpActionRequest({agent,purpose,params,tool});
   const exactHash=requestHash(request);
 
-  // Hard data-loss prevention is evaluated before any approval override.
+  // Hard data-loss prevention runs before any user-approval override.
   const raw=JSON.stringify(params?.arguments??{});
   const secretHits=detectSensitive(raw).filter(x=>x.type!=='email');
   if(secretHits.length){
     return {decision:'deny',hardDeny:true,reason:'Raw secret material detected in MCP tool arguments.',request,requestHash:exactHash,tool,detected:secretHits.map(({value,...x})=>x)};
   }
 
-  // A known tool may also hit a non-overridable policy deny.
-  const policyResult=tool?evaluatePolicy(policy,request):null;
+  // Tool-server annotations are hints, not a security boundary. Only an explicitly
+  // trusted upstream may use them to reach an automatic policy decision.
+  const policyResult=tool&&trustAnnotations?evaluatePolicy(policy,request):null;
   if(policyResult?.decision==='deny'){
     return {...policyResult,hardDeny:true,request,requestHash:exactHash,tool};
   }
 
-  // Human approval is exact-call scoped and can only override ASK.
+  // Exact human approval can override ASK, never a hard deny.
   if(preapprovedHash && preapprovedHash===exactHash){
     return {decision:'allow',reason:'Exact tool call was approved by the user.',request,requestHash:exactHash,tool};
   }
 
   if(!tool){
     return {decision:'ask',reason:'Unknown MCP tool. Supakeep fails closed until the user approves the exact call.',request,requestHash:exactHash,tool:null};
+  }
+  if(!trustAnnotations){
+    return {decision:'ask',reason:'MCP tool annotations are untrusted for this upstream. Exact approval is required.',request,requestHash:exactHash,tool};
   }
   return {...policyResult,request,requestHash:exactHash,tool};
 }
@@ -80,7 +84,7 @@ export function sanitizeForwardHeaders(headers,{brokeredAuth=null}={}){
     const key=k.toLowerCase();
     if(['host','content-length','connection','transfer-encoding','x-supakeep-agent','x-supakeep-purpose'].includes(key)) continue;
     if(key==='authorization'&&brokeredAuth) continue;
-    if(key==='authorization'||key==='accept'||key==='content-type'||key==='user-agent'||key.startsWith('mcp-')||key==='last-event-id') out[key]=v;
+    if(key==='authorization'||key==='accept'||key==='content-type'||key==='user-agent'||key.startsWith('mcp-')||key==='last-event-id') out[key]=Array.isArray(v)?v.join(', '):v;
   }
   if(brokeredAuth) out.authorization=brokeredAuth;
   return out;
