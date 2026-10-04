@@ -1,0 +1,36 @@
+name: Fix v0.9 status consistency
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-v09-status.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fix runtime version metadata and validate
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/server.js')
+          s=p.read_text()
+          s=s.replace("serverInfo:{name:'supakeep',version:'0.8.0'}", "serverInfo:{name:'supakeep',version:'0.9.0'}")
+          s=s.replace("{product:'Supakeep',version:'0.8.0'", "{product:'Supakeep',version:'0.9.0'")
+          if "version:'0.8.0'" in s:
+              raise SystemExit('stale v0.8 runtime version remains')
+          p.write_text(s)
+          PY
+          npm run check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/server.js
+          git commit -m "Align v0.9 runtime metadata"
+          git push
