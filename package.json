@@ -1,0 +1,1 @@
+{"name":"supakeep","version":"0.1.0","private":true,"type":"module","description":"Local-first privacy and authority layer for AI agents","scripts":{"start":"node src/server.js","test":"node --test","check":"node --check src/server.js && node --test"},"engines":{"node":">=22"}}
