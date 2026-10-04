@@ -161,12 +161,12 @@ async function mcp(req,res,u){
   const purpose=String(req.headers['x-supakeep-purpose']||'unspecified');
   const requestedVersion=String(req.headers['mcp-protocol-version']||envelope['io.modelcontextprotocol/protocolVersion']||'');
   const modern=requestedVersion==='2026-07-28'||rpc.method==='server/discover';
-  const serverMeta={'io.modelcontextprotocol/serverInfo':{name:'supakeep',version:'0.6.0'}};
+  const serverMeta={'io.modelcontextprotocol/serverInfo':{name:'supakeep',version:'0.7.0'}};
   const complete=result=>modern?{...result,resultType:'complete',_meta:{...(result?._meta??{}),...serverMeta}}:result;
   const rpcResult=result=>sendRpc(res,{jsonrpc:'2.0',id:rpc.id,result:complete(result)});
 
   if(rpc.method==='server/discover') return rpcResult({supportedVersions:['2026-07-28','2025-11-25'],capabilities:{tools:{listChanged:false}},instructions:'Supakeep provides bounded private computation. Private values are not exposed as MCP tools.'});
-  if(rpc.method==='initialize'&&!mcpUpstream) return sendRpc(res,{jsonrpc:'2.0',id:rpc.id,result:{protocolVersion:'2025-11-25',capabilities:{tools:{listChanged:false}},serverInfo:{name:'supakeep',version:'0.6.0'},instructions:'Supakeep provides bounded private computation. Private values are not exposed as MCP tools.'}});
+  if(rpc.method==='initialize'&&!mcpUpstream) return sendRpc(res,{jsonrpc:'2.0',id:rpc.id,result:{protocolVersion:'2025-11-25',capabilities:{tools:{listChanged:false}},serverInfo:{name:'supakeep',version:'0.7.0'},instructions:'Supakeep provides bounded private computation. Private values are not exposed as MCP tools.'}});
   if(rpc.method==='notifications/initialized'){res.writeHead(204);res.end();return;}
   if(rpc.method==='ping') return rpcResult({});
   if(rpc.method==='tools/list'&&!mcpUpstream) return rpcResult({tools:NATIVE_MCP_TOOLS});
@@ -224,7 +224,7 @@ async function mcp(req,res,u){
 }
 
 async function api(req,res,u){
-  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Supakeep',version:'0.5.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:contextKernel?{enabled:true,...contextKernel.stats()}:{enabled:false},mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});
+  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Supakeep',version:'0.7.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:contextKernel?{enabled:true,...contextKernel.stats()}:{enabled:false},mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});
   if(req.method==='GET'&&u.pathname==='/api/vault') return send(res,200,{items:vault.list()});
   if(req.method==='GET'&&u.pathname==='/api/pending') return send(res,200,{requests:[...store.pending.values()].filter(x=>x.status==='pending')});
   if(req.method==='GET'&&u.pathname==='/api/receipts') return send(res,200,{receipts:store.receipts.slice(-50).reverse(),chainValid:verifyReceiptChain(store.receipts)});
@@ -234,11 +234,11 @@ async function api(req,res,u){
 
   if(req.method==='GET'&&u.pathname==='/api/context'){
     if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with SUPAKEEP_CONTEXT_PASSPHRASE.'});
-    return send(res,200,{items:contextKernel.list(),exposure:contextKernel.exposure()});
+    return send(res,200,{items:contextKernel.list(),exposure:contextKernel.exposure(),partition:contextKernel.partitionExposure()});
   }
   if(req.method==='GET'&&u.pathname==='/api/context/exposure'){
     if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
-    return send(res,200,{fields:contextKernel.exposure()});
+    return send(res,200,{fields:contextKernel.exposure(),partition:contextKernel.partitionExposure()});
   }
   if(req.method==='GET'&&u.pathname==='/api/context/sync-bundle'){
     if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
@@ -248,7 +248,7 @@ async function api(req,res,u){
     if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with SUPAKEEP_CONTEXT_PASSPHRASE.'});
     const b=await body(req);
     if(!b.path||!Object.hasOwn(b,'value')) return send(res,400,{error:'path and value are required'});
-    const item=contextKernel.put(String(b.path),b.value,{label:b.label??null,category:String(b.category??'general'),tags:Array.isArray(b.tags)?b.tags:[]});
+    const item=contextKernel.put(String(b.path),b.value,{label:b.label??null,category:String(b.category??'general'),tags:Array.isArray(b.tags)?b.tags:[],domain:b.domain??undefined});
     return send(res,201,{item});
   }
   if(req.method==='POST'&&u.pathname==='/api/context/trajectory'){
