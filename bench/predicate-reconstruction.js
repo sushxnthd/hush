@@ -22,10 +22,13 @@ const trustA=new TrustRegistry('standard');
 const ledgerA=new DisclosureLedger({trustRegistry:trustA,windowMs:999999999});
 let tA=1000;
 const atomLevel=binarySearch(mid=>{
-  const req={agent:'agent',purpose:'loan',sink:'bank',category:'finance',level:'boolean',atomId:'salary'};
+  const req={agent:'agent',purpose:'task',sink:'bank',category:'finance',level:'boolean',atomId:'salary'};
   const e=ledgerA.evaluate(req,tA++);
   if(e.decision==='deny') return {blocked:true};
-  ledgerA.record(req,e,tA++);
+  // Naive field-level accounting cannot distinguish different predicates over the
+  // same private value. Once the first boolean answer is charged, later adaptive
+  // thresholds appear free and the oracle can be composed into exact recovery.
+  ledgerA.record({...req,approvedByHuman:e.decision==='ask'},e,tA++);
   return {value:SECRET>mid,blocked:false};
 });
 
@@ -33,9 +36,10 @@ let tB=1000;
 const trustB=new TrustRegistry('standard');
 const runtime=new PrivateContextRuntime({trustRegistry:trustB,now:()=>tB++});
 runtime.put({id:'salary',category:'finance',value:SECRET});
-const lease=runtime.issueLease({agent:'agent',purpose:'loan',sink:'bank',atomId:'salary'});
+const trajectory=runtime.beginTrajectory({purpose:'loan eligibility'});
+const lease=runtime.issueLease({agent:'agent',sink:'bank',atomId:'salary',trajectoryId:trajectory.trajectoryId});
 const compositional=binarySearch(mid=>{
-  const q=runtime.query({handle:lease.handle,agent:'agent',purpose:'loan',sink:'bank',op:'gt',arg:mid});
+  const q=runtime.query({handle:lease.handle,agent:'agent',sink:'bank',op:'gt',arg:mid});
   return q.decision==='allow'?{value:q.result,blocked:false}:{blocked:true};
 });
 
@@ -46,6 +50,6 @@ console.log(JSON.stringify({
   results:{
     unrestrictedPredicateOracle:unrestricted,
     perAtomBooleanAccounting:atomLevel,
-    supakeepCompositionalAccounting:compositional
+    supakeepTrajectoryAccounting:compositional
   }
 },null,2));
