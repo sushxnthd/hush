@@ -1,6 +1,6 @@
 # Supakeep synthetic privacy benchmarks
 
-These are **synthetic engineering benchmarks**, not claims about Charlie, 1Password, Arcade, Permit, Outerlimit, OCELOT, MINIM, FLOWSEAL, or any other system. They test whether Supakeep's own invariants behave as intended.
+These are **synthetic engineering benchmarks**, not claims about any other system. They test whether Supakeep's own invariants behave as intended.
 
 ## 1. Adversarial cumulative-disclosure simulation
 
@@ -50,19 +50,11 @@ Observed results:
 | Naive per-field boolean accounting | Yes | 20 | 1 |
 | Supakeep trajectory accounting | **No** | **6** | **31,250** |
 
-The naive baseline fails because every changed threshold still appears to be the same already-accounted boolean field. Supakeep treats distinct predicates as new disclosures within one runtime-minted task trajectory.
-
 This demonstrates query-composition behavior only; it is not a universal inference-privacy guarantee.
 
 ## 4. Blind personalization / Private Decision Programs
 
-The agent supplies **15 public flight candidates**. Supakeep locally evaluates them using three private fields:
-
-- travel budget
-- preferred airline
-- preferred departure time
-
-The private values are not returned. The runtime returns one candidate ID or `null`, giving exactly 16 possible explicit outputs.
+The agent supplies **15 public flight candidates**. Supakeep locally evaluates them using three private fields: travel budget, preferred airline and preferred departure time.
 
 Observed result:
 
@@ -70,12 +62,60 @@ Observed result:
 - raw private values returned: **0**
 - explicit output cardinality: **16**
 - conservative explicit-channel capacity bound: **4 bits**
-- trajectory information budget: **4 bits**
 - a second distinct 4-bit decision in the same trajectory: **DENY**
 
-The bound follows from the finite output interface: if an explicit result `Y` can take values in a set `Ω`, then `I(S;Y) <= H(Y) <= log2(|Ω|)`. Across adaptive calls, the chain rule gives the conservative transcript bound `I(S;Y1..Yn) <= Σ log2(|Ωi|)`, provided all relevant explicit outputs pass through the controlled interface.
+The output-cardinality bound remains useful as a conservative transcript mechanism for interfaces without a declared finite-domain model. It is **not** a pointwise measure of how informative the realized branch was.
 
-This is **not a claim of total leakage <= 4 bits**. The prototype bound excludes timing, crashes, external side effects, covert channels, and any data released outside Supakeep. It is specifically a bound on the controlled explicit return channel.
+## 5. Cross-trajectory reconstruction
+
+The attacker starts a fresh trajectory for every adaptive query.
+
+| Policy | Answers released | First denial | Exact recovery? | Candidates remaining |
+|---|---:|---:|---:|---:|
+| No persistent firewall | 20 | — | Yes | 1 |
+| Persistent firewall, same sink | 6 | 7 | No | 15,625 |
+| Persistent firewall, rotating sinks | 8 | 9 | No | 3,906 |
+
+This closes the specific task-reset / sink-rotation attack exercised by the benchmark.
+
+## 6. Partition-aware realized leakage
+
+This benchmark targets a weakness in cardinality-only accounting.
+
+For a secret uniformly modeled over `0..999999`, consider:
+
+```text
+secret == 734219 ?
+```
+
+The interface has only two possible outputs, so cardinality-only accounting assigns **1 nominal bit**. If the realized answer is `true`, however, the feasible state collapses from 1,000,000 candidates to one:
+
+```text
+log2(1,000,000 / 1) = 19.931569 bits
+```
+
+Observed results:
+
+| Attack / branch | Result |
+|---|---:|
+| Nominal capacity of exact-match predicate | 1 bit |
+| Realized knowledge if exact match is true | **19.931569 bits** |
+| Partition-aware decision | **DENY before release** |
+| Candidates after forbidden branch | 1 |
+| False equality probes safely released | **1,000** |
+| Knowledge accumulated by those false probes | **0.001443 bits** |
+| Balanced binary refinements released | **8** |
+| Next balanced refinement | **DENY at 9** |
+| Candidates remaining | **3,906** |
+
+This shows two desirable behaviors simultaneously:
+
+1. **rare high-information branches are stopped even when their output alphabet is tiny**, and
+2. **low-information branches are not overcharged merely because they are boolean**.
+
+The mechanism tracks the remaining feasible partition, so semantically redundant predicates add zero realized knowledge even if written differently.
+
+The integrated v0.7 runtime applies this pre-release check to declared finite integer domains for predicate and bucket programs. The state is encrypted and restored across process restarts. Native MCP tests verify that a forbidden rare result is denied without returning the result to the AI client.
 
 ## Reproducibility
 
@@ -84,19 +124,22 @@ All tests and benchmarks run in GitHub CI:
 ```bash
 npm test
 npm run bench
+npm run check
 ```
 
-The current suite contains 51 passing tests plus the four benchmark programs above.
+The current v0.7 suite contains **78 passing automated tests** plus six benchmark programs.
 
-## Next benchmark upgrades
+## Current boundary and next benchmark upgrades
 
-1. Real MCP/A2A traces from multiple agents and providers.
-2. Colluding-agent and colluding-sink attacks.
-3. Sink aliasing and destination canonicalization attacks.
-4. Logically equivalent programs written in different forms.
-5. High-cardinality membership/set attacks.
-6. Privacy-vs-task-success Pareto curves against strong baselines.
-7. Prompt injection attempting to manipulate privacy metadata or program structure.
-8. Latency and approval-friction measurements.
-9. Side-channel analysis for timing, failures, and externally observable effects.
-10. Blind-personalization benchmarks on shopping, travel, scheduling, and other real recommendation tasks.
+Partition-aware accounting is a finite-domain explicit-output experiment, not a universal privacy proof. Current open research includes:
+
+1. multi-field `choose` programs where one selected candidate jointly constrains several private fields;
+2. categorical, set-valued, continuous and high-dimensional private state;
+3. non-uniform priors and posterior-risk metrics beyond uniform feasible-set size;
+4. colluding agents and destinations with public auxiliary information;
+5. real MCP/client traces from multiple agent stacks;
+6. privacy-vs-task-success Pareto curves against strong baselines;
+7. prompt injection attempting to manipulate domain metadata or program structure;
+8. latency and approval-friction measurements;
+9. timing, failure, network and externally observable side channels;
+10. real recommendation and action tasks spanning shopping, travel and scheduling.
