@@ -318,6 +318,7 @@ export class PrivateDecisionRuntime {
             return {
               initialCandidates:status.initialCandidates,
               remainingCandidates:status.remainingCandidates,
+              intervals:this.partitionFirewall.candidateIntervals(field),
               values:()=>this.partitionFirewall.candidateValues(field,{limit:this.jointChoiceFirewall.maxJointStates})
             };
           }

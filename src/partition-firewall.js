@@ -199,6 +199,12 @@ export class PartitionAwareReconstructionFirewall {
     return publicAssessment(assessment);
   }
 
+  candidateIntervals(field){
+    const state=this.fields.get(String(field));
+    if(!state) return null;
+    return state.intervals.map(([lo,hi])=>[lo,hi]);
+  }
+
   candidateValues(field,{limit=this.maxDomainSize}={}){
     const state=this.fields.get(String(field));
     if(!state) return null;
