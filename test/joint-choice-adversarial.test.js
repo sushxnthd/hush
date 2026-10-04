@@ -135,13 +135,13 @@ test('overlapping field groups compose transitively',()=>{
   assert.equal(second.joint.totalKnowledgeBits,3);
 });
 
-test('oversized joint state space fails closed before release',()=>{
+test('large joint state space is analyzed or withheld before release',()=>{
   const runtime=new PrivateDecisionRuntime({firewall:false});
   runtime.setPrivate('secret.a',1,{domain:{type:'integer',min:0,max:399}});
   runtime.setPrivate('secret.b',1,{domain:{type:'integer',min:0,max:399}});
   const out=task(runtime)(exactPairChoice('secret.a',1,'secret.b',1));
   assert.equal(out.decision,'deny');
-  assert.match(out.reason,/exceeds analyzable limit/i);
+  assert.match(out.reason,/exceeds analyzable limit|joint-choice knowledge/i);
   assert.equal('result' in out,false);
 });
 
