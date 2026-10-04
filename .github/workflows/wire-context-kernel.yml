@@ -18,6 +18,7 @@ jobs:
           node-version: 22
       - name: Add native MCP routing
         run: |
+          # One-shot integration; implementation logic lives in the temporary patch script.
           python3 scripts/patch-native-mcp.py
           npm run check
           git config user.name "github-actions[bot]"
