@@ -1,15 +1,38 @@
 # Supakeep
 
-**Supakeep is a local-first personal trust layer for AI.**
+**AI should query you, not copy you.**
 
-AI systems increasingly need private context, credentials, accounts and real-world authority to complete useful work. Supakeep sits outside the model and governs both:
+Supakeep is an experimental **personal Context Kernel for AI**: a local trust boundary where agents can use private context and real-world authority without receiving unrestricted copies of either.
 
-- **what an AI may know**
+Instead of treating privacy as a one-time permission prompt, Supakeep governs an entire task trajectory:
+
+- **what an AI may learn**
+- **what an AI may infer through repeated queries**
 - **what an AI may do**
 
 The model is not the security boundary.
 
+## Context Kernel prototype
+
+A user-authorized task receives a Supakeep-minted **privacy trajectory**. Agents and sub-agents receive opaque, revocable context leases bound to that trajectory, agent, destination and private context atom.
+
+The agent can request bounded computations such as presence checks, comparisons, ranges or masked views. Exact disclosure is an escalation rather than the default retrieval primitive.
+
+Critically, Supakeep accounts for **query composition**. Repeating the exact same predicate has no additional privacy cost, but changing an adaptive predicate is treated as new information. This is designed to stop an agent from reconstructing a private value through a sequence of individually innocuous yes/no questions.
+
+See `research/CONTEXT_KERNEL.md`.
+
 ## Implemented alpha
+
+### Private context
+- opaque, revocable context leases
+- runtime-minted privacy trajectories
+- cross-agent trajectory accounting
+- disclosure levels: presence, boolean, derived, coarse, masked, exact
+- cumulative and sink-aware privacy budgets
+- compositional predicate accounting
+- user-controlled trust profiles
+- AI-footprint summaries without raw values
 
 ### Authority
 - encrypted local vault (AES-256-GCM)
@@ -19,15 +42,6 @@ The model is not the security boundary.
 - allow / ask / deny policy engine
 - exact-action human approvals with replay protection
 - tamper-evident action receipt chain
-
-### Privacy
-- secret detection and prompt redaction
-- disclosure levels: presence, boolean, derived, coarse, masked, exact
-- cumulative disclosure budgets
-- sink-aware privacy budgets
-- user-controlled trust profiles
-- cross-agent purpose-level accounting
-- AI-footprint summaries without storing raw disclosed values in the summary
 
 ### MCP enforcement
 - observed `tools/list` catalog
@@ -46,51 +60,55 @@ Requires Node.js 22+.
 
 ```bash
 npm start
-```
-
-Open `http://127.0.0.1:8787`.
-
-Run the test suite:
-
-```bash
 npm test
+node bench/predicate-reconstruction.js
 ```
 
-## Product model
+Open `http://127.0.0.1:8787` for the current local dashboard.
+
+## Model
 
 ```text
-AI / agent / MCP client
-        │
-        │ asks for context or proposes an action
-        ▼
-     Supakeep
-        ├─ disclosure ledger + privacy budgets
-        ├─ encrypted secret broker
-        ├─ Grant verifier
-        ├─ policy engine
-        ├─ MCP exposure scanner
-        └─ exact-action approval gate
-        │
-        ▼
-apps · tools · APIs · browser · payments · MCP servers
+private user state
+       │
+       ▼
+ Supakeep Context Kernel
+       │
+       ├─ privacy trajectory
+       ├─ context leases
+       ├─ compositional disclosure ledger
+       ├─ encrypted credential broker
+       ├─ Grant verifier
+       └─ exact-action approval gate
+       │
+       ▼
+AI / agent / sub-agent
+       │
+       ▼
+apps · APIs · MCP servers · browser · payments
 ```
 
-Supakeep can only enforce traffic routed through a boundary it controls. It is an alpha/reference implementation, not a production security product.
+The intended default is that an AI receives the **minimum useful result of a computation over private state**, not a raw copy of that state.
 
 ## Current evidence
 
-The repository includes synthetic privacy/utility benchmarks. In the current cumulative-disclosure simulation, Supakeep enforces the intended invariant that individually acceptable disclosures cannot accumulate indefinitely without ASK/DENY. These are engineering tests of the mechanism, **not claims of real-world privacy safety or competitor superiority**.
+The repository contains synthetic engineering tests, not a claim of real-world privacy safety.
 
-See `bench/RESULTS.md`.
+The original 10,000-trajectory simulation tests cumulative disclosure budgets. A newer adversarial reconstruction test gives an agent a boolean comparison oracle over a hidden integer in `0..999999`. Unrestricted and naive field-level predicate access can continue toward exact reconstruction; the current Supakeep prototype interrupts the adaptive sequence on the sixth distinct predicate, leaving 31,250 candidate values.
 
-## Next milestones
+That result demonstrates a mechanism invariant only. The research goal is to test whether trajectory-bound context computation can reduce recoverable private information while preserving useful agent task performance on real traces and against stronger inference attacks.
 
-1. adaptive multi-agent and colluding-sink privacy attacks
-2. replay real MCP traces and measure privacy/utility/latency tradeoffs
-3. Google/GitHub OAuth connectors using brokered tokens
-4. browser extension for page/action mediation
-5. local semantic privacy classifier for private context
-6. desktop keychain / secure-enclave integration
-7. portable Grant + receipt format aligned with emerging agent authorization standards
+## Next falsification targets
 
-See `ARCHITECTURE.md`, `THREAT_MODEL.md`, `ROADMAP.md`, and `research/PRODUCT_THESIS.md`.
+1. colluding agents within one trajectory
+2. colluding external sinks
+3. sink aliasing and destination canonicalization
+4. logically equivalent predicates expressed differently
+5. high-cardinality membership and set queries
+6. adversarial transforms that appear coarse but identify a user
+7. real MCP/A2A task traces with privacy, task-success, approval and latency measurements
+8. comparison against strong minimization, information-flow and inference-budget baselines
+
+Supakeep can only enforce context and actions routed through a boundary it controls. It is an alpha/reference implementation, not a production security product.
+
+See `ARCHITECTURE.md`, `THREAT_MODEL.md`, `ROADMAP.md`, `research/PRODUCT_THESIS.md`, and `research/CONTEXT_KERNEL.md`.
