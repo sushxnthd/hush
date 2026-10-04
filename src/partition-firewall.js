@@ -82,7 +82,6 @@ function predicatePosterior(intervals, program, result, maxFragments) {
   if(op==='eq'||op==='neq'){
     const v=numericThreshold(program.value);
     if(!Number.isSafeInteger(v)) {
-      // An integer secret can never equal a non-integer finite value.
       const condition = op==='neq';
       return truth===condition ? intervals.map(x=>[...x]) : [];
     }
@@ -122,18 +121,6 @@ function publicAssessment(x) {
   return safe;
 }
 
-/**
- * PartitionAwareReconstructionFirewall tracks the feasible value set for declared
- * finite integer domains. Before a result is released, it computes the posterior
- * partition induced by the *actual* answer and measures realized knowledge gain:
- *
- *   log2(|feasible before| / |feasible after|)
- *
- * This closes a weakness in cardinality-only accounting: a rare branch of a binary
- * predicate can reveal far more than one bit of pointwise knowledge. The guard is
- * deliberately limited to declared finite domains and explicit predicate/bucket
- * outputs. Unsupported semantics fail closed when a field is registered here.
- */
 export class PartitionAwareReconstructionFirewall {
   constructor({maxKnowledgeBits=8,minRemaining=1,maxDomainSize=DEFAULT_MAX_DOMAIN_SIZE,maxFragments=DEFAULT_MAX_FRAGMENTS}={}){
     this.maxKnowledgeBits=finiteNonNegative(maxKnowledgeBits,8);
@@ -210,6 +197,20 @@ export class PartitionAwareReconstructionFirewall {
     const assessment=this.evaluate(input);
     if(assessment.decision==='allow') this.commit(assessment);
     return publicAssessment(assessment);
+  }
+
+  candidateValues(field,{limit=this.maxDomainSize}={}){
+    const state=this.fields.get(String(field));
+    if(!state) return null;
+    const remaining=countIntervals(state.intervals);
+    const bounded=Number(limit);
+    if(!Number.isSafeInteger(bounded)||bounded<1) throw new Error('Candidate value limit must be a positive safe integer');
+    if(remaining>bounded) throw new Error('Finite posterior exceeds candidate enumeration limit');
+    const values=[];
+    for(const [lo,hi] of state.intervals){
+      for(let value=lo;value<=hi;value++) values.push(value);
+    }
+    return values;
   }
 
   status(field){
