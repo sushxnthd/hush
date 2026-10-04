@@ -116,9 +116,9 @@ Although the interface has only three possible outputs (two ids plus `null`), th
 | Explicit output cardinality | 3 |
 | Nominal cardinality charge | **1.584963 bits** |
 | Realized rare-branch knowledge | **16 bits** |
-| Cardinality-only runtime | **ALLOW `rare-profile`** |
+| Cardinality-only runtime | **ALLOW rare winner** |
 | Exact joint profile identified | **Yes** |
-| v0.8 joint guard | **DENY before release** |
+| Joint guard | **DENY before release** |
 | Selected result included in denied response | **No** |
 | Common branch posterior | **65,535 profiles** |
 | Common branch realized gain | **0.000022014 bits** |
@@ -128,7 +128,35 @@ The joint firewall composes prior released `choose` observations across overlapp
 
 The public privacy footprint intentionally omits the selected result, so diagnostics do not re-expose an observation that the privacy mechanism is trying to govern.
 
-The exact v0.8 prototype analyzes joint products up to 100,000 currently feasible states. Larger connected products fail closed rather than falling back to the weaker nominal rule.
+## 8. Scalable symbolic joint-choice analysis
+
+v0.9 replaces the old hard 100,000-state enumeration boundary with an exact symbolic interval branch-and-bound path for the currently modeled `choose` semantics.
+
+The stress benchmark uses **32 private binary fields**, producing:
+
+```text
+2^32 = 4,294,967,296
+```
+
+possible joint profiles. Two public candidates are constructed so the rare winner occurs for exactly one profile.
+
+Observed CI invariants:
+
+| Condition | Result |
+|---|---:|
+| Joint private states | **4,294,967,296** |
+| Public candidates | 2 |
+| Rare winner posterior | **1 profile** |
+| Rare winner realized knowledge | **32 bits** |
+| Rare winner | **DENY before release** |
+| Analysis method | **symbolic branch-and-bound** |
+| Common winner posterior | **4,294,967,295 profiles** |
+| Common winner | **ALLOW** |
+| Tiny nonzero common-branch leakage persisted internally | **Yes** |
+
+The same symbolic counter also resolves a one-million-value threshold choice by splitting only ambiguous regions. Unsupported or excessively expensive programs are not guessed: once the symbolic work budget is exhausted, the guard falls back to bounded exact enumeration only when the state space is small enough; otherwise it withholds the result.
+
+Internal accounting preserves full floating-point precision even when public telemetry rounds a sub-nanobit marginal gain to `0.000000000`. This prevents display rounding from becoming an accounting reset.
 
 ## Reproducibility
 
@@ -140,20 +168,20 @@ npm run bench
 npm run check
 ```
 
-The current v0.8 suite contains **84 automated tests** plus **seven benchmark programs**.
+The current v0.9 suite contains **98 automated tests** plus **eight benchmark programs**.
 
 ## Current boundary and next benchmark upgrades
 
 These are finite-domain explicit-output experiments, not universal privacy proofs. Current open research includes:
 
-1. scalable joint inference beyond explicit Cartesian enumeration;
-2. categorical, set-valued, continuous and high-dimensional private state;
-3. correlated and non-uniform priors plus posterior-risk metrics beyond support size;
-4. adversarial overlapping choice programs on state spaces above the v0.8 exact-analysis limit;
-5. colluding agents/destinations with public auxiliary information;
-6. real MCP/client traces from multiple agent stacks;
-7. privacy-vs-task-success Pareto curves against strong baselines;
-8. prompt injection attempting to manipulate privacy metadata or program structure;
-9. latency and approval-friction measurements;
+1. categorical, set-valued, continuous and genuinely high-dimensional private state beyond the current integer-domain abstraction;
+2. correlated and non-uniform priors plus posterior-risk metrics beyond support size;
+3. richer `choose` semantics that cannot yet be tightly bounded by the symbolic analyzer;
+4. adversarial programs designed specifically to exhaust symbolic analysis budgets;
+5. composition between predicate/bucket leakage, joint-choice leakage and real-world action outcomes in one unified posterior model;
+6. colluding agents/destinations with public auxiliary information;
+7. real MCP/client traces from multiple agent stacks;
+8. privacy-vs-task-success Pareto curves against strong baselines;
+9. prompt injection attempting to manipulate privacy metadata or program structure;
 10. timing, failure, network and externally observable side channels;
 11. real recommendation/action tasks spanning shopping, travel and scheduling.
