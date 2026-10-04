@@ -145,4 +145,6 @@ The visual design may closely match the reference system; the actual branding, c
 - mixed easing curves or arbitrary animation durations
 - motion that moves layout rather than only presentation
 
-`index.html` is the canonical implementation.
+`index.html` is the canonical homepage. All four page routes use `assets/site.css` and `assets/site.js` for typography, navigation, responsive layout and motion.
+
+Geist and Geist Mono are self-hosted under `assets/fonts/` with their SIL Open Font License. The mobile rail has a keyboard-accessible navigation toggle; the setup strip is a native details disclosure with a copy action. Content remains readable if JavaScript is unavailable.
