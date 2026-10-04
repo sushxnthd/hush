@@ -42,39 +42,41 @@ jobs:
           s=s.replace(old,new,1)
 
           anchor="  if(req.method==='GET'&&u.pathname==='/api/mcp/scan') return send(res,200,scanMcpCatalog(mcpCatalog.list(),{annotationsTrusted:trustMcpAnnotations}));\n\n"
-          endpoints="""  if(req.method==='GET'&&u.pathname==='/api/context'){
-    if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with SUPAKEEP_CONTEXT_PASSPHRASE.'});
-    return send(res,200,{items:contextKernel.list(),exposure:contextKernel.exposure()});
-  }
-  if(req.method==='GET'&&u.pathname==='/api/context/exposure'){
-    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
-    return send(res,200,{fields:contextKernel.exposure()});
-  }
-  if(req.method==='GET'&&u.pathname==='/api/context/sync-bundle'){
-    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
-    return send(res,200,{bundle:contextKernel.exportCiphertextBundle(),fingerprint:contextKernel.ciphertextFingerprint(),plaintextIncluded:false});
-  }
-  if(req.method==='POST'&&u.pathname==='/api/context'){
-    if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with SUPAKEEP_CONTEXT_PASSPHRASE.'});
-    const b=await body(req);
-    if(!b.path||!Object.hasOwn(b,'value')) return send(res,400,{error:'path and value are required'});
-    const item=contextKernel.put(String(b.path),b.value,{label:b.label??null,category:String(b.category??'general'),tags:Array.isArray(b.tags)?b.tags:[]});
-    return send(res,201,{item});
-  }
-  if(req.method==='POST'&&u.pathname==='/api/context/trajectory'){
-    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
-    const b=await body(req);
-    return send(res,201,contextKernel.beginTrajectory(b));
-  }
-  if(req.method==='POST'&&u.pathname==='/api/context/decision'){
-    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
-    const b=await body(req);
-    if(!b.trajectoryId||!b.program) return send(res,400,{error:'trajectoryId and program are required'});
-    const result=contextKernel.run({trajectoryId:String(b.trajectoryId),agent:String(b.agent??'unknown-agent'),sink:String(b.sink??'unknown-sink'),program:b.program});
-    return send(res,result.decision==='allow'?200:403,result);
-  }
-
-"""
+          lines=[
+              "  if(req.method==='GET'&&u.pathname==='/api/context'){",
+              "    if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with SUPAKEEP_CONTEXT_PASSPHRASE.'});",
+              "    return send(res,200,{items:contextKernel.list(),exposure:contextKernel.exposure()});",
+              "  }",
+              "  if(req.method==='GET'&&u.pathname==='/api/context/exposure'){",
+              "    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});",
+              "    return send(res,200,{fields:contextKernel.exposure()});",
+              "  }",
+              "  if(req.method==='GET'&&u.pathname==='/api/context/sync-bundle'){",
+              "    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});",
+              "    return send(res,200,{bundle:contextKernel.exportCiphertextBundle(),fingerprint:contextKernel.ciphertextFingerprint(),plaintextIncluded:false});",
+              "  }",
+              "  if(req.method==='POST'&&u.pathname==='/api/context'){",
+              "    if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with SUPAKEEP_CONTEXT_PASSPHRASE.'});",
+              "    const b=await body(req);",
+              "    if(!b.path||!Object.hasOwn(b,'value')) return send(res,400,{error:'path and value are required'});",
+              "    const item=contextKernel.put(String(b.path),b.value,{label:b.label??null,category:String(b.category??'general'),tags:Array.isArray(b.tags)?b.tags:[]});",
+              "    return send(res,201,{item});",
+              "  }",
+              "  if(req.method==='POST'&&u.pathname==='/api/context/trajectory'){",
+              "    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});",
+              "    const b=await body(req);",
+              "    return send(res,201,contextKernel.beginTrajectory(b));",
+              "  }",
+              "  if(req.method==='POST'&&u.pathname==='/api/context/decision'){",
+              "    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});",
+              "    const b=await body(req);",
+              "    if(!b.trajectoryId||!b.program) return send(res,400,{error:'trajectoryId and program are required'});",
+              "    const result=contextKernel.run({trajectoryId:String(b.trajectoryId),agent:String(b.agent??'unknown-agent'),sink:String(b.sink??'unknown-sink'),program:b.program});",
+              "    return send(res,result.decision==='allow'?200:403,result);",
+              "  }",
+              ""
+          ]
+          endpoints='\n'.join(lines)+'\n'
           if "u.pathname==='/api/context'" not in s:
               assert anchor in s
               s=s.replace(anchor,anchor+endpoints,1)
