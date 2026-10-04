@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import {canonicalize, sha256} from './core.js';
+import {PersistentReconstructionFirewall} from './reconstruction-firewall.js';
 
 const OPS = new Set(['eq','neq','lt','lte','gt','gte','in','notIn']);
 const MAX_CANDIDATES = 100;
@@ -8,6 +9,18 @@ export function capacityBits(cardinality) {
   const n = Number(cardinality);
   if (!Number.isInteger(n) || n < 1) throw new Error('Output cardinality must be a positive integer');
   return Math.log2(n);
+}
+
+export function privatePathsForProgram(program) {
+  const kind=String(program?.kind||'');
+  if(kind==='predicate'||kind==='bucket') return program?.private?[String(program.private)]:[];
+  if(kind==='choose') {
+    const paths=[];
+    for(const rule of Array.isArray(program?.constraints)?program.constraints:[]) if(rule?.private) paths.push(String(rule.private));
+    for(const pref of Array.isArray(program?.preferences)?program.preferences:[]) if(pref?.private) paths.push(String(pref.private));
+    return [...new Set(paths)].sort();
+  }
+  return [];
 }
 
 function getPath(root, path) {
@@ -110,7 +123,6 @@ function compileProgram(program) {
   }
   if (kind === 'choose') {
     const candidates = normalizeCandidates(program?.candidates);
-    // Returning one candidate id or null has N+1 possible explicit outputs.
     return {kind,cardinality:candidates.length+1,candidates};
   }
   throw new Error(`Unsupported private decision program: ${kind}`);
@@ -147,20 +159,21 @@ function executeProgram(program, compiled, profile) {
 /**
  * Private Decision Programs turn personal context into a bounded output channel.
  *
- * If a program's result is restricted to a finite output set Ω, then for any secret
- * S and any adaptive caller, I(S;Y) <= H(Y) <= log2(|Ω|) for that explicit result.
- * Across a transcript, the chain rule gives the conservative bound
- * I(S;Y_1..Y_n) <= Σ log2(|Ω_i|). This runtime enforces that sum per trajectory.
+ * The short-lived trajectory budget bounds one task transcript. The persistent
+ * reconstruction firewall separately accounts information about each referenced
+ * private field across trajectories, agents and sinks, preventing an adaptive
+ * caller from resetting the budget by starting a new task or renaming itself.
  *
- * This is an explicit-channel bound only. Timing, crashes, external side effects,
+ * These are explicit-channel bounds only. Timing, crashes, external side effects,
  * covert channels and data released outside this runtime are not covered.
  */
 export class PrivateDecisionRuntime {
-  constructor({now=()=>Date.now()}={}) {
+  constructor({now=()=>Date.now(),firewall=undefined}={}) {
     this.now=now;
     this.profile={};
     this.profileRevision=0;
     this.trajectories=new Map();
+    this.firewall=firewall===false||firewall===null?null:(firewall??new PersistentReconstructionFirewall({now}));
   }
 
   setPrivate(path,value) {
@@ -206,6 +219,7 @@ export class PrivateDecisionRuntime {
     const compiled=compileProgram(program);
     const normalizedProgram=compiled.kind==='choose'?{...program,candidates:compiled.candidates}:program;
     const programHash=sha256(canonicalize(normalizedProgram));
+    const privatePaths=privatePathsForProgram(normalizedProgram);
     const queryHash=sha256(canonicalize({programHash,profileRevision:this.profileRevision,sink:String(sink)}));
     const repeat=t.seen.has(queryHash);
     const bits=repeat?0:capacityBits(compiled.cardinality);
@@ -213,18 +227,44 @@ export class PrivateDecisionRuntime {
     const sinkBefore=t.sinkSpent.get(sinkKey)??0;
     const globalAfter=t.spentBits+bits;
     const sinkAfter=sinkBefore+bits;
+    const capacity={marginalBits:Number(bits.toFixed(6)),spentBits:Number(t.spentBits.toFixed(6)),maxBits:t.maxBits,sinkSpentBits:Number(sinkBefore.toFixed(6)),sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality,repeat};
+
     if(globalAfter>t.maxBits+1e-12 || sinkAfter>t.sinkMaxBits+1e-12) {
-      return {decision:'deny',reason:'Explicit information-capacity budget exceeded.',capacity:{marginalBits:bits,spentBits:t.spentBits,maxBits:t.maxBits,sinkSpentBits:sinkBefore,sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality}};
+      return {decision:'deny',reason:'Explicit information-capacity budget exceeded.',capacity};
     }
+
+    const reconstruction=this.firewall?.evaluate({
+      privatePaths,
+      audience:sinkKey,
+      programHash,
+      profileRevision:this.profileRevision,
+      bits
+    })??null;
+    if(reconstruction?.decision==='deny') {
+      return {decision:'deny',reason:reconstruction.reason,capacity,reconstruction};
+    }
+
     const result=executeProgram(normalizedProgram,compiled,this.profile);
     t.seen.add(queryHash);
     t.spentBits=globalAfter;
     t.sinkSpent.set(sinkKey,sinkAfter);
+    const resultHash=sha256(canonicalize(result));
+    const recorded=this.firewall?.record({
+      privatePaths,
+      audience:sinkKey,
+      programHash,
+      profileRevision:this.profileRevision,
+      bits,
+      trajectoryId:t.id,
+      resultHash
+    })??null;
+
     return {
       decision:'allow',
       result,
       capacity:{marginalBits:Number(bits.toFixed(6)),spentBits:Number(globalAfter.toFixed(6)),maxBits:t.maxBits,sinkSpentBits:Number(sinkAfter.toFixed(6)),sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality,repeat},
-      receipt:{v:1,at:this.now(),trajectoryId:t.id,purpose:t.purpose,agent:String(agent),sink:sinkKey,programHash,profileRevision:this.profileRevision,resultHash:sha256(canonicalize(result)),privateValuesIncluded:false}
+      reconstruction:recorded,
+      receipt:{v:1,at:this.now(),trajectoryId:t.id,purpose:t.purpose,agent:String(agent),sink:sinkKey,programHash,privatePathsHash:sha256(canonicalize(privatePaths)),profileRevision:this.profileRevision,resultHash,privateValuesIncluded:false}
     };
   }
 }
