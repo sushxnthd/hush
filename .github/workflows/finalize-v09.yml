@@ -1,0 +1,28 @@
+name: Finalize v0.9 privacy milestone
+
+on:
+  push:
+    paths:
+      - '.github/workflows/finalize-v09.yml'
+      - 'scripts/finalize-v09.py'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Finalize and validate
+        run: |
+          python3 scripts/finalize-v09.py
+          npm run check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/server.js README.md
+          git commit -m "Finalize v0.9 scalable privacy milestone"
+          git push
