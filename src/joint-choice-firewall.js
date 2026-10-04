@@ -75,7 +75,7 @@ export class JointChoiceReconstructionFirewall {
 
   evaluate({fields,getFieldState,program,result,evaluateProgram}={}){
     const requested=uniqueFields(fields);
-    if(requested.length<2) return {decision:'skip',reason:'Joint choice accounting requires at least two private fields.'};
+    if(requested.length<1) return {decision:'skip',reason:'Choice accounting requires at least one private field.'};
     if(typeof evaluateProgram!=='function') throw new Error('Joint choice accounting requires an evaluator');
     if(typeof getFieldState!=='function') throw new Error('Joint choice accounting requires finite-domain field state');
 
@@ -171,7 +171,7 @@ export class JointChoiceReconstructionFirewall {
       fields:uniqueFields(observation.fields),
       program:structuredClone(observation.program),
       result:structuredClone(observation.result)
-    })).filter(observation=>observation.fields.length>=2);
+    })).filter(observation=>observation.fields.length>=1);
     return this;
   }
 }

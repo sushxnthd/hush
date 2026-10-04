@@ -281,7 +281,7 @@ export class PrivateDecisionRuntime {
     let partitionAssessment=null;
     let jointAssessment=null;
 
-    if(privatePaths.length===1 && this.partitionFirewall?.hasField(privatePaths[0])) {
+    if(compiled.kind!=='choose' && privatePaths.length===1 && this.partitionFirewall?.hasField(privatePaths[0])) {
       partitionAssessment=this.partitionFirewall.evaluate({field:privatePaths[0],program:normalizedProgram,result});
       if(partitionAssessment.decision==='deny') {
         const partition=stripPartitionInternals(partitionAssessment);
@@ -289,8 +289,12 @@ export class PrivateDecisionRuntime {
       }
     }
 
-    if(compiled.kind==='choose' && privatePaths.length>1 && this.jointChoiceFirewall) {
-      const allProtected=privatePaths.every(path=>this.partitionFirewall?.hasField(path));
+    if(compiled.kind==='choose' && privatePaths.length>=1 && this.jointChoiceFirewall) {
+      const protectedCount=privatePaths.filter(path=>this.partitionFirewall?.hasField(path)).length;
+      const allProtected=protectedCount===privatePaths.length;
+      if(protectedCount>0 && !allProtected){
+        return {decision:'deny',reason:'Protected private fields cannot be mixed with undeclared fields in an analyzable choice.',capacity:{marginalBits:0,nominalBits:Number(nominalBits.toFixed(6)),spentBits:Number(t.spentBits.toFixed(6)),maxBits:t.maxBits,sinkSpentBits:Number((t.sinkSpent.get(sinkKey)??0).toFixed(6)),sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality,repeat,accounting:'fail-closed-mixed-domain'}};
+      }
       if(allProtected){
         const compiledCache=new Map();
         const evaluateProgram=(probe,assignment)=>{
