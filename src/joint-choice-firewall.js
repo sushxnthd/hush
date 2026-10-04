@@ -56,7 +56,7 @@ function cartesian(assignments, fields, valueLists, index, maxStates) {
 }
 
 function publicAssessment(assessment) {
-  const {_observation,...safe}=assessment;
+  const {_observation,_marginalKnowledgeBits,_totalKnowledgeBits,...safe}=assessment;
   return safe;
 }
 
@@ -197,13 +197,16 @@ export class JointChoiceReconstructionFirewall {
       minRemaining:this.minRemaining,
       observationsComposed:relevant.length,
       analysis,
+      _marginalKnowledgeBits:marginalKnowledgeBits,
+      _totalKnowledgeBits:totalKnowledgeBits,
       _observation:{v:1,fields:requested,program:structuredClone(program),result:structuredClone(result)}
     };
   }
 
   commit(assessment){
     if(!assessment||assessment.decision!=='allow'||!assessment._observation) return false;
-    if(assessment.marginalKnowledgeBits<=1e-12) return true;
+    const exactMarginal=assessment._marginalKnowledgeBits??assessment.marginalKnowledgeBits;
+    if(exactMarginal<=1e-12) return true;
     if(this.observations.length>=this.maxObservations) throw new Error('Joint choice observation limit exceeded');
     this.observations.push(structuredClone(assessment._observation));
     return true;

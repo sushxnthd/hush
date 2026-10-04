@@ -117,7 +117,7 @@ function bucketPosterior(intervals, program, result) {
 }
 
 function publicAssessment(x) {
-  const {_posterior,...safe}=x;
+  const {_posterior,_marginalKnowledgeBits,_totalKnowledgeBits,...safe}=x;
   return safe;
 }
 
@@ -181,6 +181,8 @@ export class PartitionAwareReconstructionFirewall {
       totalKnowledgeBits:Number(totalKnowledgeBits.toFixed(9)),
       maxKnowledgeBits:this.maxKnowledgeBits,
       minRemaining:this.minRemaining,
+      _marginalKnowledgeBits:marginalBits,
+      _totalKnowledgeBits:totalKnowledgeBits,
       _posterior:posterior
     };
   }

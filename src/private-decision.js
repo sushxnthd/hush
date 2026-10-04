@@ -331,7 +331,8 @@ export class PrivateDecisionRuntime {
     }
 
     const realizedAssessment=jointAssessment?.decision==='allow'?jointAssessment:partitionAssessment?.decision==='allow'?partitionAssessment:null;
-    const bits=repeat?0:(realizedAssessment?realizedAssessment.marginalKnowledgeBits:nominalBits);
+    const exactRealizedBits=realizedAssessment?(realizedAssessment._marginalKnowledgeBits??realizedAssessment.marginalKnowledgeBits):null;
+    const bits=repeat?0:(realizedAssessment?exactRealizedBits:nominalBits);
     const accounting=jointAssessment?.decision==='allow'?'realized-joint-choice':partitionAssessment?.decision==='allow'?'realized-partition':'output-cardinality';
     const sinkBefore=t.sinkSpent.get(sinkKey)??0;
     const globalAfter=t.spentBits+bits;
