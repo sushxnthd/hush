@@ -50,8 +50,9 @@ function atomicWrite(file, value){
  *
  * - A random data-encryption key (DEK) encrypts records independently with AES-256-GCM.
  * - The DEK is wrapped by a key derived from the user's passphrase using scrypt.
- * - Labels, categories, tags and values are inside each ciphertext; the persisted
- *   bundle exposes only opaque ids, timestamps and authenticated ciphertext.
+ * - Labels, categories, tags, privacy-domain metadata and values are inside each
+ *   ciphertext; the persisted bundle exposes only opaque ids, timestamps and
+ *   authenticated ciphertext.
  * - The same bundle can be synced through an untrusted server without giving that
  *   server the passphrase or plaintext context.
  *
@@ -131,14 +132,15 @@ export class SealedContextStore {
     return this._decryptRecord(record);
   }
 
-  put({id=null,kind='context',path:contextPath=null,label=null,category='general',value,tags=[]}={}){
+  put({id=null,kind='context',path:contextPath=null,label=null,category='general',value,tags=[],domain=undefined}={}){
     const recordId=String(id || crypto.randomUUID());
     const existing=this.bundle.records.findIndex(item=>item.id===recordId);
     const previous=existing>=0?this._decryptRecord(this.bundle.records[existing]):null;
     const createdAt=previous?.createdAt??this.now();
+    const resolvedDomain=domain===undefined?structuredClone(previous?.domain??null):structuredClone(domain);
     const plain={
       v:1,id:recordId,kind:String(kind),path:contextPath==null?null:String(contextPath),label:label==null?null:String(label),
-      category:String(category||'general'),value:structuredClone(value),tags:[...new Set((tags??[]).map(String))].sort(),createdAt,updatedAt:this.now()
+      category:String(category||'general'),value:structuredClone(value),tags:[...new Set((tags??[]).map(String))].sort(),domain:resolvedDomain,createdAt,updatedAt:this.now()
     };
     const sealed={id:recordId,updatedAt:plain.updatedAt,payload:sealJson(plain,this.dek,this._recordAad(recordId))};
     if(existing>=0) this.bundle.records[existing]=sealed; else this.bundle.records.push(sealed);
