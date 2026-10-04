@@ -74,7 +74,7 @@ new="""  if(rpc.method==='tools/list'&&upstream.ok){
       try{
         const payload=JSON.parse(text);
         mcpCatalog.ingestListResult(payload);
-        if(payload?.result&&Array.isArray(payload.result.tools)) payload.result.tools=[...NATIVE_MCP_TOOLS,...payload.result.tools.filter(tool=>!isNativeMcpTool(tool?.name))];
+        if(payload?.result&&Array.isArray(payload.result.tools)) payload.result.tools=[...payload.result.tools.filter(tool=>!isNativeMcpTool(tool?.name)),...NATIVE_MCP_TOOLS];
         res.writeHead(upstream.status,responseHeaders(upstream.headers));res.end(JSON.stringify(payload));return;
       }catch{}
       res.writeHead(upstream.status,responseHeaders(upstream.headers));res.end(text);return;
