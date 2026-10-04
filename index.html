@@ -1,397 +1,94 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f4f4f1">
-  <meta name="description" content="Supakeep is Private Mode for every AI: deep personalization without handing the model your private profile.">
-  <title>Supakeep — Private Mode for every AI</title>
-  <style>
-    :root{
-      --paper:#f4f4f1;
-      --surface:#ffffff;
-      --surface-2:#f8f8f6;
-      --ink:#0d0e10;
-      --muted:#74767b;
-      --muted-2:#9a9ca1;
-      --line:#e7e7e3;
-      --blue:#4f86ff;
-      --blue-soft:#eaf1ff;
-      --blue-ink:#285dbf;
-      --green:#37a66d;
-      --amber:#d5902e;
-      --red:#c95555;
-      --radius-sm:12px;
-      --radius-md:20px;
-      --radius-lg:32px;
-      --shadow:0 18px 60px rgba(17,18,20,.08);
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07090d">
+<meta name="description" content="Supakeep is building Private Mode for every AI: personal context without handing the model your private profile.">
+<title>Supakeep — Private Mode for every AI</title>
+<style>
+:root{--bg:#07090d;--panel:#0d1118;--panel2:#101620;--ink:#f7f8fb;--muted:#8c96a7;--muted2:#5e6878;--line:#1b2330;--blue:#1787ff;--cyan:#53c8ff;--soft:#101b2c;--green:#63d39b;--amber:#ffbd66;--red:#ff7e86;--max:1240px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.55}a{color:inherit}button,a{font:inherit}button{cursor:pointer}::selection{background:#0b75ff;color:white}.shell{width:min(var(--max),calc(100% - 44px));margin:auto}.hair{border-top:1px solid var(--line)}
 
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{
-      margin:0;
-      background:var(--paper);
-      color:var(--ink);
-      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Inter,system-ui,sans-serif;
-      font-size:15px;
-      line-height:1.45;
-      -webkit-font-smoothing:antialiased;
-    }
-    button,a{font:inherit}
-    a{color:inherit}
-    button{cursor:pointer}
-    ::selection{background:#cfe0ff;color:#0a1b3c}
+/* nav */
+nav{position:sticky;top:0;z-index:40;background:rgba(7,9,13,.78);backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid rgba(27,35,48,.8)}.navrow{height:62px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-size:19px;font-weight:700;letter-spacing:-.04em}.mark{width:27px;height:27px;display:grid;place-items:center;position:relative}.mark:before,.mark:after{content:"";position:absolute;background:#f7f8fb;border-radius:99px}.mark:before{width:24px;height:4px;transform:rotate(45deg)}.mark:after{width:24px;height:4px;transform:rotate(-45deg)}.navlinks{display:flex;align-items:center;gap:27px}.navlinks a{text-decoration:none;color:#99a2b0;font-size:13px}.navlinks a:hover{color:white}.navright{display:flex;align-items:center;gap:12px}.persona{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}.persona span{font-size:11px;padding:6px 8px;color:#667080}.persona .on{background:#121822;color:#e9edf4}.navcta{border:1px solid #2d3746;background:#111720;color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;font-size:12px;font-weight:650}
 
-    .shell{width:min(1180px,calc(100% - 40px));margin:0 auto}
-    .topbar{
-      position:sticky;top:0;z-index:30;
-      background:rgba(244,244,241,.84);
-      backdrop-filter:blur(18px) saturate(140%);
-      border-bottom:1px solid rgba(220,220,216,.8);
-    }
-    .navrow{height:66px;display:flex;align-items:center;justify-content:space-between;gap:24px}
-    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-size:20px;font-weight:750;letter-spacing:-.04em}
-    .brandmark{width:28px;height:28px;border-radius:9px;background:#111214;display:grid;place-items:center;position:relative;overflow:hidden}
-    .brandmark:before{content:"";width:11px;height:11px;border:2px solid white;border-top-left-radius:7px;border-top-right-radius:7px;border-bottom:0;transform:translateY(-1px)}
-    .brandmark:after{content:"";position:absolute;width:12px;height:9px;border-radius:3px;background:white;bottom:5px}
-    .navlinks{display:flex;align-items:center;gap:22px}
-    .navlinks a{text-decoration:none;color:#696b70;font-size:14px}
-    .navlinks a:hover{color:#111214}
-    .navcta{background:#111214!important;color:white!important;padding:9px 14px;border-radius:999px;font-weight:650}
+/* hero */
+.hero{padding:98px 0 38px;text-align:center;position:relative;overflow:hidden}.hero:before{content:"";position:absolute;left:50%;top:300px;transform:translateX(-50%);width:900px;height:480px;border-radius:50%;background:radial-gradient(circle,#096dff44 0,#0d73ff22 34%,transparent 70%);filter:blur(24px);pointer-events:none}.announce{display:inline-flex;align-items:center;gap:8px;border:1px solid #243042;background:#0c1119;color:#9aa5b5;border-radius:999px;padding:7px 11px;font-size:11px;margin-bottom:24px}.announce b{color:#e7ebf1;font-weight:600}.announce i{width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 15px var(--blue)}h1{font-size:clamp(55px,7.5vw,102px);line-height:.94;letter-spacing:-.075em;font-weight:620;margin:0 auto 24px;max-width:1100px}.hero-sub{max-width:680px;margin:0 auto;color:#99a4b3;font-size:18px;line-height:1.55}.actions{display:flex;justify-content:center;gap:10px;margin-top:28px;flex-wrap:wrap}.btn{height:43px;padding:0 16px;border-radius:8px;border:1px solid #283344;background:#0e141d;color:white;display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:620;font-size:13px;transition:.18s ease}.btn.primary{background:linear-gradient(#1c8aff,#0874ee);border-color:#268eff;box-shadow:0 8px 30px #0874ee33}.btn:hover{transform:translateY(-1px);border-color:#42506a}.works{margin-top:40px;color:#596373;font-size:11px;text-transform:uppercase;letter-spacing:.12em}.logo-row{display:flex;justify-content:center;gap:8px;margin-top:14px;flex-wrap:wrap}.logo-pill{border:1px solid #1b2532;background:#0b0f15;border-radius:8px;padding:7px 10px;color:#929cab;font-size:11px}
 
-    .hero{padding:94px 0 78px}
-    .hero-grid{display:grid;grid-template-columns:minmax(0,1.02fr) minmax(380px,.98fr);gap:64px;align-items:center}
-    .kicker{font-size:12px;font-weight:720;letter-spacing:.08em;text-transform:uppercase;color:var(--blue-ink)}
-    h1{font-size:clamp(52px,6.1vw,82px);line-height:.94;letter-spacing:-.075em;margin:18px 0 24px;font-weight:730;max-width:760px}
-    .hero p{font-size:19px;line-height:1.5;color:#66686d;max-width:640px;margin:0}
-    .hero-actions{display:flex;align-items:center;gap:18px;margin-top:30px}
-    .primary{
-      display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border-radius:999px;
-      background:#111214;color:white;text-decoration:none;border:1px solid #111214;font-weight:650;
-      transition:transform .16s ease,background .16s ease;
-    }
-    .primary:hover{transform:translateY(-1px);background:#24262a}
-    .text-link{text-decoration:none;color:#4f5156;font-weight:620}
-    .text-link:hover{color:#111214}
-    .text-link span{display:inline-block;transition:transform .16s ease}.text-link:hover span{transform:translateX(3px)}
+/* hero graph */
+.stage-wrap{padding:22px 0 94px}.stage{height:580px;border:1px solid #172231;border-radius:14px;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 55%,#0e61cc35,transparent 32%),linear-gradient(180deg,#080c12,#06080c);box-shadow:inset 0 0 0 1px #09111c}.stage:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(to bottom,transparent,#000 15%,#000 85%,transparent)}.kernel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:210px;height:210px;border-radius:24px;background:linear-gradient(145deg,#0c1119,#121d2c);border:1px solid #2d4460;display:grid;place-items:center;box-shadow:0 0 80px #087cff55,0 0 170px #087cff22}.kernel:before{content:"";position:absolute;inset:-34px;border:1px solid #126fcc33;border-radius:38px}.kernel-logo{width:66px;height:66px;position:relative}.kernel-logo:before,.kernel-logo:after{content:"";position:absolute;top:31px;left:5px;width:56px;height:5px;background:#62c6ff;border-radius:5px;box-shadow:0 0 18px #1787ff}.kernel-logo:before{transform:rotate(45deg)}.kernel-logo:after{transform:rotate(-45deg)}.kernel strong{position:absolute;bottom:25px;letter-spacing:-.03em}.orbit{position:absolute;border:1px solid #213249;background:#0c121b;border-radius:10px;padding:10px 12px;color:#c5cbd4;font-size:11px;box-shadow:0 10px 30px #0005}.orbit small{display:block;color:#5f6b7a;margin-top:2px}.o1{left:8%;top:18%}.o2{left:11%;bottom:16%}.o3{right:8%;top:16%}.o4{right:9%;bottom:17%}.o5{left:42%;top:8%}.o6{left:42%;bottom:7%}.wire{position:absolute;height:1px;background:linear-gradient(90deg,transparent,#1787ff66,transparent);transform-origin:left center}.w1{width:310px;left:22%;top:31%;transform:rotate(22deg)}.w2{width:310px;left:22%;bottom:31%;transform:rotate(-22deg)}.w3{width:310px;right:22%;top:31%;transform:rotate(-22deg)}.w4{width:310px;right:22%;bottom:31%;transform:rotate(22deg)}.pulse{position:absolute;left:50%;top:50%;width:8px;height:8px;background:#40aaff;border-radius:50%;box-shadow:0 0 22px #3ba8ff;animation:pulse 4s linear infinite}@keyframes pulse{0%{transform:translate(-150px,-100px);opacity:0}15%{opacity:1}50%{transform:translate(-4px,-4px)}85%{opacity:1}100%{transform:translate(145px,95px);opacity:0}}
 
-    .device-stage{background:#e8e8e5;border-radius:42px;padding:34px;min-height:610px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-    .device-stage:before{content:"";position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(79,134,255,.13);filter:blur(8px);top:-70px;right:-60px}
-    .phone{width:min(390px,100%);background:white;border:1px solid #dededa;border-radius:34px;box-shadow:0 24px 70px rgba(19,20,22,.13);padding:18px 18px 22px;position:relative;z-index:1}
-    .phone-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
-    .phone-title{font-size:17px;font-weight:720;letter-spacing:-.025em}
-    .status-dot{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 5px #e6f5ed}
-    .task-label{color:#8a8c91;font-size:12px;margin-bottom:6px}
-    .task-title{font-size:28px;line-height:1.05;letter-spacing:-.045em;font-weight:690;margin-bottom:22px}
-    .local-box{background:var(--surface-2);border:1px solid #ecece8;border-radius:18px;padding:17px}
-    .local-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;font-size:12px;color:#77797e}
-    .local-head b{color:#151619;font-size:13px}
-    .local-item{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-top:1px solid #e8e8e4}
-    .local-item:first-of-type{border-top:0}
-    .check{width:20px;height:20px;border-radius:50%;background:#e7f5ee;color:#2b8b59;display:grid;place-items:center;font-size:12px;font-weight:800}
-    .provider-result{margin-top:14px;border:1px solid #dce6fb;background:#f6f9ff;border-radius:18px;padding:16px}
-    .result-top{display:flex;justify-content:space-between;gap:10px;align-items:center;color:#74777e;font-size:12px}
-    .result-value{font-size:20px;font-weight:720;letter-spacing:-.035em;margin-top:7px;display:flex;align-items:center;justify-content:space-between}
-    .bit{font-size:11px;color:var(--blue-ink);background:var(--blue-soft);padding:5px 8px;border-radius:8px;font-weight:680}
-    .zero-strip{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
-    .tiny-stat{border:1px solid #ecece8;border-radius:14px;padding:12px 13px}
-    .tiny-stat strong{display:block;font-size:20px;letter-spacing:-.04em}.tiny-stat span{font-size:11px;color:#85878c}
+/* statement */
+.statement{padding:106px 0 96px}.statement p{font-size:clamp(31px,4.2vw,58px);line-height:1.05;letter-spacing:-.055em;max-width:1050px;margin:0}.statement .dim{color:#515c6d}.statement .accent{color:#e8eef8}.tiny-link{display:inline-block;margin-top:26px;color:#8da4c2;text-decoration:none;font-size:13px}.tiny-link:hover{color:white}
 
-    .rule{border-top:1px solid var(--line)}
-    .section{padding:92px 0}
-    .section-head{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:end;margin-bottom:46px}
-    .section h2{font-size:clamp(38px,4vw,58px);line-height:1;letter-spacing:-.06em;margin:10px 0 0;font-weight:710;max-width:700px}
-    .section-copy{color:#6f7176;font-size:17px;max-width:520px;margin:0 0 4px auto}
+/* section heads */
+.section{padding:88px 0}.eyebrow{font-size:11px;color:#5e6878;text-transform:uppercase;letter-spacing:.14em;margin-bottom:15px}.section h2{font-size:clamp(38px,4.5vw,62px);line-height:1.02;letter-spacing:-.055em;font-weight:570;margin:0}.section-lead{color:#8792a2;font-size:17px;max-width:650px;margin:18px 0 0}
 
-    .inversion{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    .lane{background:white;border-radius:24px;padding:28px;border:1px solid #ecece8;min-height:250px}
-    .lane.bad{background:#efefec;color:#77797e;border-color:#e5e5e0}
-    .lane-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:30px}
-    .lane-flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-weight:650}
-    .chip{background:#fff;border:1px solid #e1e1dc;border-radius:12px;padding:10px 12px;color:#232428}
-    .lane.bad .chip{color:#77797e;background:#f7f7f4}
-    .arrow{color:#a8aaae}
-    .lane p{margin:28px 0 0;color:#7a7c81;max-width:520px}
-    .lane.good{box-shadow:0 10px 35px rgba(17,18,20,.045)}
-    .lane.good .lane-label{color:var(--blue-ink)}
+/* figure */
+.figure{margin-top:44px;border:1px solid var(--line);border-radius:12px;background:#090d13;overflow:hidden}.figure-main{padding:50px 42px 45px;display:grid;grid-template-columns:1fr 70px 1.3fr 70px 1fr;align-items:center;gap:6px;min-height:330px}.figbox{border:1px solid #233043;background:#0d131c;border-radius:10px;padding:22px;min-height:154px;display:flex;flex-direction:column;justify-content:center}.figbox b{font-size:16px;letter-spacing:-.02em}.figbox p{color:#687586;font-size:12px;margin:8px 0 0}.figbox.core{border-color:#1c69bd;background:radial-gradient(circle at 50% 15%,#0d67d838,#0d131c 58%);box-shadow:0 0 45px #087cff18}.fig-arrow{text-align:center;color:#2c8df0;font-size:24px}.figure-cap{border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:30px;padding:13px 18px;color:#596475;font-size:10px}.figure-cap b{color:#99a4b3;font-weight:500}
 
-    .demo-frame{background:#e8e8e5;border-radius:34px;padding:18px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.02)}
-    .app{background:white;border-radius:26px;min-height:660px;overflow:hidden;display:grid;grid-template-columns:220px 1fr;border:1px solid #dededa;box-shadow:var(--shadow)}
-    .sidebar{padding:24px 18px;border-right:1px solid #ecece8;background:#fbfbfa;display:flex;flex-direction:column}
-    .appbrand{font-size:18px;font-weight:750;letter-spacing:-.04em;margin:0 8px 28px;display:flex;align-items:center;gap:8px}
-    .appbrand .brandmark{width:24px;height:24px;border-radius:8px}
-    .appbrand .brandmark:before{width:9px;height:9px}.appbrand .brandmark:after{width:10px;height:8px;bottom:4px}
-    .navitem{appearance:none;border:0;background:transparent;text-align:left;padding:11px 12px;border-radius:10px;color:#73757a;margin:2px 0;font-weight:560;display:flex;align-items:center;gap:10px}
-    .navitem:hover{background:#f0f0ed;color:#242529}
-    .navitem.active{background:#ececea;color:#111214;font-weight:650}
-    .navicon{width:16px;text-align:center;color:#999ba0}
-    .navitem.active .navicon{color:#111214}
-    .sidebar-foot{margin-top:auto;padding:18px 10px 4px;color:#96989d;font-size:11px}
-    .mainpanel{padding:34px 36px 40px;min-width:0}
-    .panel-top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:34px}
-    .panel-top h3{font-size:30px;letter-spacing:-.045em;margin:5px 0 0;font-weight:690}
-    .subtle{font-size:12px;color:#8d8f94}
-    .mode{display:flex;align-items:center;gap:9px;color:#313236;font-size:12px;font-weight:640}
-    .mode .status-dot{width:8px;height:8px;box-shadow:0 0 0 4px #e6f5ed}
-    .view{display:none}.view.active{display:block}
-    .summary-row{display:grid;grid-template-columns:1.45fr .75fr .75fr;gap:12px;margin-bottom:24px}
-    .summary-primary{background:#111214;color:white;border-radius:20px;padding:20px 21px;min-height:140px;display:flex;flex-direction:column;justify-content:space-between}
-    .summary-primary span{color:#aeb0b5;font-size:12px}
-    .summary-primary strong{font-size:30px;line-height:1;letter-spacing:-.05em;max-width:330px}
-    .metric{border:1px solid #ecece8;border-radius:20px;padding:18px;background:white}
-    .metric span{color:#8b8d92;font-size:11px}.metric strong{display:block;font-size:34px;letter-spacing:-.055em;margin-top:17px}.metric small{color:#8d8f94}
-    .list{border-top:1px solid #ecece8}
-    .list-row{display:grid;grid-template-columns:1.2fr 1fr auto;gap:18px;align-items:center;padding:17px 2px;border-bottom:1px solid #ecece8}
-    .list-row b{font-weight:640}.list-row small{display:block;color:#8a8c91;margin-top:3px}.list-mid{color:#6e7075;font-size:13px}
-    .badge{font-size:11px;font-weight:650;padding:6px 9px;border-radius:8px;background:#f0f0ed;color:#5d5f64;white-space:nowrap}
-    .badge.blue{background:var(--blue-soft);color:var(--blue-ink)}
-    .badge.green{background:#e7f5ee;color:#287f53}.badge.red{background:#f9eaea;color:#a64343}.badge.amber{background:#fff3df;color:#9e691b}
-    .decision-card{border:1px solid #e8e8e4;border-radius:22px;padding:22px;margin-bottom:12px;background:#fff}
-    .decision-title{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.decision-title h4{font-size:21px;letter-spacing:-.035em;margin:0}.decision-title p{margin:6px 0 0;color:#7b7d82}
-    .decision-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:20px}
-    .decision-cell{background:#f7f7f5;border-radius:14px;padding:13px}.decision-cell span{display:block;font-size:10px;color:#919399;text-transform:uppercase;letter-spacing:.05em}.decision-cell b{display:block;margin-top:5px;font-size:14px}
-    .approval-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
-    .btn-small{border:0;border-radius:10px;padding:9px 12px;font-weight:650;background:#111214;color:white}
-    .btn-small.secondary{background:#efefec;color:#4f5156}.btn-small.danger{background:#f8eaea;color:#9c4545}
-    .empty{border:1px dashed #dddeda;border-radius:18px;padding:34px;text-align:center;color:#85878c}
+/* what we do */
+.feature-list{margin-top:44px;border-top:1px solid var(--line)}.feature-row{display:grid;grid-template-columns:78px .9fr 1.35fr;gap:34px;padding:34px 0;border-bottom:1px solid var(--line);align-items:start}.num{font-variant-numeric:tabular-nums;color:#465162}.feature-row h3{margin:0;font-size:27px;letter-spacing:-.035em;font-weight:560}.feature-row p{margin:0;color:#808b9a;max-width:650px}.feature-row code{color:#7ec8ff;background:#0d1623;padding:2px 6px;border-radius:5px;font-size:12px}
 
-    .evidence{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-    .evidence-block{padding:34px 34px 34px 0}.evidence-block+ .evidence-block{border-left:1px solid var(--line);padding-left:34px;padding-right:0}
-    .evidence strong{font-size:52px;letter-spacing:-.06em;display:block;line-height:1;margin:16px 0 12px}.evidence p{color:#77797e;max-width:460px;margin:0}
+/* proof */
+.proof-head{display:flex;justify-content:space-between;gap:30px;align-items:end}.proof-note{color:#596373;font-size:11px;max-width:300px;text-align:right}.metrics{display:grid;grid-template-columns:repeat(4,1fr);margin-top:44px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.metric{padding:28px 24px 30px;border-right:1px solid var(--line)}.metric:last-child{border-right:0}.metric span{display:block;color:#5f6978;font-size:11px;text-transform:uppercase;letter-spacing:.1em}.metric strong{display:block;font-size:46px;letter-spacing:-.06em;margin-top:26px;font-weight:550}.metric small{color:#788493}.metric em{font-style:normal;color:#67aef7;font-size:11px;margin-left:6px}.benchmark{margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:14px}.bench-card{border:1px solid var(--line);background:#090d13;border-radius:12px;padding:25px}.bench-card h3{font-size:22px;margin:0 0 8px;letter-spacing:-.035em}.bench-card>p{color:#718091;margin:0 0 24px;font-size:13px}.attack-row{display:grid;grid-template-columns:1.35fr .7fr .8fr;gap:12px;border-top:1px solid #18202c;padding:13px 0;font-size:12px}.attack-row span:nth-child(2),.attack-row span:nth-child(3){text-align:right}.good{color:var(--green)}.bad{color:var(--red)}.blue{color:#62b4ff}.bar{height:7px;background:#101822;border-radius:99px;overflow:hidden;margin-top:10px}.bar i{display:block;height:100%;background:linear-gradient(90deg,#1387ff,#66d1ff);border-radius:99px}.privacy-demo{display:grid;grid-template-columns:1fr 64px 1fr;align-items:center;gap:16px}.private-stack{display:grid;gap:8px}.private-item{border:1px solid #1d2c3f;background:#0e151f;border-radius:8px;padding:11px 12px;color:#93a2b3;font-size:11px}.result-box{border:1px solid #1b72cc;background:#0a1727;border-radius:10px;padding:20px;box-shadow:0 0 40px #087cff16}.result-box small{color:#5f7490}.result-box b{font-size:24px;display:block;margin:8px 0 15px}.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.result-grid span{padding:10px;border:1px solid #1a2b40;border-radius:7px;color:#7690ad;font-size:10px}.result-grid strong{display:block;color:white;font-size:16px;margin-top:3px}.run{width:100%;height:38px;border:1px solid #258bff;background:#117cf0;color:white;border-radius:7px;font-weight:650;margin-top:16px}.run:hover{filter:brightness(1.1)}
 
-    .final{padding:105px 0 115px;text-align:center}
-    .final h2{font-size:clamp(45px,5.7vw,72px);letter-spacing:-.07em;line-height:.96;max-width:850px;margin:0 auto 22px;font-weight:720}
-    .final p{font-size:18px;color:#74767b;max-width:620px;margin:0 auto 28px}
-    footer{border-top:1px solid var(--line);padding:34px 0 46px;color:#83858a}
-    .footer-row{display:flex;justify-content:space-between;gap:20px;align-items:center}
-    .footer-row b{color:#191a1d}
+/* deployment */
+.deploy-grid{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:42px}.deploy{min-height:300px;padding:24px;border-right:1px solid var(--line);position:relative;background:#090d13}.deploy:last-child{border-right:0}.deploy .idx{position:absolute;right:18px;top:17px;color:#3d4858;font-size:11px}.deploy h3{font-size:23px;letter-spacing:-.035em;margin:45px 0 10px}.deploy p{color:#727e8e;font-size:13px}.device-art{height:110px;margin-top:34px;position:relative;display:grid;place-items:center}.laptop{width:130px;height:78px;border:1px solid #325272;border-radius:7px;background:#0c1521;box-shadow:0 0 35px #087cff22}.laptop:after{content:"";position:absolute;width:160px;height:5px;border-radius:99px;background:#1d2938;bottom:9px;left:50%;transform:translateX(-50%)}.browser{width:145px;height:93px;border:1px solid #325272;border-radius:7px;background:#0c1521;box-shadow:0 0 35px #087cff22}.browser:before{content:"•••";letter-spacing:3px;color:#53677f;position:absolute;top:6px;left:11px;font-size:8px}.network{width:120px;height:120px;position:relative}.node{position:absolute;width:12px;height:12px;background:#1687ff;border-radius:50%;box-shadow:0 0 14px #1687ff}.node:nth-child(1){left:54px;top:52px;width:18px;height:18px}.node:nth-child(2){left:9px;top:17px}.node:nth-child(3){right:6px;top:18px}.node:nth-child(4){left:12px;bottom:12px}.node:nth-child(5){right:10px;bottom:11px}.network:before,.network:after{content:"";position:absolute;left:20px;top:58px;width:85px;height:1px;background:#294c70;transform:rotate(33deg);box-shadow:0 0 12px #0b7eff}.network:after{transform:rotate(-34deg)}
 
-    @media(max-width:900px){
-      .hero{padding-top:68px}.hero-grid,.section-head{grid-template-columns:1fr}.hero-grid{gap:40px}.device-stage{min-height:520px}.section-copy{margin:0}.inversion{grid-template-columns:1fr}.app{grid-template-columns:1fr}.sidebar{border-right:0;border-bottom:1px solid #ecece8;display:block;white-space:nowrap;overflow:auto;padding:12px}.appbrand,.sidebar-foot{display:none}.navitem{display:inline-flex;margin-right:3px}.summary-row{grid-template-columns:1fr 1fr}.summary-primary{grid-column:1/-1}.evidence{grid-template-columns:1fr}.evidence-block+ .evidence-block{border-left:0;border-top:1px solid var(--line);padding-left:0}.evidence-block{padding-right:0}
-    }
-    @media(max-width:620px){
-      .shell{width:min(100% - 28px,1180px)}.navlinks a:not(.navcta){display:none}.hero{padding:54px 0 58px}.hero-grid{grid-template-columns:1fr}.device-stage{padding:16px;border-radius:28px;min-height:0}.phone{border-radius:27px}.section{padding:68px 0}.section-head{gap:20px}.mainpanel{padding:26px 20px 30px}.panel-top{align-items:center}.summary-row{grid-template-columns:1fr}.summary-primary{grid-column:auto}.list-row{grid-template-columns:1fr auto}.list-mid{display:none}.decision-grid{grid-template-columns:1fr}.demo-frame{padding:8px;border-radius:26px}.app{border-radius:20px}.footer-row{align-items:flex-start;flex-direction:column}.hero-actions{align-items:flex-start;flex-direction:column;gap:12px}.primary{width:100%}
-    }
-    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}}
-  </style>
+/* research / security */
+.security{display:grid;grid-template-columns:.8fr 1.2fr;gap:80px;align-items:start}.security-copy p{color:#7e8b9c;font-size:15px}.security-list{border-top:1px solid var(--line)}.sec-row{display:flex;justify-content:space-between;gap:20px;padding:17px 0;border-bottom:1px solid var(--line);font-size:13px}.sec-row span:last-child{color:#6d7888;text-align:right}.warning{margin-top:22px;border:1px solid #3b2e21;background:#17120d;color:#c7a77e;border-radius:9px;padding:12px 14px;font-size:11px}
+
+/* writing */
+.writing{margin-top:40px;border-top:1px solid var(--line)}.post{display:grid;grid-template-columns:70px 1.7fr .8fr;gap:25px;padding:20px 0;border-bottom:1px solid var(--line);text-decoration:none}.post:hover .post-title{color:#6db7ff}.post-num{color:#465162}.post-title{font-size:18px;letter-spacing:-.02em}.post-meta{color:#657181;text-align:right;font-size:12px}
+
+/* CTA/footer */
+.cta{padding:100px 0}.cta-box{border:1px solid #203247;border-radius:14px;padding:72px 40px;text-align:center;background:radial-gradient(circle at 50% 120%,#0b70eb44,transparent 46%),#090d13}.cta-box h2{font-size:clamp(46px,6vw,78px);line-height:.95;letter-spacing:-.065em;margin:0 auto 18px;max-width:900px;font-weight:580}.cta-box p{color:#7d8999;font-size:17px;max-width:620px;margin:0 auto}footer{border-top:1px solid var(--line);padding:52px 0 30px}.footer-grid{display:grid;grid-template-columns:1.8fr repeat(3,.7fr);gap:40px}.footer-big{font-size:clamp(50px,7vw,94px);line-height:.85;letter-spacing:-.08em;font-weight:600}.footer-tag{color:#616c7b;margin-top:18px;max-width:380px}.fcol b{display:block;font-size:11px;color:#515c6b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:13px}.fcol a{display:block;text-decoration:none;color:#8994a4;font-size:13px;margin:9px 0}.fcol a:hover{color:white}.fine{margin-top:52px;padding-top:18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;color:#4f5968;font-size:10px}
+
+@media(max-width:900px){.navlinks{display:none}.hero{padding-top:72px}.stage{height:500px}.orbit{transform:scale(.88)}.o1{left:3%}.o2{left:4%}.o3{right:3%}.o4{right:4%}.figure-main{grid-template-columns:1fr;gap:12px}.fig-arrow{transform:rotate(90deg)}.feature-row{grid-template-columns:50px 1fr}.feature-row p{grid-column:2}.metrics{grid-template-columns:1fr 1fr}.metric:nth-child(2){border-right:0}.metric:nth-child(-n+2){border-bottom:1px solid var(--line)}.benchmark{grid-template-columns:1fr}.deploy-grid{grid-template-columns:1fr}.deploy{border-right:0;border-bottom:1px solid var(--line)}.deploy:last-child{border-bottom:0}.security{grid-template-columns:1fr;gap:30px}.footer-grid{grid-template-columns:1fr 1fr}.footer-big{grid-column:1/-1}}
+@media(max-width:620px){.shell{width:min(var(--max),calc(100% - 28px))}.persona{display:none}.hero{padding-top:60px}.hero-sub{font-size:16px}.stage{height:430px}.kernel{width:160px;height:160px}.orbit{font-size:9px;padding:8px}.o5,.o6{display:none}.w1,.w2,.w3,.w4{display:none}.statement{padding:70px 0}.section{padding:68px 0}.figure-main{padding:26px 18px}.figure-cap{display:block}.figure-cap span{display:block;margin:4px 0}.metrics{grid-template-columns:1fr}.metric{border-right:0;border-bottom:1px solid var(--line)}.metric:last-child{border-bottom:0}.privacy-demo{grid-template-columns:1fr}.privacy-demo>.fig-arrow{transform:rotate(90deg)}.post{grid-template-columns:40px 1fr}.post-meta{display:none}.cta-box{padding:58px 20px}.footer-grid{grid-template-columns:1fr}.fine{display:block}.fine span{display:block;margin-top:5px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
+</style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="shell navrow">
-      <a class="brand" href="#top" aria-label="Supakeep home"><span class="brandmark" aria-hidden="true"></span>supakeep</a>
-      <nav class="navlinks" aria-label="Primary navigation">
-        <a href="#how">How it works</a>
-        <a href="#demo">Demo</a>
-        <a href="https://github.com/sushxnthd/supakeep">GitHub</a>
-        <a class="navcta" href="#demo">Open Private Mode</a>
-      </nav>
-    </div>
-  </header>
+<nav><div class="shell navrow"><a class="brand" href="#top"><span class="mark"></span>supakeep</a><div class="navlinks"><a href="#mission">Mission</a><a href="#product">Product</a><a href="#proof">Research</a><a href="#everywhere">Everywhere</a><a href="#writing">Writing</a></div><div class="navright"><div class="persona"><span class="on">Human</span><span>Agent</span></div><a class="navcta" href="https://github.com/sushxnthd/supakeep">GitHub ↗</a></div></div></nav>
 
-  <main id="top">
-    <section class="hero">
-      <div class="shell hero-grid">
-        <div>
-          <div class="kicker">Private Mode for every AI</div>
-          <h1>Let AI use your life. Without giving it your life.</h1>
-          <p>Supakeep keeps your private context with you. AI sends decisions toward your data, receives only the minimum useful result, and gets exact values only when an authorized destination truly needs them.</p>
-          <div class="hero-actions">
-            <a class="primary" href="#demo">See Private Mode</a>
-            <a class="text-link" href="https://github.com/sushxnthd/supakeep">View the research <span>→</span></a>
-          </div>
-        </div>
+<main id="top">
+<section class="hero"><div class="shell"><div class="announce"><i></i><b>Research</b> Private Decision Programs are live <span>↗</span></div><h1>supakeep is building Private Mode for every AI.</h1><p class="hero-sub">Deep personalization without handing a model your private profile. Supakeep keeps personal context local, lets agents compute against it, and returns only the minimum useful result.</p><div class="actions"><a class="btn primary" href="#demo">Try the private-mode demo</a><a class="btn" href="https://github.com/sushxnthd/supakeep">View source ↗</a></div><div class="works">Works across</div><div class="logo-row"><span class="logo-pill">ChatGPT</span><span class="logo-pill">Claude</span><span class="logo-pill">Gemini</span><span class="logo-pill">Cursor</span><span class="logo-pill">MCP</span><span class="logo-pill">Browser agents</span></div></div></section>
 
-        <div class="device-stage" aria-label="Supakeep Private Mode preview">
-          <div class="phone">
-            <div class="phone-top">
-              <div class="phone-title">Private Mode</div>
-              <div class="status-dot" title="Private Mode active"></div>
-            </div>
-            <div class="task-label">CURRENT TASK</div>
-            <div class="task-title">Find the best flight to Tokyo next month.</div>
-            <div class="local-box">
-              <div class="local-head"><b>Used on this device</b><span>4 private fields</span></div>
-              <div class="local-item"><span>Travel budget</span><span class="check">✓</span></div>
-              <div class="local-item"><span>Calendar availability</span><span class="check">✓</span></div>
-              <div class="local-item"><span>Airline preference</span><span class="check">✓</span></div>
-              <div class="local-item"><span>Departure habits</span><span class="check">✓</span></div>
-            </div>
-            <div class="provider-result">
-              <div class="result-top"><span>Returned to the AI</span><span>bounded output</span></div>
-              <div class="result-value"><span>flight-08</span><span class="bit">≤ 4 bits</span></div>
-            </div>
-            <div class="zero-strip">
-              <div class="tiny-stat"><strong>0</strong><span>raw private values shared</span></div>
-              <div class="tiny-stat"><strong>1</strong><span>useful decision returned</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+<div class="stage-wrap"><div class="shell"><div class="stage"><div class="wire w1"></div><div class="wire w2"></div><div class="wire w3"></div><div class="wire w4"></div><div class="orbit o1">private calendar<small>stays local</small></div><div class="orbit o2">payment credential<small>brokered at execution</small></div><div class="orbit o3">Claude / ChatGPT<small>bounded result only</small></div><div class="orbit o4">MCP + browser<small>scoped authority</small></div><div class="orbit o5">budget · preferences · identity</div><div class="orbit o6">receipts · trajectory · revocation</div><div class="kernel"><div class="kernel-logo"></div><strong>supakeep</strong></div><div class="pulse"></div></div></div></div>
 
-    <section id="how" class="section rule">
-      <div class="shell">
-        <div class="section-head">
-          <div><div class="kicker">The inversion</div><h2>Move the decision to your data.</h2></div>
-          <p class="section-copy">Personal AI normally works by moving your personal context into a model. Supakeep reverses the direction: the model brings a bounded decision request to your private context.</p>
-        </div>
-        <div class="inversion">
-          <div class="lane bad">
-            <div class="lane-label">Today</div>
-            <div class="lane-flow"><span class="chip">Your profile</span><span class="arrow">→</span><span class="chip">AI provider</span><span class="arrow">→</span><span class="chip">Answer</span></div>
-            <p>Deep personalization requires repeatedly copying more of you into somebody else’s system.</p>
-          </div>
-          <div class="lane good">
-            <div class="lane-label">With Supakeep</div>
-            <div class="lane-flow"><span class="chip">AI decision</span><span class="arrow">→</span><span class="chip">Your private context</span><span class="arrow">→</span><span class="chip">Bounded result</span></div>
-            <p>The AI can still make a personalized choice while your underlying profile remains local and provider-neutral.</p>
-          </div>
-        </div>
-      </div>
-    </section>
+<section class="statement hair" id="mission"><div class="shell"><p><span class="accent">The path to useful personal AI is not to upload more of your life into more models.</span> <span class="dim">It is to make your private context portable, computable, and useful while it remains under your control.</span></p><a class="tiny-link" href="https://github.com/sushxnthd/supakeep/blob/main/research/BLIND_PERSONALIZATION.md">Read the research thesis ↗</a></div></section>
 
-    <section id="demo" class="section rule">
-      <div class="shell">
-        <div class="section-head">
-          <div><div class="kicker">Interactive preview</div><h2>One place to see what AI knows and does.</h2></div>
-          <p class="section-copy">This public demo uses sample data only. The interface is designed around one question: what happened on my behalf, and how much of me did the AI actually receive?</p>
-        </div>
+<section class="section hair" id="product"><div class="shell"><div class="eyebrow">The model is not the security boundary</div><h2>Personal context moves toward the decision, not toward the model.</h2><p class="section-lead">An agent sends public candidates and a bounded request. Supakeep evaluates that request against private state locally. The agent gets the answer it needs, not a copy of the profile that produced it.</p><div class="figure"><div class="figure-main"><div class="figbox"><b>Your private world</b><p>Calendar, budget, preferences, identity, credentials, health/accessibility constraints.</p></div><div class="fig-arrow">→</div><div class="figbox core"><b>Supakeep Context Kernel</b><p>Private Decision Programs · information budgets · trust policy · grants · credential brokerage.</p></div><div class="fig-arrow">→</div><div class="figbox"><b>Any AI</b><p>Receives a bounded result, scoped authority, and nothing else by default.</p></div></div><div class="figure-cap"><b>Figure 1 · Blind personalization runtime</b><span>Private values remain outside model context until an authorized destination truly needs them.</span></div></div>
 
-        <div class="demo-frame">
-          <div class="app">
-            <aside class="sidebar">
-              <div class="appbrand"><span class="brandmark" aria-hidden="true"></span>supakeep</div>
-              <button class="navitem active" data-view="overview"><span class="navicon">○</span>Overview</button>
-              <button class="navitem" data-view="decisions"><span class="navicon">◇</span>Private decisions</button>
-              <button class="navitem" data-view="authority"><span class="navicon">↗</span>Authority</button>
-              <button class="navitem" data-view="receipts"><span class="navicon">≡</span>Receipts</button>
-              <div class="sidebar-foot">Sample data · no real secrets</div>
-            </aside>
+<div class="feature-list"><div class="feature-row"><div class="num">01</div><h3>Blind personalization.</h3><p>Agents send candidates and a decision request instead of demanding your profile. Supakeep can locally rank flights, products, jobs, schedules, or actions using private user state.</p></div><div class="feature-row"><div class="num">02</div><h3>Bound the information channel.</h3><p>Private Decision Programs expose finite outputs whose maximum capacity is known before execution: a boolean is at most <code>1 bit</code>; one of 16 outcomes is at most <code>4 bits</code>. Repeated decisions share one trajectory budget.</p></div><div class="feature-row"><div class="num">03</div><h3>Broker authority, not secrets.</h3><p>Credentials and exact values can remain sealed until an authorized action requires them. Supakeep brokers them directly to the destination instead of dropping them into an agent prompt.</p></div></div></div></section>
 
-            <div class="mainpanel">
-              <div class="panel-top">
-                <div><div class="subtle">TOKYO TRIP · TRAJECTORY 8A4F</div><h3>Private Mode</h3></div>
-                <div class="mode"><span class="status-dot"></span>Active</div>
-              </div>
+<section class="section hair" id="proof"><div class="shell"><div class="proof-head"><div><div class="eyebrow">In the current alpha</div><h2>Mechanisms we can reproduce, not marketing claims.</h2></div><div class="proof-note">All numbers below are synthetic engineering evidence from the public repository, not claims of real-world privacy safety.</div></div><div class="metrics"><div class="metric"><span>Test suite</span><strong>51/51</strong><small>passing in CI</small></div><div class="metric"><span>Adversarial trajectories</span><strong>10k</strong><small>synthetic disclosure runs</small></div><div class="metric"><span>Raw private values</span><strong>0</strong><small>returned in blind-personalization demo</small></div><div class="metric"><span>Explicit channel</span><strong>4<em>bits</em></strong><small>15 candidates + no-match outcome</small></div></div>
 
-              <section class="view active" id="view-overview">
-                <div class="summary-row">
-                  <div class="summary-primary"><span>CURRENT TASK</span><strong>Plan a Tokyo trip under my normal budget.</strong></div>
-                  <div class="metric"><span>RAW VALUES TO MODEL</span><strong>0</strong><small>this trajectory</small></div>
-                  <div class="metric"><span>OUTPUT BUDGET</span><strong>4b</strong><small>4 of 4 bits used</small></div>
-                </div>
-                <div class="list" id="context-list"></div>
-              </section>
+<div class="benchmark"><div class="bench-card"><h3>Adaptive reconstruction attack</h3><p>A hidden integer in 0..999,999 is exposed only through yes/no threshold predicates.</p><div class="attack-row"><span>Policy</span><span>Queries</span><span>Result</span></div><div class="attack-row"><span>Unrestricted predicate oracle</span><span>20</span><span class="bad">exact value</span></div><div class="attack-row"><span>Naive per-field boolean accounting</span><span>20</span><span class="bad">exact value</span></div><div class="attack-row"><span>Supakeep trajectory accounting</span><span>6</span><span class="good">blocked</span></div><div style="margin-top:21px;color:#687687;font-size:11px">31,250 candidate values remain when Supakeep interrupts the adaptive sequence.</div></div>
 
-              <section class="view" id="view-decisions">
-                <div class="decision-card">
-                  <div class="decision-title"><div><h4>Flight selection</h4><p>15 public candidates ranked against private travel context.</p></div><span class="badge blue">4 bits</span></div>
-                  <div class="decision-grid">
-                    <div class="decision-cell"><span>Result</span><b>flight-08</b></div>
-                    <div class="decision-cell"><span>Private fields used</span><b>3</b></div>
-                    <div class="decision-cell"><span>Raw values returned</span><b>0</b></div>
-                  </div>
-                </div>
-                <div class="decision-card">
-                  <div class="decision-title"><div><h4>Second flight ranking</h4><p>A distinct decision would exceed the trajectory’s explicit output capacity.</p></div><span class="badge red">Denied</span></div>
-                  <div class="decision-grid">
-                    <div class="decision-cell"><span>Requested</span><b>+4 bits</b></div>
-                    <div class="decision-cell"><span>Already spent</span><b>4 bits</b></div>
-                    <div class="decision-cell"><span>Trajectory limit</span><b>4 bits</b></div>
-                  </div>
-                </div>
-              </section>
+<div class="bench-card" id="demo"><h3>Blind personalization</h3><p>Public flight candidates move to the user. Private travel context does not move to the agent.</p><div class="privacy-demo"><div class="private-stack"><div class="private-item">travel.maxBudget <span style="float:right;color:#4f6074">private</span></div><div class="private-item">travel.preferredAirline <span style="float:right;color:#4f6074">private</span></div><div class="private-item">travel.preferredDepartureHour <span style="float:right;color:#4f6074">private</span></div></div><div class="fig-arrow">→</div><div class="result-box"><small>SUPAKEEP RETURNS</small><b id="demoResult">bounded decision</b><div class="result-grid"><span>Raw values<strong id="rawCount">0</strong></span><span>Worst-case channel<strong id="bitsCount">≤ 4 bits</strong></span></div><button class="run" id="runDemo">Run private decision</button></div></div></div></div></div></section>
 
-              <section class="view" id="view-authority">
-                <div id="approval-list"></div>
-              </section>
+<section class="section hair" id="everywhere"><div class="shell"><div class="eyebrow">One boundary, wherever AI runs</div><h2>Supakeep runs where your private state lives.</h2><p class="section-lead">The long-term product is provider-neutral. Your personal trust layer should survive model switches, app switches, and agent stacks.</p><div class="deploy-grid"><div class="deploy"><span class="idx">001</span><h3>On your laptop</h3><p>Keep a local Context Kernel beside your private files, credentials, and personal state.</p><div class="device-art"><div class="laptop"></div></div></div><div class="deploy"><span class="idx">002</span><h3>In your browser</h3><p>Mediate page context and actions before browser agents receive or execute them.</p><div class="device-art"><div class="browser"></div></div></div><div class="deploy"><span class="idx">003</span><h3>Across your agent stack</h3><p>Use MCP and SDK adapters so sub-agents inherit one privacy and authority trajectory.</p><div class="device-art"><div class="network"><i class="node"></i><i class="node"></i><i class="node"></i><i class="node"></i><i class="node"></i></div></div></div></div></div></section>
 
-              <section class="view" id="view-receipts">
-                <div class="list" id="receipt-list"></div>
-              </section>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+<section class="section hair"><div class="shell security"><div><div class="eyebrow">Security posture</div><h2 style="font-size:48px">Research alpha, explicit boundaries.</h2><div class="warning">Supakeep is not currently a certified security product. It cannot control traffic that bypasses its enforcement boundary.</div></div><div class="security-copy"><p>The architecture treats models, prompts, tool metadata, remote MCP servers, and downstream services as potentially buggy or adversarial. The product goal is to move trust decisions outside the model itself.</p><div class="security-list"><div class="sec-row"><span>Encrypted local vault</span><span>AES-256-GCM</span></div><div class="sec-row"><span>Scoped grants</span><span>Ed25519-signed · expiry · purpose · use count</span></div><div class="sec-row"><span>Exact-action approvals</span><span>hash-bound · one-shot · replay-protected</span></div><div class="sec-row"><span>Agent tool calls</span><span>MCP proxy · fail-closed unknown tools</span></div><div class="sec-row"><span>Private decisions</span><span>finite-output runtime · trajectory bit budgets</span></div><div class="sec-row"><span>Audit</span><span>tamper-evident receipts</span></div></div></div></div></section>
 
-    <section class="section rule">
-      <div class="shell">
-        <div class="section-head">
-          <div><div class="kicker">Current evidence</div><h2>Designed to be falsifiable.</h2></div>
-          <p class="section-copy">The current numbers are synthetic mechanism tests, not a claim of universal privacy. They exist so the privacy contract can fail loudly instead of becoming marketing language.</p>
-        </div>
-        <div class="evidence">
-          <div class="evidence-block"><div class="kicker">Adaptive reconstruction</div><strong>31,250</strong><p>candidate values still remained when Supakeep stopped a binary-search attack on query six. The unrestricted baseline recovered the exact value in 20 queries.</p></div>
-          <div class="evidence-block"><div class="kicker">Blind personalization</div><strong>0</strong><p>raw private values returned while selecting one flight from 15 candidates using three private travel attributes locally.</p></div>
-        </div>
-      </div>
-    </section>
+<section class="section hair" id="writing"><div class="shell"><div class="eyebrow">Writing</div><h2>The work behind Supakeep.</h2><div class="writing"><a class="post" href="https://github.com/sushxnthd/supakeep/blob/main/research/BLIND_PERSONALIZATION.md"><span class="post-num">01</span><span class="post-title">Blind personalization: the Supakeep breakthrough hypothesis</span><span class="post-meta">Research ↗</span></a><a class="post" href="https://github.com/sushxnthd/supakeep/blob/main/research/CONTEXT_KERNEL.md"><span class="post-num">02</span><span class="post-title">Context Kernel: compositional privacy for agent trajectories</span><span class="post-meta">Architecture ↗</span></a><a class="post" href="https://github.com/sushxnthd/supakeep/blob/main/THREAT_MODEL.md"><span class="post-num">03</span><span class="post-title">Threat model: what Supakeep assumes can go wrong</span><span class="post-meta">Security ↗</span></a></div></div></section>
 
-    <section class="final rule">
-      <div class="shell">
-        <h2>Your AI can know you without owning you.</h2>
-        <p>One private profile. Any model. Bounded disclosure. Scoped authority. A receipt for what actually happened.</p>
-        <a class="primary" href="https://github.com/sushxnthd/supakeep">Explore the prototype</a>
-      </div>
-    </section>
-  </main>
+<section class="cta hair"><div class="shell"><div class="cta-box"><h2>AI can know you without owning your data.</h2><p>Supakeep is testing a provider-neutral Private Mode for personal AI: use the context, keep the profile.</p><div class="actions"><a class="btn primary" href="https://github.com/sushxnthd/supakeep">Build with Supakeep ↗</a><a class="btn" href="#proof">See the evidence</a></div></div></div></section>
+</main>
 
-  <footer>
-    <div class="shell footer-row"><div><b>Supakeep</b><br>Private Mode for every AI.</div><div>Alpha research prototype · 2026</div></div>
-  </footer>
+<footer><div class="shell"><div class="footer-grid"><div><div class="footer-big">supakeep</div><div class="footer-tag">Private Mode for every AI. Personal context without surrendering the profile behind it.</div></div><div class="fcol"><b>Product</b><a href="#product">Context Kernel</a><a href="#proof">Benchmarks</a><a href="#everywhere">Deployment</a></div><div class="fcol"><b>Research</b><a href="https://github.com/sushxnthd/supakeep/blob/main/research/BLIND_PERSONALIZATION.md">Blind personalization</a><a href="https://github.com/sushxnthd/supakeep/blob/main/THREAT_MODEL.md">Threat model</a><a href="https://github.com/sushxnthd/supakeep/blob/main/ROADMAP.md">Roadmap</a></div><div class="fcol"><b>Connect</b><a href="https://github.com/sushxnthd/supakeep">GitHub</a><a href="#top">Back to top ↑</a></div></div><div class="fine"><span>© 2026 Supakeep · experimental research project</span><span>No affiliation with reference. Visual direction adapted to Supakeep content.</span></div></div></footer>
 
-  <script>
-    const contextRows=[
-      {name:'Travel budget',detail:'Used locally for candidate filtering',value:'Local only',tone:'green'},
-      {name:'Calendar availability',detail:'Used locally to remove impossible dates',value:'Local only',tone:'green'},
-      {name:'Airline preference',detail:'Used locally in ranking',value:'Local only',tone:'green'},
-      {name:'Flight choice',detail:'Bounded result returned to the cloud agent',value:'flight-08',tone:'blue'}
-    ];
-
-    let approvals=[
-      {title:'Book flight for ₹47,821',detail:'airline.example · purchase · one use',risk:'Needs approval'},
-      {title:'Send passport number to airline',detail:'airline.example · exact identity field · direct broker',risk:'Needs approval'}
-    ];
-
-    let receipts=[
-      {title:'Private decision · flight ranking',detail:'3 private fields used locally · 4-bit explicit channel',state:'Allowed',tone:'green'},
-      {title:'Second ranking request',detail:'trajectory output budget exhausted',state:'Blocked',tone:'red'},
-      {title:'Read public flight inventory',detail:'browser agent · no private context',state:'Allowed',tone:'green'}
-    ];
-
-    const qs=s=>document.querySelector(s);
-    const qsa=s=>[...document.querySelectorAll(s)];
-
-    function renderContext(){
-      qs('#context-list').innerHTML=contextRows.map(x=>`<div class="list-row"><div><b>${x.name}</b><small>${x.detail}</small></div><div class="list-mid">Tokyo trip trajectory</div><span class="badge ${x.tone}">${x.value}</span></div>`).join('');
-    }
-
-    function renderApprovals(){
-      const el=qs('#approval-list');
-      if(!approvals.length){el.innerHTML='<div class="empty"><b>Nothing waiting.</b><br>Supakeep will interrupt only when the task needs more authority.</div>';return}
-      el.innerHTML=approvals.map((x,i)=>`<div class="decision-card"><div class="decision-title"><div><h4>${x.title}</h4><p>${x.detail}</p></div><span class="badge amber">${x.risk}</span></div><div class="approval-actions"><button class="btn-small secondary" onclick="decide(${i},false)">Deny</button><button class="btn-small" onclick="decide(${i},true)">Allow once</button></div></div>`).join('');
-    }
-
-    function renderReceipts(){
-      qs('#receipt-list').innerHTML=receipts.map(x=>`<div class="list-row"><div><b>${x.title}</b><small>${x.detail}</small></div><div class="list-mid">Tamper-evident demo receipt</div><span class="badge ${x.tone}">${x.state}</span></div>`).join('');
-    }
-
-    window.decide=(i,allowed)=>{
-      const item=approvals.splice(i,1)[0];
-      receipts.unshift({title:item.title,detail:item.detail,state:allowed?'Allowed once':'Denied',tone:allowed?'green':'red'});
-      renderApprovals();renderReceipts();
-    };
-
-    qsa('.navitem').forEach(button=>button.addEventListener('click',()=>{
-      qsa('.navitem').forEach(x=>x.classList.remove('active'));
-      qsa('.view').forEach(x=>x.classList.remove('active'));
-      button.classList.add('active');
-      qs('#view-'+button.dataset.view).classList.add('active');
-    }));
-
-    renderContext();renderApprovals();renderReceipts();
-  </script>
-</body>
-</html>
+<script>
+const run=document.getElementById('runDemo');
+const result=document.getElementById('demoResult');
+const bits=document.getElementById('bitsCount');
+let ran=false;
+run.addEventListener('click',()=>{
+  if(!ran){run.textContent='Computing locally…';result.textContent='private context stays local';bits.textContent='calculating';setTimeout(()=>{result.textContent='flight-08';bits.textContent='≤ 4 bits';run.textContent='Decision returned · run again';ran=true},650)}else{result.textContent='denied: trajectory budget spent';bits.textContent='4 / 4 bits';run.textContent='Reset demo';ran=false}
+});
+</script>
+</body></html>
