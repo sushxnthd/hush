@@ -85,28 +85,41 @@ export class JointChoiceReconstructionFirewall {
     return before!==this.observations.length;
   }
 
-  evaluate({fields,fieldStates,program,result,evaluateProgram}={}){
+  evaluate({fields,getFieldState,program,result,evaluateProgram}={}){
     const requested=uniqueFields(fields);
     if(requested.length<2) return {decision:'skip',reason:'Joint choice accounting requires at least two private fields.'};
     if(typeof evaluateProgram!=='function') throw new Error('Joint choice accounting requires an evaluator');
+    if(typeof getFieldState!=='function') throw new Error('Joint choice accounting requires finite-domain field state');
 
     const component=componentFor(requested,this.observations);
-    const states=fieldStates??{};
     let initialKnowledgeBits=0;
     let currentProduct=1;
-    const valueLists=Object.create(null);
+    const resolved=Object.create(null);
 
     for(const field of component){
-      const state=states[field];
-      if(!state||!Number.isSafeInteger(state.initialCandidates)||state.initialCandidates<1||!Array.isArray(state.values)||!state.values.length){
+      let state;
+      try{ state=getFieldState(field); }
+      catch(error){ return {decision:'deny',reason:error?.message||'Unable to read finite-domain state.',fields:component}; }
+      if(!state||!Number.isSafeInteger(state.initialCandidates)||state.initialCandidates<1||!Number.isSafeInteger(state.remainingCandidates)||state.remainingCandidates<1){
         return {decision:'deny',reason:'Joint choice accounting requires declared finite domains for every connected private field.',fields:component};
       }
       initialKnowledgeBits+=Math.log2(state.initialCandidates);
-      currentProduct*=state.values.length;
+      currentProduct*=state.remainingCandidates;
       if(!Number.isSafeInteger(currentProduct)||currentProduct>this.maxJointStates){
         return {decision:'deny',reason:'Joint private-state space exceeds analyzable limit; result withheld.',fields:component,currentCandidates:currentProduct,maxJointStates:this.maxJointStates};
       }
-      valueLists[field]=state.values;
+      resolved[field]=state;
+    }
+
+    const valueLists=Object.create(null);
+    for(const field of component){
+      try{
+        const values=typeof resolved[field].values==='function'?resolved[field].values():resolved[field].values;
+        if(!Array.isArray(values)||values.length!==resolved[field].remainingCandidates) throw new Error('Finite-domain candidate enumeration mismatch');
+        valueLists[field]=values;
+      }catch(error){
+        return {decision:'deny',reason:error?.message||'Unable to enumerate finite-domain values.',fields:component};
+      }
     }
 
     let feasible;
