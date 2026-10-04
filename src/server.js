@@ -12,6 +12,7 @@ import {
 } from './core.js';
 import { DisclosureLedger, TrustRegistry, TRUST_PROFILES } from './privacy.js';
 import { McpToolCatalog, evaluateMcpCall, jsonRpcError, sanitizeForwardHeaders } from './mcp.js';
+import { scanMcpCatalog } from './scanner.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = path.join(root, 'data');
@@ -32,7 +33,8 @@ const mcpApprovals = new Map();
 const mcpUpstream = process.env.SUPAKEEP_MCP_UPSTREAM || null;
 const trustMcpAnnotations = process.env.SUPAKEEP_MCP_TRUST_TOOL_ANNOTATIONS === '1';
 const configuredBearer = process.env.SUPAKEEP_MCP_BEARER_TOKEN || null;
-const brokeredAuth = configuredBearer ? (configuredBearer.startsWith('Bearer ') ? configuredBearer : `Bearer ${configuredBearer}`) : null;
+const configuredVaultAuthId = process.env.SUPAKEEP_MCP_AUTH_VAULT_ID || null;
+const configuredAuthScheme = process.env.SUPAKEEP_MCP_AUTH_SCHEME || 'Bearer';
 if (mcpUpstream) {
   const protocol = new URL(mcpUpstream).protocol;
   if (!['http:','https:'].includes(protocol)) throw new Error('SUPAKEEP_MCP_UPSTREAM must use http or https');
@@ -107,9 +109,18 @@ function responseHeaders(headers){
   out['cache-control']='no-store';
   return out;
 }
+function brokeredMcpAuth(){
+  let value=null;
+  if(configuredVaultAuthId) value=String(vault.resolve(configuredVaultAuthId));
+  else if(configuredBearer) value=String(configuredBearer);
+  if(!value) return null;
+  if(configuredAuthScheme.toLowerCase()==='raw') return value;
+  const scheme=configuredAuthScheme.trim();
+  return value.toLowerCase().startsWith(`${scheme.toLowerCase()} `)?value:`${scheme} ${value}`;
+}
 async function fetchMcpUpstream(req,u,raw){
   if(!mcpUpstream) throw Object.assign(new Error('MCP upstream is not configured. Set SUPAKEEP_MCP_UPSTREAM.'),{code:'NO_MCP_UPSTREAM'});
-  const headers=sanitizeForwardHeaders(req.headers,{brokeredAuth});
+  const headers=sanitizeForwardHeaders(req.headers,{brokeredAuth:brokeredMcpAuth()});
   return fetch(mcpTargetUrl(u),{
     method:req.method,
     headers,
@@ -166,9 +177,9 @@ async function mcp(req,res,u){
       return sendRpc(res,jsonRpcError(rpc.id,-32001,'Supakeep requires approval for this MCP tool call.',{decision:'ask',pendingId:pending.id,retryAfterApproval:true,reason:evaluation.reason}));
     }
 
-    if(hadApproval) mcpApprovals.delete(evaluation.requestHash); // one-shot before execution
+    if(hadApproval) mcpApprovals.delete(evaluation.requestHash);
     const upstream=await fetchMcpUpstream(req,u,raw);
-    receipt(audit,upstream.ok?'allow':'error',null,{mcp:true,upstreamStatus:upstream.status,approved:Boolean(hadApproval)});
+    receipt(audit,upstream.ok?'allow':'error',null,{mcp:true,upstreamStatus:upstream.status,approved:Boolean(hadApproval),credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)});
     return pipeMcpResponse(res,upstream);
   }
 
@@ -185,12 +196,13 @@ async function mcp(req,res,u){
 }
 
 async function api(req,res,u){
-  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Supakeep',version:'0.3.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations},chainValid:verifyReceiptChain(store.receipts)});
+  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Supakeep',version:'0.4.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});
   if(req.method==='GET'&&u.pathname==='/api/vault') return send(res,200,{items:vault.list()});
   if(req.method==='GET'&&u.pathname==='/api/pending') return send(res,200,{requests:[...store.pending.values()].filter(x=>x.status==='pending')});
   if(req.method==='GET'&&u.pathname==='/api/receipts') return send(res,200,{receipts:store.receipts.slice(-50).reverse(),chainValid:verifyReceiptChain(store.receipts)});
   if(req.method==='GET'&&u.pathname==='/api/privacy/footprint') return send(res,200,{agents:disclosureLedger.footprint(),windowMs:disclosureLedger.windowMs});
   if(req.method==='GET'&&u.pathname==='/api/privacy/trust') return send(res,200,{levels:Object.keys(TRUST_PROFILES),profiles:[...trustRegistry.profiles.entries()].map(([agent,p])=>({agent,...p}))});
+  if(req.method==='GET'&&u.pathname==='/api/mcp/scan') return send(res,200,scanMcpCatalog(mcpCatalog.list(),{annotationsTrusted:trustMcpAnnotations}));
 
   if(req.method==='POST'&&u.pathname==='/api/redact'){
     const b=await body(req), r=redactSensitive(String(b.text??''));
