@@ -1,9 +1,18 @@
 import crypto from 'node:crypto';
 import {canonicalize, sha256} from './core.js';
 import {PersistentReconstructionFirewall} from './reconstruction-firewall.js';
+import {PartitionAwareReconstructionFirewall, stripPartitionInternals} from './partition-firewall.js';
 
 const OPS = new Set(['eq','neq','lt','lte','gt','gte','in','notIn']);
 const MAX_CANDIDATES = 100;
+const FORBIDDEN_PATH_PARTS = new Set(['__proto__','prototype','constructor']);
+
+function pathParts(path) {
+  const parts=String(path).split('.').filter(Boolean);
+  if(!parts.length) throw new Error('Private path required');
+  if(parts.some(part=>FORBIDDEN_PATH_PARTS.has(part))) throw new Error('Unsafe private path');
+  return parts;
+}
 
 export function capacityBits(cardinality) {
   const n = Number(cardinality);
@@ -24,10 +33,10 @@ export function privatePathsForProgram(program) {
 }
 
 function getPath(root, path) {
-  const parts = String(path).split('.').filter(Boolean);
+  const parts = pathParts(path);
   let value = root;
   for (const part of parts) {
-    if (value == null || typeof value !== 'object' || !(part in value)) throw new Error(`Private field not found: ${path}`);
+    if (value == null || typeof value !== 'object' || !Object.hasOwn(value,part)) throw new Error(`Private field not found: ${path}`);
     value = value[part];
   }
   return value;
@@ -61,7 +70,7 @@ function normalizeCandidates(candidates) {
 }
 
 function candidateValue(candidate, field) {
-  if (!(String(field) in candidate)) throw new Error(`Candidate field not found: ${field}`);
+  if (!Object.hasOwn(candidate,String(field))) throw new Error(`Candidate field not found: ${field}`);
   return candidate[String(field)];
 }
 
@@ -159,42 +168,62 @@ function executeProgram(program, compiled, profile) {
 /**
  * Private Decision Programs turn personal context into a bounded output channel.
  *
- * The short-lived trajectory budget bounds one task transcript. The persistent
- * reconstruction firewall separately accounts information about each referenced
- * private field across trajectories, agents and sinks, preventing an adaptive
- * caller from resetting the budget by starting a new task or renaming itself.
+ * Three accounting layers can apply:
+ * - short-lived task/sink budgets;
+ * - persistent cross-task reconstruction accounting;
+ * - for declared finite domains, realized partition accounting that measures how
+ *   much the actual answer shrinks the feasible private state before release.
  *
- * These are explicit-channel bounds only. Timing, crashes, external side effects,
+ * These are explicit-channel defenses only. Timing, crashes, external side effects,
  * covert channels and data released outside this runtime are not covered.
  */
 export class PrivateDecisionRuntime {
-  constructor({now=()=>Date.now(),firewall=undefined}={}) {
+  constructor({now=()=>Date.now(),firewall=undefined,partitionFirewall=undefined}={}) {
     this.now=now;
-    this.profile={};
+    this.profile=Object.create(null);
     this.profileRevision=0;
     this.trajectories=new Map();
     this.firewall=firewall===false||firewall===null?null:(firewall??new PersistentReconstructionFirewall({now}));
+    this.partitionFirewall=partitionFirewall===false||partitionFirewall===null?null:(partitionFirewall??new PartitionAwareReconstructionFirewall());
   }
 
-  setPrivate(path,value) {
-    const parts=String(path).split('.').filter(Boolean);
-    if (!parts.length) throw new Error('Private path required');
+  setPrivate(path,value,{domain=undefined}={}) {
+    const parts=pathParts(path);
     let node=this.profile;
     for (let i=0;i<parts.length-1;i++) {
       const part=parts[i];
-      if (!node[part] || typeof node[part] !== 'object' || Array.isArray(node[part])) node[part]={};
+      if (!Object.hasOwn(node,part) || !node[part] || typeof node[part] !== 'object' || Array.isArray(node[part])) node[part]=Object.create(null);
       node=node[part];
     }
     node[parts.at(-1)]=structuredClone(value);
     this.profileRevision++;
-    return {path:String(path),revision:this.profileRevision};
+    if(domain!==undefined) this.registerPrivateDomain(path,domain);
+    else if(this.partitionFirewall?.hasField(path)) this.partitionFirewall.resetField(path);
+    return {path:String(path),revision:this.profileRevision,partitionProtected:Boolean(this.partitionFirewall?.hasField(path))};
   }
 
+  registerPrivateDomain(path,domain) {
+    const key=String(path);
+    const value=getPath(this.profile,key);
+    if(!Number.isSafeInteger(value)) throw new Error('Declared integer privacy domains require a safe-integer private value');
+    const status=this.partitionFirewall?.registerField(key,domain);
+    if(status && (value<status.domain.min || value>status.domain.max)) {
+      this.partitionFirewall.fields.delete(key);
+      throw new Error('Private value is outside its declared privacy domain');
+    }
+    return status;
+  }
+
+  partitionFootprint(){ return this.partitionFirewall?.footprint()??[]; }
+
   beginTrajectory({purpose='unspecified',maxBits=8,sinkMaxBits=maxBits,ttlMs=30*60*1000}={}) {
-    const global=Number(maxBits),sink=Number(sinkMaxBits);
+    const global=Number(maxBits),sink=Number(sinkMaxBits),ttl=Number(ttlMs);
     if (![global,sink].every(x=>Number.isFinite(x)&&x>=0)) throw new Error('Bit budgets must be finite and non-negative');
+    if(!Number.isFinite(ttl)||ttl<1000) throw new Error('Trajectory TTL must be finite and at least 1000 ms');
     const id=`pdp_${crypto.randomBytes(24).toString('base64url')}`;
-    const t={id,purpose:String(purpose),maxBits:global,sinkMaxBits:sink,spentBits:0,sinkSpent:new Map(),seen:new Set(),issuedAt:this.now(),expiresAt:this.now()+Math.max(1000,Math.min(Number(ttlMs),24*60*60*1000)),revokedAt:null};
+    const boundedTtl=Math.min(ttl,24*60*60*1000);
+    const issuedAt=this.now();
+    const t={id,purpose:String(purpose),maxBits:global,sinkMaxBits:sink,spentBits:0,sinkSpent:new Map(),seen:new Set(),issuedAt,expiresAt:issuedAt+boundedTtl,revokedAt:null};
     this.trajectories.set(id,t);
     return {trajectoryId:id,purpose:t.purpose,maxBits:t.maxBits,sinkMaxBits:t.sinkMaxBits,expiresAt:t.expiresAt};
   }
@@ -220,17 +249,32 @@ export class PrivateDecisionRuntime {
     const normalizedProgram=compiled.kind==='choose'?{...program,candidates:compiled.candidates}:program;
     const programHash=sha256(canonicalize(normalizedProgram));
     const privatePaths=privatePathsForProgram(normalizedProgram);
-    const queryHash=sha256(canonicalize({programHash,profileRevision:this.profileRevision,sink:String(sink)}));
-    const repeat=t.seen.has(queryHash);
-    const bits=repeat?0:capacityBits(compiled.cardinality);
+    privatePaths.forEach(path=>pathParts(path));
     const sinkKey=String(sink);
+    const queryHash=sha256(canonicalize({programHash,profileRevision:this.profileRevision,sink:sinkKey}));
+    const repeat=t.seen.has(queryHash);
+    const nominalBits=repeat?0:capacityBits(compiled.cardinality);
+
+    // Execute locally before release so a realized branch can be assessed without
+    // exposing it to the caller. A denied result never leaves this process.
+    const result=executeProgram(normalizedProgram,compiled,this.profile);
+    let partitionAssessment=null;
+    if(privatePaths.length===1 && this.partitionFirewall?.hasField(privatePaths[0])) {
+      partitionAssessment=this.partitionFirewall.evaluate({field:privatePaths[0],program:normalizedProgram,result});
+      if(partitionAssessment.decision==='deny') {
+        const partition=stripPartitionInternals(partitionAssessment);
+        return {decision:'deny',reason:partition.reason,capacity:{marginalBits:0,nominalBits:Number(nominalBits.toFixed(6)),spentBits:Number(t.spentBits.toFixed(6)),maxBits:t.maxBits,sinkSpentBits:Number((t.sinkSpent.get(sinkKey)??0).toFixed(6)),sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality,repeat,accounting:'realized-partition'},partition};
+      }
+    }
+
+    const bits=repeat?0:(partitionAssessment?.decision==='allow'?partitionAssessment.marginalKnowledgeBits:nominalBits);
     const sinkBefore=t.sinkSpent.get(sinkKey)??0;
     const globalAfter=t.spentBits+bits;
     const sinkAfter=sinkBefore+bits;
-    const capacity={marginalBits:Number(bits.toFixed(6)),spentBits:Number(t.spentBits.toFixed(6)),maxBits:t.maxBits,sinkSpentBits:Number(sinkBefore.toFixed(6)),sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality,repeat};
+    const capacity={marginalBits:Number(bits.toFixed(6)),nominalBits:Number(nominalBits.toFixed(6)),spentBits:Number(t.spentBits.toFixed(6)),maxBits:t.maxBits,sinkSpentBits:Number(sinkBefore.toFixed(6)),sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality,repeat,accounting:partitionAssessment?.decision==='allow'?'realized-partition':'output-cardinality'};
 
     if(globalAfter>t.maxBits+1e-12 || sinkAfter>t.sinkMaxBits+1e-12) {
-      return {decision:'deny',reason:'Explicit information-capacity budget exceeded.',capacity};
+      return {decision:'deny',reason:'Explicit information-capacity budget exceeded.',capacity,...(partitionAssessment?{partition:stripPartitionInternals(partitionAssessment)}:{})};
     }
 
     const reconstruction=this.firewall?.evaluate({
@@ -241,10 +285,9 @@ export class PrivateDecisionRuntime {
       bits
     })??null;
     if(reconstruction?.decision==='deny') {
-      return {decision:'deny',reason:reconstruction.reason,capacity,reconstruction};
+      return {decision:'deny',reason:reconstruction.reason,capacity,reconstruction,...(partitionAssessment?{partition:stripPartitionInternals(partitionAssessment)}:{})};
     }
 
-    const result=executeProgram(normalizedProgram,compiled,this.profile);
     t.seen.add(queryHash);
     t.spentBits=globalAfter;
     t.sinkSpent.set(sinkKey,sinkAfter);
@@ -258,12 +301,14 @@ export class PrivateDecisionRuntime {
       trajectoryId:t.id,
       resultHash
     })??null;
+    if(partitionAssessment?.decision==='allow') this.partitionFirewall.commit(partitionAssessment);
 
     return {
       decision:'allow',
       result,
-      capacity:{marginalBits:Number(bits.toFixed(6)),spentBits:Number(globalAfter.toFixed(6)),maxBits:t.maxBits,sinkSpentBits:Number(sinkAfter.toFixed(6)),sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality,repeat},
+      capacity:{marginalBits:Number(bits.toFixed(6)),nominalBits:Number(nominalBits.toFixed(6)),spentBits:Number(globalAfter.toFixed(6)),maxBits:t.maxBits,sinkSpentBits:Number(sinkAfter.toFixed(6)),sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality,repeat,accounting:partitionAssessment?.decision==='allow'?'realized-partition':'output-cardinality'},
       reconstruction:recorded,
+      ...(partitionAssessment?{partition:stripPartitionInternals(partitionAssessment)}:{}),
       receipt:{v:1,at:this.now(),trajectoryId:t.id,purpose:t.purpose,agent:String(agent),sink:sinkKey,programHash,privatePathsHash:sha256(canonicalize(privatePaths)),profileRevision:this.profileRevision,resultHash,privateValuesIncluded:false}
     };
   }
