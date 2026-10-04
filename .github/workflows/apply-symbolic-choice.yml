@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - '.github/workflows/apply-symbolic-choice.yml'
+      - 'scripts/apply-symbolic-choice.py'
+      - 'test/joint-choice-adversarial.test.js'
 
 permissions:
   contents: write
