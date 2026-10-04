@@ -68,7 +68,7 @@ The current suite exercises:
 
 ## Integration status
 
-The experiment is integrated into the v0.7 private-decision path for declared finite integer domains:
+The experiment is integrated into the private-decision path for declared finite integer domains:
 
 - domain metadata is stored inside encrypted Context Kernel records;
 - posterior partition state is stored in encrypted kernel state;
@@ -79,17 +79,28 @@ The experiment is integrated into the v0.7 private-decision path for declared fi
 - local API callers can declare the finite domain when adding context;
 - exposure endpoints return partition summaries without returning the private value or full private domain metadata.
 
-Fields without a declared finite domain retain the existing output-cardinality and persistent reconstruction accounting behavior.
+Fields without a declared finite domain retain the output-cardinality and persistent reconstruction accounting behavior.
+
+## v0.8 extension: joint choice leakage
+
+The v0.7 result exposed a broader question: a selected recommendation can jointly constrain several private fields even if the output is only one candidate id.
+
+v0.8 now implements and tests an exact finite-state defense for that case. `JointChoiceReconstructionFirewall` composes overlapping multi-field `choose` observations and measures the realized shrinkage of the joint feasible state before releasing the winner.
+
+The falsification benchmark uses 16 binary private fields (65,536 joint profiles) and two public candidates. The candidate table is engineered so a rare winner occurs for exactly one private profile. Cardinality-only accounting charges `log2(3) = 1.584963` bits and releases the rare candidate, even though it identifies the full 16-bit profile. The v0.8 joint guard measures 16 realized bits and denies the result before release. The common winner leaves 65,535 profiles feasible and is allowed at only `0.000022014` realized bits.
+
+See `research/JOINT_CHOICE_PRIVACY.md` for the construction, mechanism, persistence semantics and limitations.
 
 ## What this does not prove
 
-This is a finite-domain explicit-output experiment, not a universal privacy proof.
+These are finite-domain explicit-output experiments, not universal privacy proofs.
 
-It currently does not solve:
+The current mechanisms still do not solve:
 
 - arbitrary continuous or high-dimensional private state;
-- **joint leakage from multi-field `choose` programs**;
-- priors other than the declared feasible-set model;
+- joint products above the exact enumeration limit;
+- categorical and structured domains outside the current finite-integer model;
+- correlated or non-uniform priors;
 - timing, crash, network or side-effect channels;
 - traffic that bypasses Supakeep;
 - compromised local hosts;
@@ -97,10 +108,8 @@ It currently does not solve:
 
 ## Next research target
 
-The most important next attack is **joint posterior leakage from `choose`**.
+The next bottleneck is **scalable joint posterior accounting without explicit Cartesian enumeration**.
 
-A selected public candidate can simultaneously reveal constraints on several private fields. For example, returning one flight from a public list may jointly narrow budget, airline preference, departure-time preference and calendar constraints even though the explicit output is only a candidate ID.
+v0.8 deliberately fails closed when an overlapping joint state exceeds the exact analysis limit. That protects the privacy invariant but can destroy utility for realistic profiles with many fields or large domains.
 
-The next experiment should construct an adversarial candidate-set generator that chooses candidate tables specifically to maximize posterior shrinkage over a multi-field private profile. The defense should then estimate or bound the joint posterior induced by the selected candidate before release, rather than treating `choose` only as `log2(number of candidates + 1)`.
-
-That is the next falsification target; it is not yet solved by v0.7.
+The next falsification program should therefore construct adversarial overlapping `choose` queries over state spaces too large for v0.8 and test symbolic or conservative representations—such as decision diagrams, SAT/SMT-style constraints, abstract interpretation, or provable posterior upper bounds—that can preserve pre-release protection without enumerating every joint assignment.
