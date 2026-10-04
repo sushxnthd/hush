@@ -21,7 +21,7 @@ function run(width,value){
   const start=performance.now();
   const out=runtime.run({trajectoryId:trajectory.trajectoryId,agent:'benchmark',sink:'benchmark',program:rareBitsProgram(width)});
   const elapsedMs=performance.now()-start;
-  return {out,elapsedMs};
+  return {out,elapsedMs,jointObservationCount:runtime.jointChoiceFootprint().length};
 }
 
 const width=32;
@@ -50,8 +50,7 @@ const result={
     beforeCandidates:common.out.joint?.beforeCandidates,
     afterCandidates:common.out.joint?.afterCandidates,
     publicRoundedMarginalBits:common.out.joint?.marginalKnowledgeBits,
-    observationPersisted:common.out.decision==='allow' && common.out.reconstruction!==undefined,
-    jointObservationCount:common.out.decision==='allow'?1:0,
+    jointObservationCount:common.jointObservationCount,
     analysis:common.out.joint?.analysis,
     elapsedMs:Number(common.elapsedMs.toFixed(3))
   },
@@ -59,6 +58,6 @@ const result={
 };
 
 if(result.rareWinner.decision!=='deny'||result.rareWinner.resultReleased||result.rareWinner.beforeCandidates!==stateSpace||result.rareWinner.afterCandidates!==1||result.rareWinner.analysis?.method!=='symbolic-branch-and-bound') throw new Error('Rare joint-choice privacy invariant failed');
-if(result.commonWinner.decision!=='allow'||result.commonWinner.released!=='fallback'||result.commonWinner.afterCandidates!==stateSpace-1||result.commonWinner.analysis?.method!=='symbolic-branch-and-bound') throw new Error('Common joint-choice utility invariant failed');
+if(result.commonWinner.decision!=='allow'||result.commonWinner.released!=='fallback'||result.commonWinner.afterCandidates!==stateSpace-1||result.commonWinner.analysis?.method!=='symbolic-branch-and-bound'||result.commonWinner.jointObservationCount!==1) throw new Error('Common joint-choice utility/precision invariant failed');
 
 console.log(JSON.stringify(result,null,2));
