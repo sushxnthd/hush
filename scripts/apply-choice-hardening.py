@@ -20,8 +20,8 @@ old="if(requested.length<2) return {decision:'skip',reason:'Joint choice account
 new="if(requested.length<1) return {decision:'skip',reason:'Choice accounting requires at least one private field.'};"
 assert old in s
 s=s.replace(old,new,1)
-old="}).filter(observation=>observation.fields.length>=2);"
-new="}).filter(observation=>observation.fields.length>=1);"
+old="})).filter(observation=>observation.fields.length>=2);"
+new="})).filter(observation=>observation.fields.length>=1);"
 assert old in s
 s=s.replace(old,new,1)
 p.write_text(s)
