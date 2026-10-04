@@ -24,6 +24,7 @@ export class ContextKernel {
       this.pathToId.set(record.path,record.id);
     }
     if(state.partitionState) this.runtime.partitionFirewall?.restore(state.partitionState);
+    if(state.jointChoiceState) this.runtime.jointChoiceFirewall?.restore(state.jointChoiceState);
     if(Number.isInteger(state.profileRevision) && state.profileRevision>=0){
       this.runtime.profileRevision=state.profileRevision;
     }
@@ -31,10 +32,11 @@ export class ContextKernel {
 
   _persistState(){
     this.store.setState({
-      v:2,
+      v:3,
       profileRevision:this.runtime.profileRevision,
       firewallEvents:this.firewall.snapshot(),
-      partitionState:this.runtime.partitionFirewall?.snapshot()??null
+      partitionState:this.runtime.partitionFirewall?.snapshot()??null,
+      jointChoiceState:this.runtime.jointChoiceFirewall?.snapshot()??null
     });
   }
 
@@ -62,6 +64,7 @@ export class ContextKernel {
     const id=this.pathToId.get(key);
     if(!id) return false;
     const partitionSnapshot=this.runtime.partitionFirewall?.snapshot()??null;
+    const jointChoiceSnapshot=this.runtime.jointChoiceFirewall?.snapshot()??null;
     const ok=this.store.remove(id);
     if(ok){
       this.pathToId.delete(key);
@@ -76,6 +79,10 @@ export class ContextKernel {
       }
       if(partitionSnapshot?.v===1){
         this.runtime.partitionFirewall?.restore({...partitionSnapshot,fields:(partitionSnapshot.fields??[]).filter(field=>String(field.field)!==key)});
+      }
+      if(jointChoiceSnapshot?.v===1){
+        this.runtime.jointChoiceFirewall?.restore(jointChoiceSnapshot);
+        this.runtime.jointChoiceFirewall?.resetField(key);
       }
       this.runtime.profileRevision=savedRevision;
       this._persistState();
@@ -98,6 +105,7 @@ export class ContextKernel {
 
   exposure(){ return this.firewall.footprint(); }
   partitionExposure(){ return this.runtime.partitionFootprint(); }
+  jointChoiceExposure(){ return this.runtime.jointChoiceFootprint(); }
   exportCiphertextBundle(){ return this.store.exportCiphertextBundle(); }
   ciphertextFingerprint(){ return this.store.ciphertextFingerprint(); }
 
@@ -107,6 +115,7 @@ export class ContextKernel {
       profileRevision:this.runtime.profileRevision,
       exposureFields:this.exposure().length,
       partitionFields:this.partitionExposure().length,
+      jointChoiceObservations:this.jointChoiceExposure().length,
       ciphertextFingerprint:this.ciphertextFingerprint()
     };
   }
