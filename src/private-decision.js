@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import {canonicalize, sha256} from './core.js';
 import {PersistentReconstructionFirewall} from './reconstruction-firewall.js';
 import {PartitionAwareReconstructionFirewall, stripPartitionInternals} from './partition-firewall.js';
+import {JointChoiceReconstructionFirewall, stripJointChoiceInternals} from './joint-choice-firewall.js';
 
 const OPS = new Set(['eq','neq','lt','lte','gt','gte','in','notIn']);
 const MAX_CANDIDATES = 100;
@@ -12,6 +13,24 @@ function pathParts(path) {
   if(!parts.length) throw new Error('Private path required');
   if(parts.some(part=>FORBIDDEN_PATH_PARTS.has(part))) throw new Error('Unsafe private path');
   return parts;
+}
+
+function setPath(root,path,value){
+  const parts=pathParts(path);
+  let node=root;
+  for(let i=0;i<parts.length-1;i++){
+    const part=parts[i];
+    if(!Object.hasOwn(node,part)) node[part]=Object.create(null);
+    else if(!node[part]||typeof node[part]!=='object'||Array.isArray(node[part])) throw new Error('Private path collision');
+    node=node[part];
+  }
+  node[parts.at(-1)]=value;
+}
+
+function profileFromAssignment(assignment){
+  const profile=Object.create(null);
+  for(const [field,value] of Object.entries(assignment??{})) setPath(profile,field,value);
+  return profile;
 }
 
 export function capacityBits(cardinality) {
@@ -168,23 +187,24 @@ function executeProgram(program, compiled, profile) {
 /**
  * Private Decision Programs turn personal context into a bounded output channel.
  *
- * Three accounting layers can apply:
+ * Four accounting layers can apply:
  * - short-lived task/sink budgets;
  * - persistent cross-task reconstruction accounting;
- * - for declared finite domains, realized partition accounting that measures how
- *   much the actual answer shrinks the feasible private state before release.
+ * - single-field realized partition accounting;
+ * - joint-choice realized accounting for analyzable multi-field choose programs.
  *
  * These are explicit-channel defenses only. Timing, crashes, external side effects,
  * covert channels and data released outside this runtime are not covered.
  */
 export class PrivateDecisionRuntime {
-  constructor({now=()=>Date.now(),firewall=undefined,partitionFirewall=undefined}={}) {
+  constructor({now=()=>Date.now(),firewall=undefined,partitionFirewall=undefined,jointChoiceFirewall=undefined}={}) {
     this.now=now;
     this.profile=Object.create(null);
     this.profileRevision=0;
     this.trajectories=new Map();
     this.firewall=firewall===false||firewall===null?null:(firewall??new PersistentReconstructionFirewall({now}));
     this.partitionFirewall=partitionFirewall===false||partitionFirewall===null?null:(partitionFirewall??new PartitionAwareReconstructionFirewall());
+    this.jointChoiceFirewall=jointChoiceFirewall===false||jointChoiceFirewall===null?null:(jointChoiceFirewall??new JointChoiceReconstructionFirewall());
   }
 
   setPrivate(path,value,{domain=undefined}={}) {
@@ -197,6 +217,7 @@ export class PrivateDecisionRuntime {
     }
     node[parts.at(-1)]=structuredClone(value);
     this.profileRevision++;
+    this.jointChoiceFirewall?.resetField(path);
     if(domain!==undefined) this.registerPrivateDomain(path,domain);
     else if(this.partitionFirewall?.hasField(path)) this.partitionFirewall.resetField(path);
     return {path:String(path),revision:this.profileRevision,partitionProtected:Boolean(this.partitionFirewall?.hasField(path))};
@@ -215,6 +236,7 @@ export class PrivateDecisionRuntime {
   }
 
   partitionFootprint(){ return this.partitionFirewall?.footprint()??[]; }
+  jointChoiceFootprint(){ return this.jointChoiceFirewall?.footprint()??[]; }
 
   beginTrajectory({purpose='unspecified',maxBits=8,sinkMaxBits=maxBits,ttlMs=30*60*1000}={}) {
     const global=Number(maxBits),sink=Number(sinkMaxBits),ttl=Number(ttlMs);
@@ -255,10 +277,10 @@ export class PrivateDecisionRuntime {
     const repeat=t.seen.has(queryHash);
     const nominalBits=repeat?0:capacityBits(compiled.cardinality);
 
-    // Execute locally before release so a realized branch can be assessed without
-    // exposing it to the caller. A denied result never leaves this process.
     const result=executeProgram(normalizedProgram,compiled,this.profile);
     let partitionAssessment=null;
+    let jointAssessment=null;
+
     if(privatePaths.length===1 && this.partitionFirewall?.hasField(privatePaths[0])) {
       partitionAssessment=this.partitionFirewall.evaluate({field:privatePaths[0],program:normalizedProgram,result});
       if(partitionAssessment.decision==='deny') {
@@ -267,14 +289,52 @@ export class PrivateDecisionRuntime {
       }
     }
 
-    const bits=repeat?0:(partitionAssessment?.decision==='allow'?partitionAssessment.marginalKnowledgeBits:nominalBits);
+    if(compiled.kind==='choose' && privatePaths.length>1 && this.jointChoiceFirewall) {
+      const allProtected=privatePaths.every(path=>this.partitionFirewall?.hasField(path));
+      if(allProtected){
+        const compiledCache=new Map();
+        const evaluateProgram=(probe,assignment)=>{
+          const key=sha256(canonicalize(probe));
+          let cached=compiledCache.get(key);
+          if(!cached){
+            const probeCompiled=compileProgram(probe);
+            cached={compiled:probeCompiled,program:probeCompiled.kind==='choose'?{...probe,candidates:probeCompiled.candidates}:probe};
+            compiledCache.set(key,cached);
+          }
+          return executeProgram(cached.program,cached.compiled,profileFromAssignment(assignment));
+        };
+        jointAssessment=this.jointChoiceFirewall.evaluate({
+          fields:privatePaths,
+          program:normalizedProgram,
+          result,
+          evaluateProgram,
+          getFieldState:(field)=>{
+            const status=this.partitionFirewall.status(field);
+            if(!status) return null;
+            return {
+              initialCandidates:status.initialCandidates,
+              remainingCandidates:status.remainingCandidates,
+              values:()=>this.partitionFirewall.candidateValues(field,{limit:this.jointChoiceFirewall.maxJointStates})
+            };
+          }
+        });
+        if(jointAssessment.decision==='deny'){
+          const joint=stripJointChoiceInternals(jointAssessment);
+          return {decision:'deny',reason:joint.reason,capacity:{marginalBits:0,nominalBits:Number(nominalBits.toFixed(6)),spentBits:Number(t.spentBits.toFixed(6)),maxBits:t.maxBits,sinkSpentBits:Number((t.sinkSpent.get(sinkKey)??0).toFixed(6)),sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality,repeat,accounting:'realized-joint-choice'},joint};
+        }
+      }
+    }
+
+    const realizedAssessment=jointAssessment?.decision==='allow'?jointAssessment:partitionAssessment?.decision==='allow'?partitionAssessment:null;
+    const bits=repeat?0:(realizedAssessment?realizedAssessment.marginalKnowledgeBits:nominalBits);
+    const accounting=jointAssessment?.decision==='allow'?'realized-joint-choice':partitionAssessment?.decision==='allow'?'realized-partition':'output-cardinality';
     const sinkBefore=t.sinkSpent.get(sinkKey)??0;
     const globalAfter=t.spentBits+bits;
     const sinkAfter=sinkBefore+bits;
-    const capacity={marginalBits:Number(bits.toFixed(6)),nominalBits:Number(nominalBits.toFixed(6)),spentBits:Number(t.spentBits.toFixed(6)),maxBits:t.maxBits,sinkSpentBits:Number(sinkBefore.toFixed(6)),sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality,repeat,accounting:partitionAssessment?.decision==='allow'?'realized-partition':'output-cardinality'};
+    const capacity={marginalBits:Number(bits.toFixed(6)),nominalBits:Number(nominalBits.toFixed(6)),spentBits:Number(t.spentBits.toFixed(6)),maxBits:t.maxBits,sinkSpentBits:Number(sinkBefore.toFixed(6)),sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality,repeat,accounting};
 
     if(globalAfter>t.maxBits+1e-12 || sinkAfter>t.sinkMaxBits+1e-12) {
-      return {decision:'deny',reason:'Explicit information-capacity budget exceeded.',capacity,...(partitionAssessment?{partition:stripPartitionInternals(partitionAssessment)}:{})};
+      return {decision:'deny',reason:'Explicit information-capacity budget exceeded.',capacity,...(partitionAssessment?{partition:stripPartitionInternals(partitionAssessment)}:{}),...(jointAssessment?{joint:stripJointChoiceInternals(jointAssessment)}:{})};
     }
 
     const reconstruction=this.firewall?.evaluate({
@@ -285,7 +345,7 @@ export class PrivateDecisionRuntime {
       bits
     })??null;
     if(reconstruction?.decision==='deny') {
-      return {decision:'deny',reason:reconstruction.reason,capacity,reconstruction,...(partitionAssessment?{partition:stripPartitionInternals(partitionAssessment)}:{})};
+      return {decision:'deny',reason:reconstruction.reason,capacity,reconstruction,...(partitionAssessment?{partition:stripPartitionInternals(partitionAssessment)}:{}),...(jointAssessment?{joint:stripJointChoiceInternals(jointAssessment)}:{})};
     }
 
     t.seen.add(queryHash);
@@ -302,13 +362,15 @@ export class PrivateDecisionRuntime {
       resultHash
     })??null;
     if(partitionAssessment?.decision==='allow') this.partitionFirewall.commit(partitionAssessment);
+    if(jointAssessment?.decision==='allow') this.jointChoiceFirewall.commit(jointAssessment);
 
     return {
       decision:'allow',
       result,
-      capacity:{marginalBits:Number(bits.toFixed(6)),nominalBits:Number(nominalBits.toFixed(6)),spentBits:Number(globalAfter.toFixed(6)),maxBits:t.maxBits,sinkSpentBits:Number(sinkAfter.toFixed(6)),sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality,repeat,accounting:partitionAssessment?.decision==='allow'?'realized-partition':'output-cardinality'},
+      capacity:{marginalBits:Number(bits.toFixed(6)),nominalBits:Number(nominalBits.toFixed(6)),spentBits:Number(globalAfter.toFixed(6)),maxBits:t.maxBits,sinkSpentBits:Number(sinkAfter.toFixed(6)),sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality,repeat,accounting},
       reconstruction:recorded,
       ...(partitionAssessment?{partition:stripPartitionInternals(partitionAssessment)}:{}),
+      ...(jointAssessment?{joint:stripJointChoiceInternals(jointAssessment)}:{}),
       receipt:{v:1,at:this.now(),trajectoryId:t.id,purpose:t.purpose,agent:String(agent),sink:sinkKey,programHash,privatePathsHash:sha256(canonicalize(privatePaths)),profileRevision:this.profileRevision,resultHash,privateValuesIncluded:false}
     };
   }
