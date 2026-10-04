@@ -4,7 +4,7 @@
 
 Supakeep's `choose` primitive lets an agent submit public candidates while private preferences and constraints remain local. Returning only a candidate id is substantially better than returning the private profile, but the chosen id is still an observation about that profile.
 
-The v0.8 research question is:
+The core question is:
 
 > Can an adversarial agent design the public candidate set itself so that the candidate Supakeep selects acts as a high-information probe of several private fields at once?
 
@@ -14,65 +14,52 @@ Preference elicitation and information-seeking recommendation queries have subst
 
 ## Falsifying the old accounting rule
 
-The benchmark defines 16 private binary attributes:
+The original benchmark defines 16 private binary attributes:
 
 ```text
 secret.bit0 ... secret.bit15 ∈ {0,1}
 ```
 
-Under the declared finite-domain model there are:
+There are `2^16 = 65,536` possible joint profiles. The adversarial caller submits only two public candidates. Public attributes and preference weights are chosen so that one candidate wins for exactly one private profile and the fallback wins for the other 65,535.
 
-```text
-2^16 = 65,536
-```
-
-possible joint profiles.
-
-The adversarial caller submits only two public candidates, `rare-profile` and `fallback`. Each candidate has 16 public bit-like attributes. The private decision program awards one point for every candidate attribute that matches its corresponding private bit. A public bias term penalizes `rare-profile` by 15.5 points.
-
-Consequently:
-
-- `rare-profile` wins only when all 16 private bits are `1`;
-- `fallback` wins for every other one of the 65,535 profiles.
-
-The ordinary `choose` interface has three possible explicit outputs: the two candidate ids plus `null`. Cardinality-only accounting therefore assigns:
+The ordinary `choose` interface has three possible explicit outputs: two candidate ids plus `null`, so cardinality-only accounting assigns:
 
 ```text
 log2(3) = 1.584963 bits
 ```
 
-But on the rare branch the selected id leaves exactly one feasible private profile:
+But the rare winner leaves exactly one feasible private profile:
 
 ```text
 log2(65,536 / 1) = 16 bits
 ```
 
-The benchmark therefore produces a concrete counterexample to treating output alphabet size as a sufficient pointwise leakage measure for multi-field personalization.
+This is a concrete counterexample to treating output alphabet size as a sufficient pointwise leakage measure for multi-field personalization.
 
-## v0.8 mechanism
+## v0.8: realized joint-choice accounting
 
-`JointChoiceReconstructionFirewall` performs pre-release posterior accounting for analyzable multi-field `choose` programs.
+`JointChoiceReconstructionFirewall` performs pre-release posterior accounting for protected `choose` programs.
 
-For all private fields referenced by the choice program, Supakeep:
+For referenced private fields, Supakeep:
 
-1. requires declared finite domains;
-2. obtains each field's currently feasible values from the single-field partition firewall;
-3. forms the feasible joint state space;
-4. composes prior released `choose` observations whose private-field sets overlap the current one;
-5. evaluates the new public candidate program over every feasible joint assignment;
-6. keeps only assignments that would produce the result Supakeep is about to release;
-7. measures the realized shrinkage:
+1. requires declared finite domains when any protected field participates;
+2. composes prior released `choose` observations through overlapping field sets;
+3. computes how many private states remain consistent with those previous releases;
+4. computes how many would remain if the currently selected result were released;
+5. measures
 
 ```text
-marginal joint gain = log2(joint states before / joint states after)
+marginal joint gain = log2(states before / states after)
 ```
 
-and cumulative knowledge relative to the original declared joint domain;
-8. denies the result before release if it exceeds the configured joint knowledge budget or minimum-posterior requirement.
+and cumulative knowledge relative to the original connected domain;
+6. withholds the selected result before release when the configured knowledge limit would be exceeded.
 
-### Why overlapping observations matter
+A protected field cannot be mixed with an undeclared dummy field to force a downgrade to nominal accounting. Single protected-field choices use the same realized choice mechanism, and fresh tasks, agent identities or sinks do not reset prior joint observations.
 
-An attacker should not be able to evade joint accounting by changing field groups across calls, for example:
+### Overlapping observations
+
+The firewall builds connected field components through released observations. For example:
 
 ```text
 query 1: A + B
@@ -80,73 +67,113 @@ query 2: B + C
 query 3: C + D
 ```
 
-The firewall therefore builds a connected component through overlapping historical observations. In the example above, later analysis can compose evidence across `A,B,C,D` rather than treating each exact field set as an independent budget.
+later analysis treats `A,B,C,D` as a connected reconstruction problem rather than four unrelated budgets.
 
 ### Persistence
 
-Allowed informative choice observations are stored inside the encrypted Context Kernel state. Restarting Supakeep does not reset the joint reconstruction history. If a private field changes or is removed, observations involving that field are invalidated rather than being applied to a new private value.
+Allowed informative choice observations are stored inside encrypted Context Kernel state. Restarting Supakeep does not reset the joint reconstruction history. If an involved private field changes or is removed, observations involving that field are invalidated rather than being applied to the new value.
 
-### Fail-closed scalability boundary
+## v0.9: scalable symbolic analysis
 
-The current exact prototype enumerates at most 100,000 feasible joint states. If the connected state space is larger than the analyzable limit, Supakeep withholds the result instead of silently reverting to weaker cardinality accounting.
+Exact Cartesian enumeration was safe but became an availability and utility problem once connected state spaces grew beyond roughly 100,000 states. v0.9 therefore adds an exact **symbolic interval branch-and-bound** path for the currently modeled finite-integer `choose` semantics.
 
-This is safe but can reduce utility. Replacing enumeration with a scalable symbolic or conservative inference representation is the next major research problem.
+Instead of enumerating every profile, the analyzer represents the current feasible state as boxes over integer intervals. For each box it derives candidate-feasibility and score bounds. If one candidate is provably the winner everywhere in that box, the entire region is counted at once. Only ambiguous boxes are split.
 
-## Reproducible result
+This preserves exact support counts for the supported semantics while making highly structured attacks tractable at much larger scales.
 
-The current synthetic benchmark reports:
+### 32-bit falsification test
+
+The scalable benchmark defines 32 binary private fields:
+
+```text
+secret.bit0 ... secret.bit31 ∈ {0,1}
+```
+
+so the declared joint state contains:
+
+```text
+2^32 = 4,294,967,296 profiles
+```
+
+Two public candidates are constructed so that `rare` wins for exactly the all-ones profile and `fallback` wins everywhere else.
+
+The integrated runtime verifies:
+
+- rare branch before candidates: **4,294,967,296**;
+- rare branch after candidates: **1**;
+- realized rare-branch knowledge: **32 bits**;
+- decision: **DENY before release**;
+- analysis method: **symbolic branch-and-bound**;
+- the selected result is absent from the denied response.
+
+For the common branch:
+
+- posterior states: **4,294,967,295**;
+- decision: **ALLOW**;
+- realized leakage is positive but below the public nine-decimal display resolution;
+- the observation is still persisted internally using unrounded accounting precision.
+
+The standalone symbolic tests also resolve a one-million-value threshold choice without enumerating all one million values.
+
+### Work-budget behavior
+
+Symbolic analysis is bounded by a node budget. If an unsupported or adversarial program cannot be certified within that budget, Supakeep does not guess. It falls back to exact enumeration only when the currently feasible state is small enough. Otherwise the result is withheld.
+
+This prevents the privacy analyzer itself from becoming an unbounded compute path while preserving fail-closed behavior.
+
+## Reproducible results
 
 | Condition | Result |
 |---|---:|
-| Private attributes | 16 binary fields |
-| Possible joint profiles | 65,536 |
+| Original private attributes | 16 binary fields |
+| Original joint profiles | 65,536 |
 | Public candidates | 2 |
-| Explicit output cardinality | 3 |
 | Nominal cardinality charge | 1.584963 bits |
-| Realized rare-branch knowledge | 16 bits |
+| Original rare-branch realized knowledge | **16 bits** |
 | Cardinality-only runtime | **ALLOW rare winner** |
-| v0.8 joint guard | **DENY before release** |
-| Result included in denied response | **No** |
-| Common branch posterior | 65,535 profiles |
+| Joint guard | **DENY before release** |
 | Common branch realized gain | **0.000022014 bits** |
-| Common branch decision | **ALLOW** |
+| Scaled private attributes | **32 binary fields** |
+| Scaled joint profiles | **4,294,967,296** |
+| Scaled rare-branch realized knowledge | **32 bits** |
+| Scaled rare winner | **DENY before release** |
+| Scaled analysis | **symbolic branch-and-bound** |
+| Scaled common winner | **ALLOW** |
+| Sub-nanobit common leakage retained internally | **Yes** |
 
-This is useful in both directions. The guard blocks a tiny-output result when it is unusually informative while allowing the overwhelmingly common result at a nearly zero realized charge.
+The automated suite additionally verifies mixed-domain downgrade attacks, rotating-task/agent/sink attacks, transitive overlapping-field composition, restart persistence, field-update invalidation, native MCP withholding and symbolic-analysis work-budget failure.
 
-The automated suite also verifies that:
+## Precision invariant
 
-- the same already-released deterministic choice in a fresh task adds zero new joint knowledge;
-- joint observations survive encrypted Context Kernel restart;
-- persisted ciphertext does not contain the private path or selected candidate string used by the persistence test;
-- the public joint-choice footprint omits the selected result so privacy telemetry does not itself become a disclosure channel.
+Privacy enforcement must not use values that have been rounded for presentation. v0.9 therefore keeps exact floating-point marginal/total knowledge internally while exposing rounded values in public telemetry.
+
+This matters once the state space is large. For example, removing one state from `2^32` possibilities leaks only about `3.36e-10` bits. The public report may display `0.000000000`, but the internal observation is still recorded and composes with later releases.
 
 ## What this result supports
 
-The defensible claim is narrow:
+The defensible claim is:
 
-> For declared finite integer domains whose currently feasible Cartesian product fits within the exact analysis limit, Supakeep can detect a class of adversarial multi-field candidate-set queries where the realized winning candidate reveals far more joint private information than the output alphabet suggests, and can withhold that result before release.
+> For declared finite integer domains and the currently modeled `choose` constraints/preferences, Supakeep can detect adversarial candidate-set queries whose realized winning candidate reveals substantially more joint private information than the output alphabet suggests, can compose prior overlapping releases, and can withhold high-information results before release. Structured joint spaces with billions of states can be analyzed symbolically without explicit Cartesian enumeration.
 
-It does **not** establish general privacy of recommendation systems or arbitrary AI personalization.
+This does **not** establish general privacy of recommendation systems or arbitrary AI personalization.
 
 ## Current limitations
 
-The exact v0.8 mechanism does not yet solve:
+The v0.9 mechanism does not yet solve:
 
-- joint state spaces above the enumeration limit;
-- continuous or high-dimensional private variables;
-- categorical/structured domains that are not represented by the current finite-integer domain model;
-- correlated priors or non-uniform probability models;
-- leakage through timing, failures, resource use or other side channels;
-- inference from public auxiliary information outside the declared Supakeep state;
+- categorical, set-valued, continuous or arbitrary structured private domains;
+- correlated/non-uniform priors or semantic harm metrics beyond support-size reduction;
+- every possible future `choose` operation or arbitrary user-defined computation;
+- symbolic programs whose decision boundaries cannot be certified within the configured work budget;
+- timing, failure, network, resource-use or other side channels;
+- public auxiliary information outside the declared Supakeep state;
 - compromised local hosts or traffic that bypasses Supakeep;
-- privacy consequences of real-world actions after an authorized choice is executed.
-
-The feasible-set metric also measures support-size reduction, not every possible semantic notion of privacy harm.
+- information revealed through the consequences of real-world actions after authorization.
 
 ## Next falsification target
 
-The next required research step is **scalable joint inference without explicit Cartesian enumeration**.
+The next important research problem is **unified posterior accounting across different output mechanisms**.
 
-A useful successor should preserve v0.8's pre-release guarantee while handling much larger and richer private state. Candidate approaches to test include symbolic decision diagrams, SAT/SMT-style constraint representations, abstract interpretation, or conservative upper bounds on posterior shrinkage.
+Today predicate/bucket partition state and `choose` observation state are both persistent, but they are specialized mechanisms. An attacker may alternate between predicates, buckets, recommendations and eventually authorized actions so that information from one channel sharpens another.
 
-The falsification criterion is straightforward: construct adversarial overlapping choice programs over a state space too large for v0.8 enumeration, then determine whether the scalable guard can prevent exact or high-confidence reconstruction without collapsing benign personalization utility.
+The next falsification program should construct mixed-channel adaptive attacks and test whether a single connected posterior/knowledge model can compose them without destroying benign personalization utility.
