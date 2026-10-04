@@ -14,6 +14,7 @@ import { DisclosureLedger, TrustRegistry, TRUST_PROFILES } from './privacy.js';
 import { McpToolCatalog, evaluateMcpCall, jsonRpcError, sanitizeForwardHeaders } from './mcp.js';
 import { scanMcpCatalog } from './scanner.js';
 import { ContextKernel } from './context-kernel.js';
+import { NATIVE_MCP_TOOLS, callNativeMcpTool, isNativeMcpTool } from './native-mcp.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = path.join(root, 'data');
@@ -139,9 +140,8 @@ async function pipeMcpResponse(res,upstream){
 }
 
 async function mcp(req,res,u){
-  if(!mcpUpstream) return sendRpc(res,jsonRpcError(null,-32050,'Supakeep MCP upstream is not configured.'));
-
   if(req.method==='GET'||req.method==='DELETE'){
+    if(!mcpUpstream){res.writeHead(405,{'allow':'POST'});res.end();return;}
     const upstream=await fetchMcpUpstream(req,u,null);
     return pipeMcpResponse(res,upstream);
   }
@@ -155,8 +155,27 @@ async function mcp(req,res,u){
   if(Array.isArray(rpc)) return sendRpc(res,jsonRpcError(null,-32040,'JSON-RPC batches are not supported by the Supakeep alpha proxy.'));
   if(!rpc||typeof rpc!=='object') return sendRpc(res,jsonRpcError(null,-32600,'Invalid JSON-RPC request.'));
 
-  const agent=String(req.headers['x-supakeep-agent']||'unknown-agent');
+  const envelope=rpc.params?._meta??{};
+  const clientInfo=envelope['io.modelcontextprotocol/clientInfo'];
+  const agent=String(req.headers['x-supakeep-agent']||clientInfo?.name||'unknown-agent');
   const purpose=String(req.headers['x-supakeep-purpose']||'unspecified');
+  const requestedVersion=String(req.headers['mcp-protocol-version']||envelope['io.modelcontextprotocol/protocolVersion']||'');
+  const modern=requestedVersion==='2026-07-28'||rpc.method==='server/discover';
+  const serverMeta={'io.modelcontextprotocol/serverInfo':{name:'supakeep',version:'0.6.0'}};
+  const complete=result=>modern?{...result,resultType:'complete',_meta:{...(result?._meta??{}),...serverMeta}}:result;
+  const rpcResult=result=>sendRpc(res,{jsonrpc:'2.0',id:rpc.id,result:complete(result)});
+
+  if(rpc.method==='server/discover') return rpcResult({supportedVersions:['2026-07-28','2025-11-25'],capabilities:{tools:{listChanged:false}},instructions:'Supakeep provides bounded private computation. Private values are not exposed as MCP tools.'});
+  if(rpc.method==='initialize'&&!mcpUpstream) return sendRpc(res,{jsonrpc:'2.0',id:rpc.id,result:{protocolVersion:'2025-11-25',capabilities:{tools:{listChanged:false}},serverInfo:{name:'supakeep',version:'0.6.0'},instructions:'Supakeep provides bounded private computation. Private values are not exposed as MCP tools.'}});
+  if(rpc.method==='notifications/initialized'){res.writeHead(204);res.end();return;}
+  if(rpc.method==='ping') return rpcResult({});
+  if(rpc.method==='tools/list'&&!mcpUpstream) return rpcResult({tools:NATIVE_MCP_TOOLS});
+
+  if(rpc.method==='tools/call'&&isNativeMcpTool(rpc.params?.name)){
+    const result=callNativeMcpTool({name:rpc.params.name,args:rpc.params.arguments??{},kernel:contextKernel,agent,sink:`mcp:${agent}`});
+    return rpcResult(result);
+  }
+  if(rpc.method==='tools/call'&&!mcpUpstream) return sendRpc(res,jsonRpcError(rpc.id,-32602,'Unknown tool.'));
 
   if(rpc.method==='tools/call'){
     const params=rpc.params??{};
@@ -192,7 +211,12 @@ async function mcp(req,res,u){
     const contentType=upstream.headers.get('content-type')||'';
     if(contentType.includes('json')){
       const text=await upstream.text();
-      try{mcpCatalog.ingestListResult(JSON.parse(text));}catch{}
+      try{
+        const payload=JSON.parse(text);
+        mcpCatalog.ingestListResult(payload);
+        if(payload?.result&&Array.isArray(payload.result.tools)) payload.result.tools=[...payload.result.tools.filter(tool=>!isNativeMcpTool(tool?.name)),...NATIVE_MCP_TOOLS];
+        res.writeHead(upstream.status,responseHeaders(upstream.headers));res.end(JSON.stringify(payload));return;
+      }catch{}
       res.writeHead(upstream.status,responseHeaders(upstream.headers));res.end(text);return;
     }
   }
