@@ -166,7 +166,7 @@ async function mcp(req,res,u){
   const rpcResult=result=>sendRpc(res,{jsonrpc:'2.0',id:rpc.id,result:complete(result)});
 
   if(rpc.method==='server/discover') return rpcResult({supportedVersions:['2026-07-28','2025-11-25'],capabilities:{tools:{listChanged:false}},instructions:'Supakeep provides bounded private computation. Private values are not exposed as MCP tools.'});
-  if(rpc.method==='initialize'&&!mcpUpstream) return sendRpc(res,{jsonrpc:'2.0',id:rpc.id,result:{protocolVersion:'2025-11-25',capabilities:{tools:{listChanged:false}},serverInfo:{name:'supakeep',version:'0.8.0'},instructions:'Supakeep provides bounded private computation. Private values are not exposed as MCP tools.'}});
+  if(rpc.method==='initialize'&&!mcpUpstream) return sendRpc(res,{jsonrpc:'2.0',id:rpc.id,result:{protocolVersion:'2025-11-25',capabilities:{tools:{listChanged:false}},serverInfo:{name:'supakeep',version:'0.9.0'},instructions:'Supakeep provides bounded private computation. Private values are not exposed as MCP tools.'}});
   if(rpc.method==='notifications/initialized'){res.writeHead(204);res.end();return;}
   if(rpc.method==='ping') return rpcResult({});
   if(rpc.method==='tools/list'&&!mcpUpstream) return rpcResult({tools:NATIVE_MCP_TOOLS});
@@ -224,7 +224,7 @@ async function mcp(req,res,u){
 }
 
 async function api(req,res,u){
-  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Supakeep',version:'0.8.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:contextKernel?{enabled:true,...contextKernel.stats()}:{enabled:false},mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});
+  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Supakeep',version:'0.9.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:contextKernel?{enabled:true,...contextKernel.stats()}:{enabled:false},mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});
   if(req.method==='GET'&&u.pathname==='/api/vault') return send(res,200,{items:vault.list()});
   if(req.method==='GET'&&u.pathname==='/api/pending') return send(res,200,{requests:[...store.pending.values()].filter(x=>x.status==='pending')});
   if(req.method==='GET'&&u.pathname==='/api/receipts') return send(res,200,{receipts:store.receipts.slice(-50).reverse(),chainValid:verifyReceiptChain(store.receipts)});
