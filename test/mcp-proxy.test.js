@@ -28,12 +28,14 @@ async function waitFor(url,child){
 
 test('MCP proxy enforces exact one-shot approval before forwarding', {timeout:15000}, async t=>{
   const forwarded=[];
+  const seenAuth=[];
   const upstream=http.createServer(async(req,res)=>{
+    seenAuth.push(req.headers.authorization??null);
     const chunks=[];for await(const c of req)chunks.push(c);
     const rpc=JSON.parse(Buffer.concat(chunks).toString());
     if(rpc.method==='tools/list'){
       res.writeHead(200,{'content-type':'application/json','mcp-session-id':'mock-session'});
-      res.end(JSON.stringify({jsonrpc:'2.0',id:rpc.id,result:{tools:[{name:'search',description:'mock search',annotations:{readOnlyHint:true,openWorldHint:false},inputSchema:{type:'object'}}]}}));
+      res.end(JSON.stringify({jsonrpc:'2.0',id:rpc.id,result:{tools:[{name:'search',description:'mock search',annotations:{readOnlyHint:true,openWorldHint:false},inputSchema:{type:'object',properties:{query:{type:'string'}}}}]}}));
       return;
     }
     if(rpc.method==='tools/call'){
@@ -48,7 +50,7 @@ test('MCP proxy enforces exact one-shot approval before forwarding', {timeout:15
   const port=await freePort();
   const child=spawn(process.execPath,['src/server.js'],{
     cwd:process.cwd(),
-    env:{...process.env,PORT:String(port),SUPAKEEP_MCP_UPSTREAM:`http://127.0.0.1:${upstreamPort}/mcp`,SUPAKEEP_MCP_TRUST_TOOL_ANNOTATIONS:'0'},
+    env:{...process.env,PORT:String(port),SUPAKEEP_MCP_UPSTREAM:`http://127.0.0.1:${upstreamPort}/mcp`,SUPAKEEP_MCP_TRUST_TOOL_ANNOTATIONS:'0',SUPAKEEP_MCP_BEARER_TOKEN:'server-only-secret'},
     stdio:['ignore','pipe','pipe']
   });
   let stderr='';child.stderr.on('data',d=>stderr+=d);
@@ -56,12 +58,17 @@ test('MCP proxy enforces exact one-shot approval before forwarding', {timeout:15
 
   const base=`http://127.0.0.1:${port}`;
   await waitFor(`${base}/api/status`,child);
-  const h={'x-supakeep-agent':'claude','x-supakeep-purpose':'research'};
+  const h={'x-supakeep-agent':'claude','x-supakeep-purpose':'research','authorization':'Bearer client-visible-token'};
 
   const listed=await json(`${base}/mcp`,{jsonrpc:'2.0',id:1,method:'tools/list',params:{}},h);
   assert.equal(listed.body.result.tools[0].name,'search');
+  assert.equal(seenAuth[0],'Bearer server-only-secret');
   const status=await (await fetch(`${base}/api/status`)).json();
   assert.equal(status.mcp.observedTools,1);
+  assert.equal(status.mcp.credentialBrokered,true);
+  const scan=await (await fetch(`${base}/api/mcp/scan`)).json();
+  assert.equal(scan.summary.total,1);
+  assert.equal(scan.summary.untrustedAnnotations,1);
 
   const original={jsonrpc:'2.0',id:2,method:'tools/call',params:{name:'search',arguments:{q:'alpha'}}};
   const first=await json(`${base}/mcp`,original,h);
@@ -81,6 +88,7 @@ test('MCP proxy enforces exact one-shot approval before forwarding', {timeout:15
   assert.equal(exact.body.result.content[0].text,'ok');
   assert.equal(forwarded.length,1);
   assert.equal(forwarded[0].arguments.q,'alpha');
+  assert.equal(seenAuth.at(-1),'Bearer server-only-secret');
 
   const replay=await json(`${base}/mcp`,{...original,id:5},h);
   assert.equal(replay.body.error.data.decision,'ask');
