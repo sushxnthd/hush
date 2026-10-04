@@ -58,11 +58,11 @@ For interfaces without an analyzable finite-domain model, Supakeep retains the c
 I(S;Y) <= H(Y) <= log2(|Ω|)
 ```
 
-But output alphabet size is not enough to measure how informative the result that actually occurred was. v0.7 therefore added single-field realized partition accounting; v0.8 extends the same idea to analyzable **multi-field `choose` decisions**.
+But output alphabet size is not enough to measure how informative the result that actually occurred was. v0.7 added single-field realized partition accounting; v0.8 extended the same idea to protected `choose` decisions; and v0.9 adds exact symbolic region counting so structured joint spaces can be analyzed without explicit Cartesian enumeration.
 
 ## Four privacy-accounting layers
 
-Supakeep v0.8 can combine:
+Supakeep v0.9 can combine:
 
 1. a short-lived task/sink budget;
 2. a persistent cross-task reconstruction firewall;
@@ -107,7 +107,7 @@ Yet the rare winner identifies one of 65,536 profiles:
 log2(65,536 / 1) = 16 bits
 ```
 
-Supakeep v0.8's **JointChoiceReconstructionFirewall** computes that posterior before release and withholds the rare winner.
+The **JointChoiceReconstructionFirewall** computes that posterior before release and withholds the rare winner.
 
 The common winner is also handled more usefully: it leaves 65,535 profiles feasible and costs only **0.000022014 realized bits** rather than the full nominal 1.584963-bit charge.
 
@@ -126,7 +126,7 @@ All results below are synthetic engineering tests, not real-world privacy guaran
 | Cardinality-only charge | 1.584963 bits |
 | Rare winner realized knowledge | **16 bits** |
 | Cardinality-only runtime | **ALLOW rare winner** |
-| v0.8 joint guard | **DENY before release** |
+| v0.9 joint guard | **DENY before release** |
 | Denied response contains selected result | **No** |
 | Common winner remaining profiles | 65,535 |
 | Common winner realized charge | **0.000022014 bits** |
@@ -134,7 +134,9 @@ All results below are synthetic engineering tests, not real-world privacy guaran
 
 The joint guard composes prior released choices across overlapping private-field sets, persists that history inside encrypted Context Kernel state, and invalidates affected history when a protected private field changes. Public privacy telemetry deliberately omits the selected candidate so the ledger itself does not become a disclosure channel.
 
-The current exact prototype enumerates up to **100,000 feasible joint states**. If a connected joint state exceeds that analysis limit, the guard fails closed instead of silently reverting to weaker cardinality accounting.
+v0.9 removes the old hard 100,000-state enumeration boundary for supported `choose` semantics. It first performs exact symbolic interval branch-and-bound, counting whole private-state regions whenever the winner can be proven invariant. A 32-field binary benchmark therefore analyzes **4,294,967,296** possible joint profiles, detects a **32-bit** rare-winner disclosure, and denies it before release. The common branch leaves 4,294,967,295 profiles feasible and is allowed.
+
+If symbolic analysis exceeds its configured work budget, Supakeep falls back to exact enumeration only when the remaining state is small enough; otherwise it withholds the result. Internal accounting retains unrounded leakage even when public telemetry rounds a tiny marginal value to zero.
 
 ### Realized single-field partition leakage
 
@@ -211,6 +213,7 @@ The implementation includes the current discovery shape plus a legacy initializa
 - persistent cross-trajectory reconstruction firewall;
 - partition-aware realized privacy guard for declared finite integer domains;
 - joint-choice realized privacy guard for analyzable multi-field `choose` programs;
+- symbolic branch-and-bound for scalable exact choice-support counting;
 - overlapping-choice composition across connected private fields;
 - encrypted persistence of partition and joint reconstruction state;
 - redacted privacy telemetry;

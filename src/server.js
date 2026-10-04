@@ -161,7 +161,7 @@ async function mcp(req,res,u){
   const purpose=String(req.headers['x-supakeep-purpose']||'unspecified');
   const requestedVersion=String(req.headers['mcp-protocol-version']||envelope['io.modelcontextprotocol/protocolVersion']||'');
   const modern=requestedVersion==='2026-07-28'||rpc.method==='server/discover';
-  const serverMeta={'io.modelcontextprotocol/serverInfo':{name:'supakeep',version:'0.8.0'}};
+  const serverMeta={'io.modelcontextprotocol/serverInfo':{name:'supakeep',version:'0.9.0'}};
   const complete=result=>modern?{...result,resultType:'complete',_meta:{...(result?._meta??{}),...serverMeta}}:result;
   const rpcResult=result=>sendRpc(res,{jsonrpc:'2.0',id:rpc.id,result:complete(result)});
 
