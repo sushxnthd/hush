@@ -59,6 +59,34 @@ The reference uses Geist and Geist Mono. Supakeep should use the same metrics wh
 
 The hero is intentionally compact. Never convert it to a 70–100px centered SaaS headline.
 
+## Motion
+
+Motion is part of the reference system and must stay coherent across the whole page. Do not add one-off durations or easing curves to individual components.
+
+Canonical tokens:
+
+```css
+--ease-standard: cubic-bezier(.4,0,.2,1);
+--ease-hover: cubic-bezier(.25,.1,.25,1);
+--dur-hover: .2s;
+--dur-press: .12s;
+--dur-reveal: .3s;
+--dur-cta: .36s;
+--ease-cta: cubic-bezier(.23,1,.32,1);
+```
+
+Behavior:
+
+- first-screen reveal sequence: announcement `40ms`, statement `120ms`, deck `200ms`, actions `260ms`, prompt strip `280ms`, compatibility row `320ms`, hero figure `340ms`;
+- scroll reveals use the same `300ms` opacity + `10px` vertical translation and standard easing;
+- `What we do` rows stagger at `60 / 120 / 180ms`, with the supporting link at `240ms`;
+- ordinary hover state changes use `200ms` hover easing;
+- button press feedback uses `120ms`;
+- primary CTA uses the reference-style `360ms` tile/rail animation rather than an unrelated scale or glow effect;
+- the rail marker tracks section progress continuously on `requestAnimationFrame`, rather than jumping between hard-coded positions;
+- reduced-motion users get immediate reveals and no decorative CTA/marker motion;
+- geometry must not shift during reveals or hover states.
+
 ## Components that define the look
 
 1. persistent sticky left rail on desktop
@@ -114,5 +142,7 @@ The visual design may closely match the reference system; the actual branding, c
 - glassmorphism
 - thick borders or shadows
 - decorative gradients used everywhere
+- mixed easing curves or arbitrary animation durations
+- motion that moves layout rather than only presentation
 
 `index.html` is the canonical implementation.
