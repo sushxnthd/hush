@@ -57,18 +57,6 @@ function publicAssessment(assessment) {
   return safe;
 }
 
-/**
- * Tracks realized leakage from multi-field choose programs.
- *
- * A recommendation winner is also a choice-query answer: a malicious caller can
- * design public candidate sets whose winning candidate partitions the user's joint
- * private state. Output-cardinality accounting misses highly uneven partitions.
- *
- * This experimental guard enumerates the currently feasible Cartesian product of
- * declared finite integer fields, composes prior released choose observations over
- * overlapping field sets, and measures the realized posterior shrinkage before a
- * new winner is released.
- */
 export class JointChoiceReconstructionFirewall {
   constructor({maxKnowledgeBits=8,minRemaining=1,maxJointStates=DEFAULT_MAX_JOINT_STATES,maxObservations=DEFAULT_MAX_OBSERVATIONS}={}){
     this.maxKnowledgeBits=finiteNonNegative(maxKnowledgeBits,8,'Joint knowledge budget');
@@ -167,7 +155,7 @@ export class JointChoiceReconstructionFirewall {
   }
 
   footprint(){
-    return this.observations.map((observation,index)=>({index,fields:[...observation.fields],result:structuredClone(observation.result)}));
+    return this.observations.map((observation,index)=>({index,fields:[...observation.fields]}));
   }
 
   snapshot(){
