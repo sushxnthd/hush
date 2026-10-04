@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/apply-choice-hardening.yml'
+      - 'scripts/apply-choice-hardening.py'
 
 permissions:
   contents: write
