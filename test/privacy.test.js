@@ -27,6 +27,14 @@ test('repeating identical disclosure does not double-charge privacy budget',()=>
   assert.equal(r2.marginalCost,0);
 });
 
+test('the same fact disclosed to a different agent is charged again',()=>{
+  const l=new DisclosureLedger({windowMs:999999});
+  const q1={agent:'a',purpose:'p',sink:'s',category:'location',level:'coarse',atomId:'home-city'};
+  const e1=l.evaluate(q1,1000); l.record(q1,e1,1000);
+  const q2={...q1,agent:'b'}; const e2=l.evaluate(q2,1001);
+  assert.ok(e2.marginalCost>0);
+});
+
 test('upgrading coarse to exact only charges marginal information',()=>{
   const tr=new TrustRegistry('trusted'); const l=new DisclosureLedger({trustRegistry:tr,windowMs:999999});
   const q1={agent:'a',purpose:'p',sink:'s',category:'location',level:'coarse',atomId:'home'}; const e1=l.evaluate(q1,1000); l.record(q1,e1,1000);
@@ -43,6 +51,17 @@ test('cumulative disclosures eventually hit budget',()=>{
     l.record({...q,approvedByHuman:e.decision==='ask'},e,1000+i);
   }
   assert.equal(denied,true);
+});
+
+test('cross-agent disclosures share the same purpose budget',()=>{
+  const l=new DisclosureLedger({windowMs:999999}); let last;
+  for(let i=0;i<20;i++){
+    const q={agent:`agent-${i%4}`,purpose:'trip',sink:`sink-${i%3}`,category:'general',level:'exact',atomId:`field-${i}`};
+    last=l.evaluate(q,1000+i);
+    if(last.decision==='deny') break;
+    l.record({...q,approvedByHuman:last.decision==='ask'},last,1000+i);
+  }
+  assert.equal(last.decision,'deny');
 });
 
 test('sink budget prevents concentrating too much disclosure into one destination',()=>{
