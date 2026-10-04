@@ -2,6 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import {
   getOrCreateKeys, getOrCreateMasterKey, Vault, Store,
@@ -10,6 +11,7 @@ import {
   consumeApproval, createReceipt, verifyReceiptChain
 } from './core.js';
 import { DisclosureLedger, TrustRegistry, TRUST_PROFILES } from './privacy.js';
+import { McpToolCatalog, evaluateMcpCall, jsonRpcError, sanitizeForwardHeaders } from './mcp.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = path.join(root, 'data');
@@ -25,17 +27,36 @@ for (const [agent, profile] of Object.entries(store.load('trust.json', {}))) tru
 const disclosureLedger = new DisclosureLedger({ trustRegistry });
 disclosureLedger.events = store.load('disclosures.json', []);
 
+const mcpCatalog = new McpToolCatalog();
+const mcpApprovals = new Map();
+const mcpUpstream = process.env.SUPAKEEP_MCP_UPSTREAM || null;
+const trustMcpAnnotations = process.env.SUPAKEEP_MCP_TRUST_TOOL_ANNOTATIONS === '1';
+const configuredBearer = process.env.SUPAKEEP_MCP_BEARER_TOKEN || null;
+const brokeredAuth = configuredBearer ? (configuredBearer.startsWith('Bearer ') ? configuredBearer : `Bearer ${configuredBearer}`) : null;
+if (mcpUpstream) {
+  const protocol = new URL(mcpUpstream).protocol;
+  if (!['http:','https:'].includes(protocol)) throw new Error('SUPAKEEP_MCP_UPSTREAM must use http or https');
+}
+
 const send = (res, status, payload) => {
   const x = JSON.stringify(payload);
   res.writeHead(status, {'content-type':'application/json; charset=utf-8','cache-control':'no-store','content-length':Buffer.byteLength(x)});
   res.end(x);
 };
+const sendRpc = (res, payload) => send(res, 200, payload);
 
-async function body(req){
+async function rawBody(req, max=2e6){
   const chunks=[];
-  for await (const c of req) chunks.push(c);
-  const b=Buffer.concat(chunks);
-  if (b.length>1e6) throw Error('Request body too large');
+  let total=0;
+  for await (const c of req) {
+    total += c.length;
+    if (total>max) throw Error('Request body too large');
+    chunks.push(c);
+  }
+  return Buffer.concat(chunks);
+}
+async function body(req){
+  const b=await rawBody(req,1e6);
   return b.length ? JSON.parse(b.toString()) : {};
 }
 
@@ -52,8 +73,119 @@ function persistTrust(){
 }
 function persistDisclosures(){ store.save('disclosures.json', disclosureLedger.events); }
 
+function safeMcpAudit(evaluation){
+  return {
+    agent:evaluation.request.agent,
+    purpose:evaluation.request.purpose,
+    category:'mcp',
+    action:'tool_call',
+    resource:evaluation.request.resource,
+    mcp:{tool:evaluation.request.tool,requestHash:evaluation.requestHash,knownTool:Boolean(evaluation.tool)}
+  };
+}
+function validMcpApproval(hash){
+  const a=mcpApprovals.get(hash);
+  if(!a) return false;
+  if(Date.now()>=a.expiresAt){mcpApprovals.delete(hash);return false;}
+  return true;
+}
+function findPendingMcp(hash){
+  return [...store.pending.values()].find(x=>x.kind==='mcp'&&x.requestHash===hash&&x.status==='pending')??null;
+}
+function mcpTargetUrl(incoming){
+  const target=new URL(mcpUpstream);
+  for(const [k,v] of incoming.searchParams) target.searchParams.set(k,v);
+  return target;
+}
+function responseHeaders(headers){
+  const out={};
+  for(const [k,v] of headers.entries()){
+    const key=k.toLowerCase();
+    if(['content-length','content-encoding','transfer-encoding','connection'].includes(key)) continue;
+    out[key]=v;
+  }
+  out['cache-control']='no-store';
+  return out;
+}
+async function fetchMcpUpstream(req,u,raw){
+  if(!mcpUpstream) throw Object.assign(new Error('MCP upstream is not configured. Set SUPAKEEP_MCP_UPSTREAM.'),{code:'NO_MCP_UPSTREAM'});
+  const headers=sanitizeForwardHeaders(req.headers,{brokeredAuth});
+  return fetch(mcpTargetUrl(u),{
+    method:req.method,
+    headers,
+    body:['GET','HEAD'].includes(req.method)?undefined:(raw?.length?raw:undefined),
+    redirect:'manual'
+  });
+}
+async function pipeMcpResponse(res,upstream){
+  res.writeHead(upstream.status,responseHeaders(upstream.headers));
+  if(!upstream.body){res.end();return;}
+  Readable.fromWeb(upstream.body).pipe(res);
+}
+
+async function mcp(req,res,u){
+  if(!mcpUpstream) return sendRpc(res,jsonRpcError(null,-32050,'Supakeep MCP upstream is not configured.'));
+
+  if(req.method==='GET'||req.method==='DELETE'){
+    const upstream=await fetchMcpUpstream(req,u,null);
+    return pipeMcpResponse(res,upstream);
+  }
+  if(req.method!=='POST'){
+    res.writeHead(405,{'allow':'GET, POST, DELETE'});res.end();return;
+  }
+
+  const raw=await rawBody(req);
+  let rpc;
+  try{rpc=raw.length?JSON.parse(raw.toString()):null}catch{return sendRpc(res,jsonRpcError(null,-32700,'Invalid JSON.'));}
+  if(Array.isArray(rpc)) return sendRpc(res,jsonRpcError(null,-32040,'JSON-RPC batches are not supported by the Supakeep alpha proxy.'));
+  if(!rpc||typeof rpc!=='object') return sendRpc(res,jsonRpcError(null,-32600,'Invalid JSON-RPC request.'));
+
+  const agent=String(req.headers['x-supakeep-agent']||'unknown-agent');
+  const purpose=String(req.headers['x-supakeep-purpose']||'unspecified');
+
+  if(rpc.method==='tools/call'){
+    const params=rpc.params??{};
+    let evaluation=evaluateMcpCall({agent,purpose,params,catalog:mcpCatalog,policy:store.policy,trustAnnotations:trustMcpAnnotations});
+    const hadApproval=validMcpApproval(evaluation.requestHash);
+    if(hadApproval){
+      evaluation=evaluateMcpCall({agent,purpose,params,catalog:mcpCatalog,policy:store.policy,preapprovedHash:evaluation.requestHash,trustAnnotations:trustMcpAnnotations});
+    }
+    const audit=safeMcpAudit(evaluation);
+
+    if(evaluation.decision==='deny'){
+      const r=receipt(audit,'deny',null,{mcp:true,hardDeny:Boolean(evaluation.hardDeny),reason:evaluation.reason});
+      return sendRpc(res,jsonRpcError(rpc.id,-32003,'Supakeep blocked this MCP tool call.',{decision:'deny',reason:evaluation.reason,receiptHash:r.hash}));
+    }
+    if(evaluation.decision==='ask'){
+      let pending=findPendingMcp(evaluation.requestHash);
+      if(!pending){
+        const id=crypto.randomUUID();
+        pending={id,kind:'mcp',request:audit,requestHash:evaluation.requestHash,mcp:{tool:String(params.name||'unknown-tool'),agent,purpose},reason:evaluation.reason,risk:evaluation.request.mcp?.risk??'unknown',createdAt:Date.now(),status:'pending'};
+        store.pending.set(id,pending);
+      }
+      return sendRpc(res,jsonRpcError(rpc.id,-32001,'Supakeep requires approval for this MCP tool call.',{decision:'ask',pendingId:pending.id,retryAfterApproval:true,reason:evaluation.reason}));
+    }
+
+    if(hadApproval) mcpApprovals.delete(evaluation.requestHash); // one-shot before execution
+    const upstream=await fetchMcpUpstream(req,u,raw);
+    receipt(audit,upstream.ok?'allow':'error',null,{mcp:true,upstreamStatus:upstream.status,approved:Boolean(hadApproval)});
+    return pipeMcpResponse(res,upstream);
+  }
+
+  const upstream=await fetchMcpUpstream(req,u,raw);
+  if(rpc.method==='tools/list'&&upstream.ok){
+    const contentType=upstream.headers.get('content-type')||'';
+    if(contentType.includes('json')){
+      const text=await upstream.text();
+      try{mcpCatalog.ingestListResult(JSON.parse(text));}catch{}
+      res.writeHead(upstream.status,responseHeaders(upstream.headers));res.end(text);return;
+    }
+  }
+  return pipeMcpResponse(res,upstream);
+}
+
 async function api(req,res,u){
-  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Supakeep',version:'0.2.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,chainValid:verifyReceiptChain(store.receipts)});
+  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Supakeep',version:'0.3.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations},chainValid:verifyReceiptChain(store.receipts)});
   if(req.method==='GET'&&u.pathname==='/api/vault') return send(res,200,{items:vault.list()});
   if(req.method==='GET'&&u.pathname==='/api/pending') return send(res,200,{requests:[...store.pending.values()].filter(x=>x.status==='pending')});
   if(req.method==='GET'&&u.pathname==='/api/receipts') return send(res,200,{receipts:store.receipts.slice(-50).reverse(),chainValid:verifyReceiptChain(store.receipts)});
@@ -119,6 +251,12 @@ async function api(req,res,u){
     const x=store.pending.get(m[1]);
     if(!x||x.status!=='pending') return send(res,404,{error:'Pending request not found'});
     if(m[2]==='deny'){x.status='denied';return send(res,200,{denied:true,receipt:receipt(x.request,'deny',x.grantId,{deniedByHuman:true})})}
+    if(x.kind==='mcp'){
+      const expiresAt=Date.now()+5*60*1000;
+      mcpApprovals.set(x.requestHash,{expiresAt,pendingId:x.id});
+      x.status='approved';
+      return send(res,200,{approved:true,retry:true,oneShot:true,expiresAt,requestHash:x.requestHash,receipt:receipt(x.request,'approved',null,{mcp:true,approvedByHuman:true,pendingExecution:true})});
+    }
     if(x.kind==='disclosure'){
       const approved={...x.disclosureRequest,approvedByHuman:true};
       const fresh=disclosureLedger.evaluate(approved);
@@ -143,6 +281,15 @@ function staticFile(res,u){
 
 http.createServer(async(req,res)=>{
   const u=new URL(req.url,`http://${req.headers.host||'localhost'}`);
-  try{if(u.pathname.startsWith('/api/'))return await api(req,res,u);if(staticFile(res,u))return;res.writeHead(404);res.end('Not found')}
-  catch(e){console.error(e);send(res,500,{error:e.message||'Internal error'})}
+  try{
+    if(u.pathname==='/mcp') return await mcp(req,res,u);
+    if(u.pathname.startsWith('/api/')) return await api(req,res,u);
+    if(staticFile(res,u)) return;
+    res.writeHead(404);res.end('Not found');
+  }
+  catch(e){
+    console.error(e);
+    if(u.pathname==='/mcp') return sendRpc(res,jsonRpcError(null,-32603,e.code==='NO_MCP_UPSTREAM'?e.message:'Supakeep MCP proxy error.'));
+    send(res,500,{error:e.message||'Internal error'});
+  }
 }).listen(port,'127.0.0.1',()=>console.log(`Supakeep running at http://127.0.0.1:${port}`));
