@@ -2,132 +2,96 @@
 
 ## Canonical direction
 
-Supakeep uses the current reference-style **rail + editorial content column** system, adapted to Supakeep's own product, language, diagrams, evidence, and navigation.
+Supakeep uses the supplied reference homepage bundle as a **measurement reference**, not as loose moodboard inspiration. The public page should preserve reference's compact rail/editorial-column anatomy while replacing product content, diagrams, branding, and evidence with Supakeep's own.
 
-The saved reference HTML supplied during design review is the structural reference. Do not reinterpret it as a generic grid landing page.
+## Exact desktop constants recovered from the supplied CSS
 
-## The anatomy that matters
-
-Desktop:
-
-```text
-persistent left rail        editorial content column
-┌───────────────────┬────────────────────────────────────┐
-│ wordmark          │ note / announcement                │
-│ Human / Agent     │                                    │
-│                   │ large left-aligned statement       │
-│ Home              │ short deck                         │
-│ Product           │ two compact actions                │
-│ Writing           │ setup/prompt rail                  │
-│ Evidence          │ compatibility row                  │
-│ Docs              │ technical figure                  │
-│                   │                                    │
-│ ─────────────     │ manifesto prose                    │
-│ │ Mission         │                                    │
-│ │ What we do      │ ruled definition rows              │
-│ │ In evidence     │ production/evidence table          │
-│ │ Writing         │ numbered infrastructure blocks     │
-│ │ Research        │ CTA / writing / research           │
-│ ■                 │ footer                             │
-└───────────────────┴────────────────────────────────────┘
+```css
+--rail-w: 208px;
+--rail-gap: 108px;
+--col-w: 640px;
+--sp-rail-top: 64px;
+--sp-col-top: 64px;
+--sp-section: 72px;
+--fs-statement: 40px;
+--lh-statement: 1.12;
+--fs-dek: 17px;
+--fs-body: 17px;
+--paper: #f4f4f6;
+--ink: #0b1015;
+--rule: #dfdfdf;
+--blue: #0562ef;
 ```
 
-The left rail is not optional on desktop. It is one of the strongest visual signatures.
+Desktop page width is therefore approximately `208 + 108 + 640 = 956px`, centered in the viewport. A vertical rule sits in the rail/content gap. Do **not** widen the content column into a generic marketing canvas.
 
-## Visual grammar
+## Core anatomy
 
-- white canvas;
-- persistent narrow left rail with a thin right rule;
-- one comparatively narrow content column rather than a centered full-bleed marketing canvas;
-- Geist-like neutral grotesk typography;
-- very small navigation and metadata type;
-- low-weight editorial display typography;
-- left-aligned hero copy;
-- thin neutral-gray rules;
-- plain text and ruled rows over decorative cards;
-- monospace captions and technical labels;
-- compact square/rectangular controls;
-- extremely restrained blue usage;
-- almost no shadows;
-- no glassmorphism;
-- no generic SaaS card grid.
-
-## Navigation
-
-Desktop rail contains:
-
-1. Supakeep wordmark
-2. `Human / Agent` format switch
-3. site-level links
-4. horizontal divider
-5. section-local links
-6. vertical ruler and moving square marker
-7. quiet project status at the bottom
-
-Mobile collapses the rail into a compact sticky bar.
-
-## Homepage rhythm
-
-1. small announcement line
-2. large statement
-3. one-sentence deck
-4. two compact buttons
-5. setup-prompt strip
-6. small compatibility line
-7. bordered technical figure
-8. manifesto article
-9. `What we do` definition-list rows
-10. evidence / benchmark section
-11. deployment / boundary blocks
-12. compact CTA
-13. Writing list
-14. Research close
-15. structured multi-column footer
-
-## Color
-
-- paper: `#ffffff`
-- ink: `#111315`
-- muted: `#697078`
-- faint: `#9aa1a8`
-- primary rule: `#dfe5ea`
-- secondary rule: `#eef2f5`
-- blue: `#0877ff`
-- pale blue: `#eef6ff`
-
-Blue is an accent, not the page identity.
+```text
+208px rail       108px gap         640px editorial column
+┌──────────────┐        │       ┌──────────────────────────┐
+│ wordmark     │        │       │ announcement             │
+│ Human/Agent  │        │       │ 40px statement           │
+│              │        │       │ 17px deck                │
+│ site nav     │        │       │ 44px mono CTAs           │
+│              │        │       │ setup prompt strip       │
+│ section nav  │        │       │ compatibility row        │
+│ ruler/marker │        │       │ 2.4:1 technical field    │
+│              │        │       │ manifesto                │
+└──────────────┘        │       │ ruled product rows       │
+                                │ compact evidence blocks  │
+                                │ deployment plates        │
+                                │ CTA / writing / footer   │
+                                └──────────────────────────┘
+```
 
 ## Typography
 
-Preferred stack:
+The reference uses Geist and Geist Mono. Supakeep should use the same metrics where available, with neutral system fallbacks.
 
-```css
-"Geist", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
-```
+- hero statement: `40px / 1.12`, weight 400, `-0.03em`
+- deck/body: `17px`, body leading around `1.6–1.65`
+- section title: `24px`, weight 400
+- production creed: `30px / 1.28`
+- navigation: `15px / 1.4`
+- labels/buttons: 11–12px Geist Mono
+- primary CTA: `44px` high, ~`208px` minimum width
 
-Navigation:
-- ~12px
-- regular/medium weight
-- tight vertical rhythm
+The hero is intentionally compact. Never convert it to a 70–100px centered SaaS headline.
 
-Hero statement:
-- roughly 46–72px depending on viewport
-- low/medium weight
-- very tight tracking
-- left aligned
-- intentionally not full viewport width
+## Components that define the look
 
-Body thesis prose:
-- ~21px
-- generous leading
-- narrow readable measure
+1. persistent sticky left rail on desktop
+2. rounded `Human / Agent` mono format switch
+3. sparse 15px vertical site navigation
+4. separate section navigation with ruler ticks and a 6px blue moving square
+5. compact announcement strip with green live dot and white bordered CTA tile
+6. two 44px mono action buttons
+7. 32px setup-prompt rail directly below actions
+8. small compatibility row
+9. 2.4:1 technical field interruption
+10. narrow manifesto text at 17px
+11. `What we do` rows with 56px technical tiles and copy to the right
+12. compact white evidence/stat blocks separated by 12px gaps
+13. three bordered deployment plates
+14. dark photographic/field-style CTA that bleeds 32px beyond the 640px column
+15. bordered numbered Writing rows
+16. quiet four-column footer
 
-Technical text:
-- 10–11px monospace
+## Responsive behavior
 
-## Supakeep-specific visual model
+At `<=1000px` the persistent rail collapses into a horizontal sticky bar and the page becomes one column, max width roughly `720px`.
 
-The repeated product figure is:
+At `<=600px`:
+- hero statement ~34px
+- body/deck ~16px
+- actions stack
+- field becomes 16:9
+- evidence and deployment grids collapse to one column
+
+## Supakeep content model
+
+The repeated product abstraction remains:
 
 ```text
 private user state
@@ -137,22 +101,18 @@ Supakeep Context Kernel
 bounded result / authorized action
 ```
 
-The visual system should make one fact obvious: the private profile stays on the user side; computation crosses the boundary, not the profile.
+The visual design may closely match the reference system; the actual branding, copy, product diagrams, claims, data, and destinations must remain Supakeep-specific.
 
 ## Avoid
 
-- centered 96px SaaS heroes;
-- top-navigation-only layouts on desktop;
-- decorative blue gradient fields as the main identity;
-- floating feature cards;
-- dashboard screenshots used as hero decoration;
-- cyber-security dark mode;
-- glass surfaces;
-- excessive rounded corners;
-- badge/pill overload.
+- centered giant SaaS heroes
+- wide 900–1200px content canvases
+- top-nav-only desktop layouts
+- cyber-security dark themes
+- floating card grids
+- pill-heavy interfaces
+- glassmorphism
+- thick borders or shadows
+- decorative gradients used everywhere
 
-## Reference implementation
-
-`index.html` is the canonical public implementation.
-
-Future visual changes must preserve the rail/content anatomy unless this document is deliberately changed in the same commit.
+`index.html` is the canonical implementation.
