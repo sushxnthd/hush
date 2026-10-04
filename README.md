@@ -52,15 +52,30 @@ The declarative private-computation runtime currently supports:
 - coarse numeric buckets;
 - `choose` over public candidates using private constraints and preferences.
 
-For fields without a declared finite privacy domain, an explicit result with `|Ω|` possible values is conservatively charged using the output-cardinality bound:
+For interfaces without an analyzable finite-domain model, Supakeep retains the conservative output-cardinality bound:
 
 ```text
 I(S;Y) <= H(Y) <= log2(|Ω|)
 ```
 
-### Why output cardinality was not enough
+But output alphabet size is not enough to measure how informative the result that actually occurred was. v0.7 therefore added single-field realized partition accounting; v0.8 extends the same idea to analyzable **multi-field `choose` decisions**.
 
-A binary output does **not** imply that the answer which actually occurred revealed only one bit of pointwise knowledge.
+## Four privacy-accounting layers
+
+Supakeep v0.8 can combine:
+
+1. a short-lived task/sink budget;
+2. a persistent cross-task reconstruction firewall;
+3. single-field realized partition accounting for declared finite integer domains; and
+4. joint-choice realized accounting for multi-field recommendation/selection programs whose joint private state is exactly analyzable.
+
+Changing an agent name, purpose label, task id, destination, or restarting the local runtime therefore does not automatically provide a fresh reconstruction budget.
+
+These remain **explicit-channel defenses**, not a claim of total information leakage. Timing, failures, network metadata, side effects, compromised hosts, covert channels and anything that bypasses Supakeep remain outside the guarantee.
+
+## Why nominal output size is not enough
+
+### Single-field rare branch
 
 For an integer secret in `0..999999`, the query:
 
@@ -68,48 +83,71 @@ For an integer secret in `0..999999`, the query:
 secret == 734219 ?
 ```
 
-has only two possible outputs. Cardinality-only accounting therefore prices it at one nominal bit. But if the answer is `true`, the feasible state collapses from 1,000,000 values to one:
+has only two possible outputs and therefore one nominal bit. If the answer is `true`, however, one million feasible values collapse to one:
 
 ```text
 log2(1,000,000 / 1) = 19.931569 bits
 ```
 
-Supakeep v0.7 adds a **partition-aware reconstruction firewall** for declared finite integer domains. Before releasing a predicate or bucket result, the runtime computes the posterior feasible set induced by the actual answer and measures:
+The partition-aware firewall measures the realized posterior shrinkage and can deny that branch before release.
+
+### Multi-field malicious candidate set
+
+A recommendation result can also act as a query. The v0.8 benchmark creates **16 private binary fields**, so there are **65,536 possible joint profiles**. An adversarial caller supplies only **two public candidates** and chooses their public attributes/scoring so that one candidate wins for exactly one of those profiles.
+
+The `choose` interface has three possible outputs (two ids plus `null`), so cardinality-only accounting charges:
 
 ```text
-realized gain = log2(candidates before / candidates after)
+log2(3) = 1.584963 bits
 ```
 
-The result is denied *before release* if it would exceed the configured knowledge budget. Equivalent predicates that leave the same feasible set add zero realized knowledge, while rare branches that collapse the feasible set can be blocked immediately.
+Yet the rare winner identifies one of 65,536 profiles:
 
-There are now **three complementary accounting layers**:
+```text
+log2(65,536 / 1) = 16 bits
+```
 
-1. a short-lived task/sink budget;
-2. a persistent cross-task reconstruction firewall; and
-3. for declared finite integer domains, realized partition accounting over the remaining feasible state.
+Supakeep v0.8's **JointChoiceReconstructionFirewall** computes that posterior before release and withholds the rare winner.
 
-Changing an agent name, purpose label, task id, destination, or restarting the local runtime therefore does not automatically provide a fresh reconstruction budget.
-
-These remain **explicit-channel defenses**, not a claim of total information leakage. Timing, failures, network metadata, side effects, compromised hosts, covert channels and anything that bypasses Supakeep remain outside the guarantee. Partition-aware accounting currently covers declared finite integer domains for predicate/bucket semantics; multi-field `choose` programs still use the conservative output-cardinality path.
+The common winner is also handled more usefully: it leaves 65,535 profiles feasible and costs only **0.000022014 realized bits** rather than the full nominal 1.584963-bit charge.
 
 ## Reproducible evidence
 
 All results below are synthetic engineering tests, not real-world privacy guarantees.
 
-### Realized partition leakage
+### Joint-choice candidate-set attack
+
+| Condition | Result |
+|---|---:|
+| Private binary fields | 16 |
+| Joint profiles | 65,536 |
+| Public candidates | 2 |
+| Explicit output cardinality | 3 |
+| Cardinality-only charge | 1.584963 bits |
+| Rare winner realized knowledge | **16 bits** |
+| Cardinality-only runtime | **ALLOW rare winner** |
+| v0.8 joint guard | **DENY before release** |
+| Denied response contains selected result | **No** |
+| Common winner remaining profiles | 65,535 |
+| Common winner realized charge | **0.000022014 bits** |
+| Common winner | **ALLOW** |
+
+The joint guard composes prior released choices across overlapping private-field sets, persists that history inside encrypted Context Kernel state, and invalidates affected history when a protected private field changes. Public privacy telemetry deliberately omits the selected candidate so the ledger itself does not become a disclosure channel.
+
+The current exact prototype enumerates up to **100,000 feasible joint states**. If a connected joint state exceeds that analysis limit, the guard fails closed instead of silently reverting to weaker cardinality accounting.
+
+### Realized single-field partition leakage
 
 For a hidden integer in `0..999999`:
 
 - exact-match query nominal output capacity: **1 bit**;
 - exact-match `true` branch realized knowledge gain: **19.931569 bits**;
-- v0.7 partition-aware decision: **DENY before release**;
+- partition-aware decision: **DENY before release**;
 - harmless false equality probes released: **1,000**;
-- realized knowledge from those 1,000 false probes: **0.001443 bits**;
+- realized knowledge from those probes: **0.001443 bits**;
 - balanced binary refinements released: **8**;
 - query 9: **DENY**;
 - candidates still feasible: **3,906**.
-
-The important result is not merely stricter blocking. The same mechanism is **less wasteful** than charging every boolean query one full bit: low-information branches can remain useful while high-information rare branches are stopped.
 
 ### Blind personalization
 
@@ -137,8 +175,6 @@ The attacker deliberately starts a fresh one-bit trajectory for every adaptive q
 - persistent firewall, one sink: **6** answers released, query 7 denied, **15,625** candidates remain;
 - persistent firewall, rotating sinks: **8** answers released, query 9 denied, **3,906** candidates remain.
 
-This closes the specific task-reset / sink-rotation attack exercised by the benchmark. It does not prove arbitrary private information cannot be inferred.
-
 ### Cumulative-disclosure simulation
 
 Across 10,000 synthetic adversarial trajectories:
@@ -161,9 +197,7 @@ supakeep_private_decision
 supakeep_revoke_private_task
 ```
 
-When a protected finite-domain field is queried through native MCP, the result is computed locally, assessed against the realized posterior, and can be denied before the result enters the MCP response. The test suite exercises this path directly.
-
-Supakeep can also sit in front of another MCP server; upstream tools retain their existing order and Supakeep's private-computation tools are appended locally.
+Protected decisions are computed locally and privacy-assessed before their result enters the MCP response. Supakeep can also sit in front of another MCP server; upstream tools retain their existing order and Supakeep's private-computation tools are appended locally.
 
 The implementation includes the current discovery shape plus a legacy initialization path, but protocol interoperability still needs broader testing against production clients before claiming full MCP conformance.
 
@@ -176,10 +210,13 @@ The implementation includes the current discovery shape plus a legacy initializa
 - runtime-minted task trajectories;
 - persistent cross-trajectory reconstruction firewall;
 - partition-aware realized privacy guard for declared finite integer domains;
+- joint-choice realized privacy guard for analyzable multi-field `choose` programs;
+- overlapping-choice composition across connected private fields;
+- encrypted persistence of partition and joint reconstruction state;
+- redacted privacy telemetry;
 - global field and per-audience disclosure budgets;
 - ciphertext-only portable bundles;
 - user-controlled trust profiles;
-- exposure summaries without stored private values;
 - rejection of prototype-like unsafe private paths;
 - strict trajectory-TTL validation.
 
@@ -227,7 +264,7 @@ A finite-domain context field can be created through the local API with domain m
 }
 ```
 
-The domain metadata is stored inside the encrypted context record. The API can report that the field is partition-protected and summarize remaining feasible-state exposure without returning the private value itself.
+The domain metadata is stored inside the encrypted context record. The API can report partition/joint privacy status without returning private values or the selected results stored in the internal joint ledger.
 
 Validation commands:
 
@@ -237,11 +274,11 @@ npm run bench
 npm run check
 ```
 
-The v0.7 integration currently passes **78 automated tests** plus all benchmark programs.
+The v0.8 suite contains **84 automated tests** plus **seven benchmark programs**.
 
 ## What is not finished
 
-Supakeep has a functional private-context research core, but it is not yet a finished consumer security product. Production work still includes:
+Supakeep has a functional private-context research core, but it is not yet a finished consumer security product. Production/research work still includes:
 
 - OS keychain / Secure Enclave-style key handling and recovery;
 - encrypted multi-device sync and device revocation;
@@ -252,15 +289,17 @@ Supakeep has a functional private-context research core, but it is not yet a fin
 - full protocol interoperability testing;
 - timing, crash, network-metadata and bypass defenses;
 - real end-to-end task benchmarks and stronger collusion attacks;
-- semantic privacy accounting for multi-field `choose` programs and richer domains;
+- scalable joint inference beyond the current 100,000-state exact enumeration limit;
+- categorical, structured, continuous and correlated private domains;
+- privacy-vs-task-success evaluation against strong baselines;
 - unifying private-context disclosure and real-world authority into one task ledger.
 
 ## Research boundary
 
-Personal data stores, local recommendation, information-flow control, realized/privacy-loss accounting, inference-leakage budgets, zero-knowledge predicates, opaque handles, task-conditioned minimization and on-device ranking all have substantial prior art. Supakeep should **not** claim those individual ideas as inventions.
+Personal data stores, local recommendation, preference elicitation, information-flow control, realized/privacy-loss accounting, inference-leakage budgets, zero-knowledge predicates, opaque handles, task-conditioned minimization and on-device ranking all have substantial prior art. Supakeep should **not** claim those individual ideas as inventions.
 
 The hypothesis worth testing is the system-level combination: a provider-neutral personal-AI runtime where agents send bounded computations toward user-owned context, exact values remain sealed until necessary execution boundaries, and cumulative information / authority is governed across agents and providers.
 
 Supakeep is an alpha/reference implementation, not a certified production security product.
 
-See `ARCHITECTURE.md`, `THREAT_MODEL.md`, `ROADMAP.md`, `research/PRODUCT_THESIS.md`, `research/CONTEXT_KERNEL.md`, `research/BLIND_PERSONALIZATION.md`, `research/RECONSTRUCTION_FIREWALL.md`, and `research/PARTITION_AWARE_PRIVACY.md`.
+See `ARCHITECTURE.md`, `THREAT_MODEL.md`, `ROADMAP.md`, `research/PRODUCT_THESIS.md`, `research/CONTEXT_KERNEL.md`, `research/BLIND_PERSONALIZATION.md`, `research/RECONSTRUCTION_FIREWALL.md`, `research/PARTITION_AWARE_PRIVACY.md`, and `research/JOINT_CHOICE_PRIVACY.md`.
