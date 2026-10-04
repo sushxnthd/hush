@@ -257,6 +257,7 @@ html.motion-ready .figure[data-reveal] { translate: 0; }
   html.enhanced .rail .nav-doors { display: none; }
   html.enhanced .rail.menu-open .nav-doors { display: grid; }
   .col { padding-top: 48px; }
+  .cta { margin-inline: 0; }
   .hero, .section, .memo { scroll-margin-top: 108px; }
   html.motion-ready .rail[data-reveal] { opacity: 1; transition: none; }
 }
