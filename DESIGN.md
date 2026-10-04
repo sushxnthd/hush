@@ -2,104 +2,132 @@
 
 ## Canonical direction
 
-Supakeep uses the **current reference-style editorial infrastructure system**, adapted to Supakeep's own content and product model.
+Supakeep uses the current reference-style **rail + editorial content column** system, adapted to Supakeep's own product, language, diagrams, evidence, and navigation.
 
-The previous dark/glow interpretation was based on an older reference visual language and is no longer canonical.
+The saved reference HTML supplied during design review is the structural reference. Do not reinterpret it as a generic grid landing page.
+
+## The anatomy that matters
+
+Desktop:
+
+```text
+persistent left rail        editorial content column
+┌───────────────────┬────────────────────────────────────┐
+│ wordmark          │ note / announcement                │
+│ Human / Agent     │                                    │
+│                   │ large left-aligned statement       │
+│ Home              │ short deck                         │
+│ Product           │ two compact actions                │
+│ Writing           │ setup/prompt rail                  │
+│ Evidence          │ compatibility row                  │
+│ Docs              │ technical figure                  │
+│                   │                                    │
+│ ─────────────     │ manifesto prose                    │
+│ │ Mission         │                                    │
+│ │ What we do      │ ruled definition rows              │
+│ │ In evidence     │ production/evidence table          │
+│ │ Writing         │ numbered infrastructure blocks     │
+│ │ Research        │ CTA / writing / research           │
+│ ■                 │ footer                             │
+└───────────────────┴────────────────────────────────────┘
+```
+
+The left rail is not optional on desktop. It is one of the strongest visual signatures.
 
 ## Visual grammar
 
 - white canvas;
-- black editorial sans-serif typography;
-- very large, low-weight headlines with tight tracking;
-- thin pale blue-gray grid lines used as the page skeleton;
+- persistent narrow left rail with a thin right rule;
+- one comparatively narrow content column rather than a centered full-bleed marketing canvas;
+- Geist-like neutral grotesk typography;
+- very small navigation and metadata type;
+- low-weight editorial display typography;
+- left-aligned hero copy;
+- thin neutral-gray rules;
+- plain text and ruled rows over decorative cards;
+- monospace captions and technical labels;
+- compact square/rectangular controls;
+- extremely restrained blue usage;
 - almost no shadows;
-- squared / lightly rounded controls rather than pill-heavy UI;
-- bright electric blue as the dominant technical accent;
-- blue field / systems imagery used sparingly as large full-width visual interruptions;
-- numbered infrastructure sections (`001`, `002`, `003`);
-- flat rows and tables rather than dashboard card grids;
-- research-paper-like captions, labels and figure numbering;
-- large quantities of whitespace;
-- long-scroll narrative pacing;
-- a very large typographic footer.
+- no glassmorphism;
+- no generic SaaS card grid.
 
-## Information architecture
+## Navigation
 
-Use the same editorial rhythm consistently:
+Desktop rail contains:
 
-1. primary navigation
-2. local section navigation
-3. announcement / research strip
-4. large centered hero
-5. compatibility row
-6. mission / thesis prose
-7. architecture figure
-8. `What we do` rows
-9. `In production` evidence and benchmarks
-10. deployment blocks
-11. security / deployment notes
-12. product CTA
-13. writing / research index
-14. oversized footer
+1. Supakeep wordmark
+2. `Human / Agent` format switch
+3. site-level links
+4. horizontal divider
+5. section-local links
+6. vertical ruler and moving square marker
+7. quiet project status at the bottom
+
+Mobile collapses the rail into a compact sticky bar.
+
+## Homepage rhythm
+
+1. small announcement line
+2. large statement
+3. one-sentence deck
+4. two compact buttons
+5. setup-prompt strip
+6. small compatibility line
+7. bordered technical figure
+8. manifesto article
+9. `What we do` definition-list rows
+10. evidence / benchmark section
+11. deployment / boundary blocks
+12. compact CTA
+13. Writing list
+14. Research close
+15. structured multi-column footer
 
 ## Color
 
-- background: `#ffffff`
-- ink: `#0e1012`
-- muted text: `#646b73`
-- primary grid line: `#cfdeeb`
-- secondary grid line: `#e7eef4`
-- pale surface: `#f5f9fd`
-- electric blue: `#086fff`
-- light blue: `#42a4ff`
+- paper: `#ffffff`
+- ink: `#111315`
+- muted: `#697078`
+- faint: `#9aa1a8`
+- primary rule: `#dfe5ea`
+- secondary rule: `#eef2f5`
+- blue: `#0877ff`
+- pale blue: `#eef6ff`
 
-Blue is not a decorative gradient sprinkled across the UI. It is reserved for technical emphasis, active calls to action, system diagrams, and large field imagery.
+Blue is an accent, not the page identity.
 
 ## Typography
 
-Use a neutral platform sans stack:
+Preferred stack:
 
 ```css
-Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
+"Geist", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
 ```
 
-Headlines:
-- 52–96px on marketing surfaces;
-- low to medium font weight;
-- very tight negative letter spacing;
-- short, direct sentences.
+Navigation:
+- ~12px
+- regular/medium weight
+- tight vertical rhythm
 
-Technical metadata:
-- 10–12px;
-- monospace;
-- uppercase;
-- sparse.
+Hero statement:
+- roughly 46–72px depending on viewport
+- low/medium weight
+- very tight tracking
+- left aligned
+- intentionally not full viewport width
 
-## Components
+Body thesis prose:
+- ~21px
+- generous leading
+- narrow readable measure
 
-Prefer:
-- border-defined rows;
-- figure captions;
-- two-column editorial layouts;
-- simple tables;
-- numbered deployment blocks;
-- technical diagrams;
-- full-width field images / gradient fields;
-- plain text links with arrows.
+Technical text:
+- 10–11px monospace
 
-Avoid:
-- dark cyber-security themes;
-- card soup;
-- glassmorphism;
-- heavy shadows;
-- excessive pills;
-- rounded floating dashboards;
-- ornamental neon glows;
-- app-store-style feature tiles.
+## Supakeep-specific visual model
 
-## Supakeep-specific visual idea
-
-The core diagram repeated across the product should be:
+The repeated product figure is:
 
 ```text
 private user state
@@ -109,10 +137,22 @@ Supakeep Context Kernel
 bounded result / authorized action
 ```
 
-The visual system should make the boundary obvious: private context stays on the user side, bounded outputs cross to agents, and exact values are brokered only to authorized destinations.
+The visual system should make one fact obvious: the private profile stays on the user side; computation crosses the boundary, not the profile.
+
+## Avoid
+
+- centered 96px SaaS heroes;
+- top-navigation-only layouts on desktop;
+- decorative blue gradient fields as the main identity;
+- floating feature cards;
+- dashboard screenshots used as hero decoration;
+- cyber-security dark mode;
+- glass surfaces;
+- excessive rounded corners;
+- badge/pill overload.
 
 ## Reference implementation
 
-`index.html` is the current canonical public implementation.
+`index.html` is the canonical public implementation.
 
-Any future visual redesign must update this document in the same change.
+Future visual changes must preserve the rail/content anatomy unless this document is deliberately changed in the same commit.
