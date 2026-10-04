@@ -41,6 +41,21 @@ test('MCP client can personalize without receiving private values',()=>{
   assert.equal(wire.includes('ANA'),false);
 });
 
+test('partition-aware privacy guard denies rare result through native MCP before release',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'supakeep-native-mcp-partition-'));
+  const k=new ContextKernel({dir,passphrase:'native partition test passphrase'});
+  k.put('finance.balance',734219,{category:'finance',domain:{type:'integer',min:0,max:999999}});
+  const start=callNativeMcpTool({name:'supakeep_begin_private_task',args:{purpose:'eligibility',maxBits:8,sinkMaxBits:8},kernel:k,agent:'assistant',sink:'mcp:test'});
+  const trajectoryId=start.structuredContent.trajectory.trajectoryId;
+  const out=callNativeMcpTool({name:'supakeep_private_decision',args:{trajectoryId,program:{kind:'predicate',private:'finance.balance',op:'eq',value:734219}},kernel:k,agent:'assistant',sink:'mcp:test'});
+  assert.equal(out.isError,true);
+  assert.equal(out.structuredContent.decision,'deny');
+  assert.equal('result' in out.structuredContent,false);
+  assert.equal(out.structuredContent.partition.afterCandidates,1);
+  assert.ok(out.structuredContent.partition.marginalKnowledgeBits>19.9);
+  assert.equal(JSON.stringify(out).includes('"result":true'),false);
+});
+
 test('locked context fails closed through MCP',()=>{
   const out=callNativeMcpTool({name:'supakeep_begin_private_task',args:{},kernel:null});
   assert.equal(out.isError,true);
