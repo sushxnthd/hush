@@ -1,0 +1,27 @@
+name: Apply symbolic choice integration
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-symbolic-choice.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Integrate and validate
+        run: |
+          python3 scripts/apply-symbolic-choice.py
+          npm run check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/partition-firewall.js src/private-decision.js package.json
+          git commit -m "Integrate symbolic choice privacy analysis"
+          git push
