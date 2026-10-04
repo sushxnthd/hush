@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {countChoicePosterior,SymbolicAnalysisLimitError} from '../src/symbolic-choice-counter.js';
 
 function get(root,path){
-  return String(path).split('.').reduce((node,key)=>node[key],root);
+  const key=String(path);
+  if(Object.hasOwn(root,key)) return root[key];
+  return key.split('.').reduce((node,part)=>node[part],root);
 }
 
 function evaluate(program,assignment){
