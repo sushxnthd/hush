@@ -1,23 +1,44 @@
 # Supakeep
 
-**Supakeep is a local-first privacy and authority layer for AI agents.**
+**Supakeep is a local-first personal trust layer for AI.**
 
-Models are becoming capable enough to do real work. The bottleneck is increasingly whether they can safely access the private context, credentials, accounts and actions required to complete that work.
+AI systems increasingly need private context, credentials, accounts and real-world authority to complete useful work. Supakeep sits outside the model and governs both:
 
-Supakeep separates **what an AI can know** from **what an AI can do** and puts both behind a user-controlled boundary.
+- **what an AI may know**
+- **what an AI may do**
 
-## What is implemented in this first MVP
+The model is not the security boundary.
 
+## Implemented alpha
+
+### Authority
 - encrypted local vault (AES-256-GCM)
-- secret detection and prompt redaction
 - Ed25519-signed, time-limited, task-scoped Grants
 - agent / purpose / action / resource binding
 - spend, merchant and recipient constraints
 - allow / ask / deny policy engine
 - exact-action human approvals with replay protection
 - tamper-evident action receipt chain
-- local dashboard for approvals, vault, redaction and action simulation
-- zero runtime dependencies
+
+### Privacy
+- secret detection and prompt redaction
+- disclosure levels: presence, boolean, derived, coarse, masked, exact
+- cumulative disclosure budgets
+- sink-aware privacy budgets
+- user-controlled trust profiles
+- cross-agent purpose-level accounting
+- AI-footprint summaries without storing raw disclosed values in the summary
+
+### MCP enforcement
+- observed `tools/list` catalog
+- tool-call risk classification
+- explicit trust boundary for MCP annotations
+- fail-closed handling for unknown/untrusted tools
+- hard deny for raw secret material in tool arguments
+- exact-call approval binding
+- transparent MCP enforcement proxy
+- heuristic MCP exposure scanner
+- vault-backed authorization brokerage so credentials need not enter model context
 
 ## Run
 
@@ -27,9 +48,9 @@ Requires Node.js 22+.
 npm start
 ```
 
-Then open `http://127.0.0.1:8787`.
+Open `http://127.0.0.1:8787`.
 
-Run the security-core tests:
+Run the test suite:
 
 ```bash
 npm test
@@ -38,33 +59,38 @@ npm test
 ## Product model
 
 ```text
-AI agent
-   │ proposes an action / asks for context
-   ▼
-Supakeep
-   ├─ context minimization
-   ├─ encrypted secret broker
-   ├─ signed Grant verifier
-   ├─ policy engine
-   └─ approval gate
-   │
-   ▼
-apps · tools · APIs · browser · payments
+AI / agent / MCP client
+        │
+        │ asks for context or proposes an action
+        ▼
+     Supakeep
+        ├─ disclosure ledger + privacy budgets
+        ├─ encrypted secret broker
+        ├─ Grant verifier
+        ├─ policy engine
+        ├─ MCP exposure scanner
+        └─ exact-action approval gate
+        │
+        ▼
+apps · tools · APIs · browser · payments · MCP servers
 ```
 
-The model is **not** the security boundary. Supakeep makes authorization decisions outside the model.
+Supakeep can only enforce traffic routed through a boundary it controls. It is an alpha/reference implementation, not a production security product.
 
-## Current boundary
+## Current evidence
 
-This repository is an alpha/reference implementation. Supakeep can only enforce actions routed through a boundary it controls. The next production milestone is a real MCP gateway so agent `tools/call` traffic can be mediated before execution.
+The repository includes synthetic privacy/utility benchmarks. In the current cumulative-disclosure simulation, Supakeep enforces the intended invariant that individually acceptable disclosures cannot accumulate indefinitely without ASK/DENY. These are engineering tests of the mechanism, **not claims of real-world privacy safety or competitor superiority**.
+
+See `bench/RESULTS.md`.
 
 ## Next milestones
 
-1. MCP Streamable HTTP gateway + tool schema risk classifier
-2. Google/GitHub OAuth connectors using brokered tokens
-3. browser extension for page/action mediation
-4. local semantic privacy classifier for private context
-5. desktop secure enclave/keychain integration
-6. portable Grant / receipt format aligned with emerging agent authorization standards
+1. adaptive multi-agent and colluding-sink privacy attacks
+2. replay real MCP traces and measure privacy/utility/latency tradeoffs
+3. Google/GitHub OAuth connectors using brokered tokens
+4. browser extension for page/action mediation
+5. local semantic privacy classifier for private context
+6. desktop keychain / secure-enclave integration
+7. portable Grant + receipt format aligned with emerging agent authorization standards
 
-See `ARCHITECTURE.md`, `THREAT_MODEL.md`, and `ROADMAP.md`.
+See `ARCHITECTURE.md`, `THREAT_MODEL.md`, `ROADMAP.md`, and `research/PRODUCT_THESIS.md`.
