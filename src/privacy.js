@@ -65,11 +65,14 @@ export class DisclosureLedger {
     const cutoff = now - this.windowMs;
     return this.events.filter(e => e.at >= cutoff);
   }
-  _scopeEvents(request, now=Date.now()) {
+  _agentPurposeEvents(request, now=Date.now()) {
     return this.recent(now).filter(e => e.agent === request.agent && e.purpose === request.purpose);
   }
+  _purposeEvents(request, now=Date.now()) {
+    return this.recent(now).filter(e => e.purpose === request.purpose);
+  }
   _marginalCost(request, now=Date.now()) {
-    const prior = this._scopeEvents(request, now).filter(e => e.atomHash === stableHash(request.atomId));
+    const prior = this._agentPurposeEvents(request, now).filter(e => e.atomHash === stableHash(request.atomId));
     const priorMaxRank = prior.reduce((m,e)=>Math.max(m, LEVEL_RANK[e.level] ?? -1), -1);
     const requestedRank = LEVEL_RANK[request.level];
     if (requestedRank == null) throw new Error(`Unknown disclosure level: ${request.level}`);
@@ -92,9 +95,9 @@ export class DisclosureLedger {
     if (trust.level === 'blocked') return { decision:'deny', reason:'Agent is blocked by the user.', trust:trust.level, marginalCost:0 };
     if (r.category === 'credential' && ['masked','exact'].includes(r.level)) return { decision:'deny', reason:'Credential material may be used by a broker but never disclosed to an agent.', trust:trust.level, marginalCost:0 };
     const marginalCost = this._marginalCost(r, now);
-    const scope = this._scopeEvents(r, now);
-    const globalSpent = scope.reduce((s,e)=>s+e.cost,0);
-    const sinkSpent = scope.filter(e=>e.sink===r.sink).reduce((s,e)=>s+e.cost,0);
+    const purposeScope = this._purposeEvents(r, now);
+    const globalSpent = purposeScope.reduce((s,e)=>s+e.cost,0);
+    const sinkSpent = purposeScope.filter(e=>e.sink===r.sink).reduce((s,e)=>s+e.cost,0);
     const globalAfter = globalSpent + marginalCost;
     const sinkAfter = sinkSpent + marginalCost;
     if (globalAfter > limits.globalBudget || sinkAfter > limits.sinkBudget) return { decision:'deny', reason:'Disclosure budget exceeded.', trust:trust.level, marginalCost, globalSpent, sinkSpent, globalAfter, sinkAfter, limits };
