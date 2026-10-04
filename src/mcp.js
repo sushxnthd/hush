@@ -23,7 +23,7 @@ export function classifyMcpTool(tool){
   if(a.destructiveHint===true){
     return {known:true,action:'delete',category:'destructive',risk:'high',reason:'Tool declares destructive behavior.'};
   }
-  return {known:true,action:'write',category:a.openWorldHint===true?'communication':'general',risk:a.openWorldHint===true?'medium':'medium',reason:'Tool may modify state.'};
+  return {known:true,action:'write',category:a.openWorldHint===true?'communication':'general',risk:'medium',reason:'Tool may modify state.'};
 }
 
 export function mcpActionRequest({agent='unknown-agent',purpose='unspecified',params={},tool=null}){
@@ -45,19 +45,29 @@ export function evaluateMcpCall({agent,purpose,params,catalog,policy,preapproved
   const tool=catalog?.get(params?.name);
   const request=mcpActionRequest({agent,purpose,params,tool});
   const exactHash=requestHash(request);
-  if(preapprovedHash && preapprovedHash===exactHash){
-    return {decision:'allow',reason:'Exact tool call was approved by the user.',request,requestHash:exactHash,tool};
-  }
+
+  // Hard data-loss prevention is evaluated before any approval override.
   const raw=JSON.stringify(params?.arguments??{});
   const secretHits=detectSensitive(raw).filter(x=>x.type!=='email');
   if(secretHits.length){
-    return {decision:'deny',reason:'Raw secret material detected in MCP tool arguments.',request,requestHash:exactHash,tool,detected:secretHits.map(({value,...x})=>x)};
+    return {decision:'deny',hardDeny:true,reason:'Raw secret material detected in MCP tool arguments.',request,requestHash:exactHash,tool,detected:secretHits.map(({value,...x})=>x)};
   }
+
+  // A known tool may also hit a non-overridable policy deny.
+  const policyResult=tool?evaluatePolicy(policy,request):null;
+  if(policyResult?.decision==='deny'){
+    return {...policyResult,hardDeny:true,request,requestHash:exactHash,tool};
+  }
+
+  // Human approval is exact-call scoped and can only override ASK.
+  if(preapprovedHash && preapprovedHash===exactHash){
+    return {decision:'allow',reason:'Exact tool call was approved by the user.',request,requestHash:exactHash,tool};
+  }
+
   if(!tool){
     return {decision:'ask',reason:'Unknown MCP tool. Supakeep fails closed until the user approves the exact call.',request,requestHash:exactHash,tool:null};
   }
-  const p=evaluatePolicy(policy,request);
-  return {...p,request,requestHash:exactHash,tool};
+  return {...policyResult,request,requestHash:exactHash,tool};
 }
 
 export function jsonRpcError(id,code,message,data={}){
