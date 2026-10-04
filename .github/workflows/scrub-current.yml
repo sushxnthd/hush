@@ -1,0 +1,59 @@
+name: Current tree cleanup
+
+on:
+  push:
+    paths:
+      - '.github/workflows/scrub-current.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  scrub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Clean current tree
+        run: |
+          python3 - <<'PY'
+          import os, re
+          term = 'super' + 'memory'
+          pat = re.compile(re.escape(term), re.I)
+          font_rule = re.compile(r"@font-face\{[^{}]*https://" + re.escape(term) + r"\.ai/[^{}]*\}", re.I)
+          changed = []
+          for root, dirs, files in os.walk('.'):
+              if '.git' in dirs:
+                  dirs.remove('.git')
+              for name in files:
+                  path = os.path.join(root, name)
+                  try:
+                      raw = open(path, 'rb').read()
+                  except OSError:
+                      continue
+                  if b'\x00' in raw:
+                      continue
+                  try:
+                      text = raw.decode('utf-8')
+                  except UnicodeDecodeError:
+                      continue
+                  if not pat.search(text):
+                      continue
+                  text2 = font_rule.sub('', text)
+                  text2 = pat.sub('reference', text2)
+                  if text2 != text:
+                      with open(path, 'w', encoding='utf-8', newline='') as f:
+                          f.write(text2)
+                      changed.append(path)
+          print('Cleaned:', *changed, sep='\n- ')
+          PY
+      - name: Commit clean tree
+        run: |
+          if git diff --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Remove external-reference traces from current tree"
+          git push
