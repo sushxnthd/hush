@@ -21,7 +21,7 @@ public candidates / bounded question
          ┌──────────────────────┐
          │ sealed private state │
          │ decision runtime     │
-         │ disclosure budgets   │
+         │ privacy firewalls    │
          │ authority broker     │
          └──────────────────────┘
                 │
@@ -33,11 +33,11 @@ Private values remain behind the Supakeep boundary. Raw/exact private output is 
 
 ## Sealed private context
 
-Supakeep now has a persistent encrypted Context Kernel rather than an in-memory-only profile.
+Supakeep has a persistent encrypted Context Kernel rather than an in-memory-only profile.
 
 - a random 256-bit data-encryption key encrypts private records with AES-256-GCM;
 - a scrypt-derived wrapping key protects that data key;
-- paths, labels, categories, tags, values and reconstruction state are encrypted rather than stored as readable metadata;
+- paths, labels, categories, tags, privacy-domain metadata, values and reconstruction state are encrypted rather than stored as readable metadata;
 - ciphertext is authenticated, so modified records fail closed;
 - exported sync bundles contain ciphertext and opaque identifiers, not readable context;
 - restarting Supakeep restores private context and cumulative reconstruction state.
@@ -52,24 +52,64 @@ The declarative private-computation runtime currently supports:
 - coarse numeric buckets;
 - `choose` over public candidates using private constraints and preferences.
 
-If an explicit result can take one of `|Ω|` possible values, Supakeep conservatively accounts up to:
+For fields without a declared finite privacy domain, an explicit result with `|Ω|` possible values is conservatively charged using the output-cardinality bound:
 
 ```text
 I(S;Y) <= H(Y) <= log2(|Ω|)
 ```
 
-There are now **two accounting layers**:
+### Why output cardinality was not enough
 
-1. a short-lived task-trajectory budget; and
-2. a persistent reconstruction firewall that tracks exposure associated with private fields across new trajectories, agents and sinks.
+A binary output does **not** imply that the answer which actually occurred revealed only one bit of pointwise knowledge.
 
-Changing an agent name, purpose label, task id or destination therefore does not automatically provide a fresh global field budget.
+For an integer secret in `0..999999`, the query:
 
-This remains an **explicit-channel bound**, not a claim of total information leakage. Timing, failures, network metadata, side effects, covert channels and anything that bypasses Supakeep remain outside that guarantee.
+```text
+secret == 734219 ?
+```
+
+has only two possible outputs. Cardinality-only accounting therefore prices it at one nominal bit. But if the answer is `true`, the feasible state collapses from 1,000,000 values to one:
+
+```text
+log2(1,000,000 / 1) = 19.931569 bits
+```
+
+Supakeep v0.7 adds a **partition-aware reconstruction firewall** for declared finite integer domains. Before releasing a predicate or bucket result, the runtime computes the posterior feasible set induced by the actual answer and measures:
+
+```text
+realized gain = log2(candidates before / candidates after)
+```
+
+The result is denied *before release* if it would exceed the configured knowledge budget. Equivalent predicates that leave the same feasible set add zero realized knowledge, while rare branches that collapse the feasible set can be blocked immediately.
+
+There are now **three complementary accounting layers**:
+
+1. a short-lived task/sink budget;
+2. a persistent cross-task reconstruction firewall; and
+3. for declared finite integer domains, realized partition accounting over the remaining feasible state.
+
+Changing an agent name, purpose label, task id, destination, or restarting the local runtime therefore does not automatically provide a fresh reconstruction budget.
+
+These remain **explicit-channel defenses**, not a claim of total information leakage. Timing, failures, network metadata, side effects, compromised hosts, covert channels and anything that bypasses Supakeep remain outside the guarantee. Partition-aware accounting currently covers declared finite integer domains for predicate/bucket semantics; multi-field `choose` programs still use the conservative output-cardinality path.
 
 ## Reproducible evidence
 
 All results below are synthetic engineering tests, not real-world privacy guarantees.
+
+### Realized partition leakage
+
+For a hidden integer in `0..999999`:
+
+- exact-match query nominal output capacity: **1 bit**;
+- exact-match `true` branch realized knowledge gain: **19.931569 bits**;
+- v0.7 partition-aware decision: **DENY before release**;
+- harmless false equality probes released: **1,000**;
+- realized knowledge from those 1,000 false probes: **0.001443 bits**;
+- balanced binary refinements released: **8**;
+- query 9: **DENY**;
+- candidates still feasible: **3,906**.
+
+The important result is not merely stricter blocking. The same mechanism is **less wasteful** than charging every boolean query one full bit: low-information branches can remain useful while high-information rare branches are stopped.
 
 ### Blind personalization
 
@@ -78,7 +118,7 @@ A reproducible flight demo supplies 15 public candidates and uses private travel
 - raw private values returned: **0**;
 - selected result: one candidate ID;
 - explicit output cardinality: **16**;
-- worst-case explicit-channel capacity: **4 bits**;
+- conservative explicit-channel capacity: **4 bits**;
 - a second distinct 4-bit decision in the same 4-bit trajectory: **DENY**.
 
 ### Adaptive reconstruction inside one task
@@ -111,7 +151,7 @@ A separate benign smoke test completes **99.14%** of synthetic tasks without an 
 
 ## Native AI connection
 
-Supakeep can expose bounded private computation over its local `/mcp` endpoint. The native agent surface intentionally contains **no raw-context dump tool**.
+Supakeep exposes bounded private computation over its local `/mcp` endpoint. The native agent surface intentionally contains **no raw-context dump tool**.
 
 Current native tools are:
 
@@ -121,7 +161,9 @@ supakeep_private_decision
 supakeep_revoke_private_task
 ```
 
-An AI can therefore start a task, submit a bounded decision program and receive the result without being given the underlying values. Supakeep can also sit in front of another MCP server; upstream tools retain their existing order and Supakeep's private-computation tools are appended locally.
+When a protected finite-domain field is queried through native MCP, the result is computed locally, assessed against the realized posterior, and can be denied before the result enters the MCP response. The test suite exercises this path directly.
+
+Supakeep can also sit in front of another MCP server; upstream tools retain their existing order and Supakeep's private-computation tools are appended locally.
 
 The implementation includes the current discovery shape plus a legacy initialization path, but protocol interoperability still needs broader testing against production clients before claiming full MCP conformance.
 
@@ -133,10 +175,13 @@ The implementation includes the current discovery shape plus a legacy initializa
 - opaque, revocable context leases;
 - runtime-minted task trajectories;
 - persistent cross-trajectory reconstruction firewall;
+- partition-aware realized privacy guard for declared finite integer domains;
 - global field and per-audience disclosure budgets;
 - ciphertext-only portable bundles;
 - user-controlled trust profiles;
-- exposure summaries without stored private values.
+- exposure summaries without stored private values;
+- rejection of prototype-like unsafe private paths;
+- strict trajectory-TTL validation.
 
 ### Authority
 
@@ -171,6 +216,19 @@ npm start
 
 Then open `http://127.0.0.1:8787` for the local dashboard. The local MCP endpoint is `/mcp`.
 
+A finite-domain context field can be created through the local API with domain metadata such as:
+
+```json
+{
+  "path": "finance.balance",
+  "value": 734219,
+  "category": "finance",
+  "domain": {"type":"integer","min":0,"max":999999}
+}
+```
+
+The domain metadata is stored inside the encrypted context record. The API can report that the field is partition-protected and summarize remaining feasible-state exposure without returning the private value itself.
+
 Validation commands:
 
 ```bash
@@ -179,9 +237,11 @@ npm run bench
 npm run check
 ```
 
+The v0.7 integration currently passes **78 automated tests** plus all benchmark programs.
+
 ## What is not finished
 
-Supakeep now has a functional private-context core, but it is not yet a finished consumer security product. Production work still includes:
+Supakeep has a functional private-context research core, but it is not yet a finished consumer security product. Production work still includes:
 
 - OS keychain / Secure Enclave-style key handling and recovery;
 - encrypted multi-device sync and device revocation;
@@ -191,15 +251,16 @@ Supakeep now has a functional private-context core, but it is not yet a finished
 - richer capability schemas so agents do not need to know private field paths;
 - full protocol interoperability testing;
 - timing, crash, network-metadata and bypass defenses;
-- real end-to-end task benchmarks and stronger collusion / equivalent-query attacks;
+- real end-to-end task benchmarks and stronger collusion attacks;
+- semantic privacy accounting for multi-field `choose` programs and richer domains;
 - unifying private-context disclosure and real-world authority into one task ledger.
 
 ## Research boundary
 
-Personal data stores, local recommendation, information-flow control, inference-leakage budgets, zero-knowledge predicates, opaque handles, task-conditioned minimization and on-device ranking all have substantial prior art. Supakeep should **not** claim those individual ideas as inventions.
+Personal data stores, local recommendation, information-flow control, realized/privacy-loss accounting, inference-leakage budgets, zero-knowledge predicates, opaque handles, task-conditioned minimization and on-device ranking all have substantial prior art. Supakeep should **not** claim those individual ideas as inventions.
 
 The hypothesis worth testing is the system-level combination: a provider-neutral personal-AI runtime where agents send bounded computations toward user-owned context, exact values remain sealed until necessary execution boundaries, and cumulative information / authority is governed across agents and providers.
 
 Supakeep is an alpha/reference implementation, not a certified production security product.
 
-See `ARCHITECTURE.md`, `THREAT_MODEL.md`, `ROADMAP.md`, `research/PRODUCT_THESIS.md`, `research/CONTEXT_KERNEL.md`, `research/BLIND_PERSONALIZATION.md`, and `research/RECONSTRUCTION_FIREWALL.md`.
+See `ARCHITECTURE.md`, `THREAT_MODEL.md`, `ROADMAP.md`, `research/PRODUCT_THESIS.md`, `research/CONTEXT_KERNEL.md`, `research/BLIND_PERSONALIZATION.md`, `research/RECONSTRUCTION_FIREWALL.md`, and `research/PARTITION_AWARE_PRIVACY.md`.
