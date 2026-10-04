@@ -1,0 +1,95 @@
+name: Wire encrypted context kernel
+
+on:
+  push:
+    paths:
+      - '.github/workflows/wire-context-kernel.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wire context kernel and benchmark
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+
+          p=Path('src/server.js')
+          s=p.read_text()
+          anchor="import { scanMcpCatalog } from './scanner.js';\n"
+          addition="import { ContextKernel } from './context-kernel.js';\n"
+          if addition not in s:
+              assert anchor in s
+              s=s.replace(anchor,anchor+addition,1)
+
+          anchor="disclosureLedger.events = store.load('disclosures.json', []);\n"
+          addition="\nconst contextPassphrase = process.env.SUPAKEEP_CONTEXT_PASSPHRASE || null;\nconst contextKernel = contextPassphrase ? new ContextKernel({dir:path.join(dataDir,'context'),passphrase:contextPassphrase}) : null;\n"
+          if 'const contextKernel =' not in s:
+              assert anchor in s
+              s=s.replace(anchor,anchor+addition,1)
+
+          old="if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Supakeep',version:'0.4.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});"
+          new="if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Supakeep',version:'0.5.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:contextKernel?{enabled:true,...contextKernel.stats()}:{enabled:false},mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});"
+          assert old in s
+          s=s.replace(old,new,1)
+
+          anchor="  if(req.method==='GET'&&u.pathname==='/api/mcp/scan') return send(res,200,scanMcpCatalog(mcpCatalog.list(),{annotationsTrusted:trustMcpAnnotations}));\n\n"
+          endpoints="""  if(req.method==='GET'&&u.pathname==='/api/context'){
+    if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with SUPAKEEP_CONTEXT_PASSPHRASE.'});
+    return send(res,200,{items:contextKernel.list(),exposure:contextKernel.exposure()});
+  }
+  if(req.method==='GET'&&u.pathname==='/api/context/exposure'){
+    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
+    return send(res,200,{fields:contextKernel.exposure()});
+  }
+  if(req.method==='GET'&&u.pathname==='/api/context/sync-bundle'){
+    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
+    return send(res,200,{bundle:contextKernel.exportCiphertextBundle(),fingerprint:contextKernel.ciphertextFingerprint(),plaintextIncluded:false});
+  }
+  if(req.method==='POST'&&u.pathname==='/api/context'){
+    if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with SUPAKEEP_CONTEXT_PASSPHRASE.'});
+    const b=await body(req);
+    if(!b.path||!Object.hasOwn(b,'value')) return send(res,400,{error:'path and value are required'});
+    const item=contextKernel.put(String(b.path),b.value,{label:b.label??null,category:String(b.category??'general'),tags:Array.isArray(b.tags)?b.tags:[]});
+    return send(res,201,{item});
+  }
+  if(req.method==='POST'&&u.pathname==='/api/context/trajectory'){
+    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
+    const b=await body(req);
+    return send(res,201,contextKernel.beginTrajectory(b));
+  }
+  if(req.method==='POST'&&u.pathname==='/api/context/decision'){
+    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
+    const b=await body(req);
+    if(!b.trajectoryId||!b.program) return send(res,400,{error:'trajectoryId and program are required'});
+    const result=contextKernel.run({trajectoryId:String(b.trajectoryId),agent:String(b.agent??'unknown-agent'),sink:String(b.sink??'unknown-sink'),program:b.program});
+    return send(res,result.decision==='allow'?200:403,result);
+  }
+
+"""
+          if "u.pathname==='/api/context'" not in s:
+              assert anchor in s
+              s=s.replace(anchor,anchor+endpoints,1)
+          p.write_text(s)
+
+          pkg=Path('package.json')
+          data=json.loads(pkg.read_text())
+          data['version']='0.5.0'
+          data['scripts']['bench']='node bench/privacy-bench.js && node bench/utility-bench.js && node bench/predicate-reconstruction.js && node bench/blind-personalization.js && node bench/cross-trajectory-reconstruction.js'
+          data['scripts']['check']='node --check src/server.js && node --check src/context-kernel.js && node --check src/secure-context.js && node --check src/reconstruction-firewall.js && node --test && npm run bench'
+          pkg.write_text(json.dumps(data,separators=(',',':'))+'\n')
+          PY
+          npm run check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/server.js package.json
+          git commit -m "Wire encrypted context kernel into local API"
+          git push
