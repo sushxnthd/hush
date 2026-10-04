@@ -42,8 +42,6 @@ This is a deliberately simple utility smoke test. Real product validation must m
 
 A hidden integer is selected from `0..999999`. An adversarial caller receives a greater-than predicate and performs adaptive binary search.
 
-Observed results:
-
 | Policy | Exact value recovered? | Queries before stop | Candidates remaining |
 |---|---:|---:|---:|
 | Unrestricted predicate oracle | Yes | 20 | 1 |
@@ -64,7 +62,7 @@ Observed result:
 - conservative explicit-channel capacity bound: **4 bits**
 - a second distinct 4-bit decision in the same trajectory: **DENY**
 
-The output-cardinality bound remains useful as a conservative transcript mechanism for interfaces without a declared finite-domain model. It is **not** a pointwise measure of how informative the realized branch was.
+The output-cardinality bound remains useful as a conservative transcript mechanism for interfaces without an analyzable finite-domain model. It is **not** a pointwise measure of how informative the realized branch was.
 
 ## 5. Cross-trajectory reconstruction
 
@@ -80,42 +78,57 @@ This closes the specific task-reset / sink-rotation attack exercised by the benc
 
 ## 6. Partition-aware realized leakage
 
-This benchmark targets a weakness in cardinality-only accounting.
-
-For a secret uniformly modeled over `0..999999`, consider:
-
-```text
-secret == 734219 ?
-```
-
-The interface has only two possible outputs, so cardinality-only accounting assigns **1 nominal bit**. If the realized answer is `true`, however, the feasible state collapses from 1,000,000 candidates to one:
+For a secret uniformly modeled over `0..999999`, consider `secret == 734219`. The interface has only two possible outputs, so cardinality-only accounting assigns **1 nominal bit**. If the realized answer is `true`, the feasible state collapses from 1,000,000 candidates to one:
 
 ```text
 log2(1,000,000 / 1) = 19.931569 bits
 ```
-
-Observed results:
 
 | Attack / branch | Result |
 |---|---:|
 | Nominal capacity of exact-match predicate | 1 bit |
 | Realized knowledge if exact match is true | **19.931569 bits** |
 | Partition-aware decision | **DENY before release** |
-| Candidates after forbidden branch | 1 |
 | False equality probes safely released | **1,000** |
 | Knowledge accumulated by those false probes | **0.001443 bits** |
 | Balanced binary refinements released | **8** |
 | Next balanced refinement | **DENY at 9** |
 | Candidates remaining | **3,906** |
 
-This shows two desirable behaviors simultaneously:
+The mechanism tracks the remaining feasible partition, so semantically redundant predicates add zero realized knowledge even if written differently. Its encrypted state is restored across process restarts.
 
-1. **rare high-information branches are stopped even when their output alphabet is tiny**, and
-2. **low-information branches are not overcharged merely because they are boolean**.
+## 7. Malicious candidate-set joint reconstruction
 
-The mechanism tracks the remaining feasible partition, so semantically redundant predicates add zero realized knowledge even if written differently.
+This benchmark tests whether an adversarial recommender can turn the winning candidate itself into a probe of multiple private fields.
 
-The integrated v0.7 runtime applies this pre-release check to declared finite integer domains for predicate and bucket programs. The state is encrypted and restored across process restarts. Native MCP tests verify that a forbidden rare result is denied without returning the result to the AI client.
+Configuration:
+
+- 16 binary private fields;
+- 65,536 possible joint profiles;
+- two public candidates;
+- weighted `matchPrivate` preferences plus a public bias term;
+- the rare candidate wins for exactly one of the 65,536 profiles.
+
+Although the interface has only three possible outputs (two ids plus `null`), the rare result uniquely identifies the full synthetic 16-bit profile.
+
+| Condition | Result |
+|---|---:|
+| Explicit output cardinality | 3 |
+| Nominal cardinality charge | **1.584963 bits** |
+| Realized rare-branch knowledge | **16 bits** |
+| Cardinality-only runtime | **ALLOW `rare-profile`** |
+| Exact joint profile identified | **Yes** |
+| v0.8 joint guard | **DENY before release** |
+| Selected result included in denied response | **No** |
+| Common branch posterior | **65,535 profiles** |
+| Common branch realized gain | **0.000022014 bits** |
+| Common branch | **ALLOW** |
+
+The joint firewall composes prior released `choose` observations across overlapping private-field sets. Allowed informative observations are encrypted with Context Kernel state and survive restart. Repeating a choice whose information is already implied by prior observations adds zero marginal joint knowledge.
+
+The public privacy footprint intentionally omits the selected result, so diagnostics do not re-expose an observation that the privacy mechanism is trying to govern.
+
+The exact v0.8 prototype analyzes joint products up to 100,000 currently feasible states. Larger connected products fail closed rather than falling back to the weaker nominal rule.
 
 ## Reproducibility
 
@@ -127,19 +140,20 @@ npm run bench
 npm run check
 ```
 
-The current v0.7 suite contains **78 passing automated tests** plus six benchmark programs.
+The current v0.8 suite contains **84 automated tests** plus **seven benchmark programs**.
 
 ## Current boundary and next benchmark upgrades
 
-Partition-aware accounting is a finite-domain explicit-output experiment, not a universal privacy proof. Current open research includes:
+These are finite-domain explicit-output experiments, not universal privacy proofs. Current open research includes:
 
-1. multi-field `choose` programs where one selected candidate jointly constrains several private fields;
+1. scalable joint inference beyond explicit Cartesian enumeration;
 2. categorical, set-valued, continuous and high-dimensional private state;
-3. non-uniform priors and posterior-risk metrics beyond uniform feasible-set size;
-4. colluding agents and destinations with public auxiliary information;
-5. real MCP/client traces from multiple agent stacks;
-6. privacy-vs-task-success Pareto curves against strong baselines;
-7. prompt injection attempting to manipulate domain metadata or program structure;
-8. latency and approval-friction measurements;
-9. timing, failure, network and externally observable side channels;
-10. real recommendation and action tasks spanning shopping, travel and scheduling.
+3. correlated and non-uniform priors plus posterior-risk metrics beyond support size;
+4. adversarial overlapping choice programs on state spaces above the v0.8 exact-analysis limit;
+5. colluding agents/destinations with public auxiliary information;
+6. real MCP/client traces from multiple agent stacks;
+7. privacy-vs-task-success Pareto curves against strong baselines;
+8. prompt injection attempting to manipulate privacy metadata or program structure;
+9. latency and approval-friction measurements;
+10. timing, failure, network and externally observable side channels;
+11. real recommendation/action tasks spanning shopping, travel and scheduling.
