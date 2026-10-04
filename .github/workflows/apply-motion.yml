@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: 22
       - name: Apply motion normalization
-        run: node scripts/apply-motion.mjs
+        run: node scripts/run-motion.mjs
       - name: Commit normalized motion
         run: |
           if git diff --quiet -- index.html; then
