@@ -13,6 +13,7 @@ import {
 import { DisclosureLedger, TrustRegistry, TRUST_PROFILES } from './privacy.js';
 import { McpToolCatalog, evaluateMcpCall, jsonRpcError, sanitizeForwardHeaders } from './mcp.js';
 import { scanMcpCatalog } from './scanner.js';
+import { ContextKernel } from './context-kernel.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = path.join(root, 'data');
@@ -27,6 +28,9 @@ const trustRegistry = new TrustRegistry('limited');
 for (const [agent, profile] of Object.entries(store.load('trust.json', {}))) trustRegistry.set(agent, profile.level ?? profile);
 const disclosureLedger = new DisclosureLedger({ trustRegistry });
 disclosureLedger.events = store.load('disclosures.json', []);
+
+const contextPassphrase = process.env.SUPAKEEP_CONTEXT_PASSPHRASE || null;
+const contextKernel = contextPassphrase ? new ContextKernel({dir:path.join(dataDir,'context'),passphrase:contextPassphrase}) : null;
 
 const mcpCatalog = new McpToolCatalog();
 const mcpApprovals = new Map();
@@ -196,13 +200,45 @@ async function mcp(req,res,u){
 }
 
 async function api(req,res,u){
-  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Supakeep',version:'0.4.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});
+  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Supakeep',version:'0.5.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:contextKernel?{enabled:true,...contextKernel.stats()}:{enabled:false},mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});
   if(req.method==='GET'&&u.pathname==='/api/vault') return send(res,200,{items:vault.list()});
   if(req.method==='GET'&&u.pathname==='/api/pending') return send(res,200,{requests:[...store.pending.values()].filter(x=>x.status==='pending')});
   if(req.method==='GET'&&u.pathname==='/api/receipts') return send(res,200,{receipts:store.receipts.slice(-50).reverse(),chainValid:verifyReceiptChain(store.receipts)});
   if(req.method==='GET'&&u.pathname==='/api/privacy/footprint') return send(res,200,{agents:disclosureLedger.footprint(),windowMs:disclosureLedger.windowMs});
   if(req.method==='GET'&&u.pathname==='/api/privacy/trust') return send(res,200,{levels:Object.keys(TRUST_PROFILES),profiles:[...trustRegistry.profiles.entries()].map(([agent,p])=>({agent,...p}))});
   if(req.method==='GET'&&u.pathname==='/api/mcp/scan') return send(res,200,scanMcpCatalog(mcpCatalog.list(),{annotationsTrusted:trustMcpAnnotations}));
+
+  if(req.method==='GET'&&u.pathname==='/api/context'){
+    if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with SUPAKEEP_CONTEXT_PASSPHRASE.'});
+    return send(res,200,{items:contextKernel.list(),exposure:contextKernel.exposure()});
+  }
+  if(req.method==='GET'&&u.pathname==='/api/context/exposure'){
+    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
+    return send(res,200,{fields:contextKernel.exposure()});
+  }
+  if(req.method==='GET'&&u.pathname==='/api/context/sync-bundle'){
+    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
+    return send(res,200,{bundle:contextKernel.exportCiphertextBundle(),fingerprint:contextKernel.ciphertextFingerprint(),plaintextIncluded:false});
+  }
+  if(req.method==='POST'&&u.pathname==='/api/context'){
+    if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with SUPAKEEP_CONTEXT_PASSPHRASE.'});
+    const b=await body(req);
+    if(!b.path||!Object.hasOwn(b,'value')) return send(res,400,{error:'path and value are required'});
+    const item=contextKernel.put(String(b.path),b.value,{label:b.label??null,category:String(b.category??'general'),tags:Array.isArray(b.tags)?b.tags:[]});
+    return send(res,201,{item});
+  }
+  if(req.method==='POST'&&u.pathname==='/api/context/trajectory'){
+    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
+    const b=await body(req);
+    return send(res,201,contextKernel.beginTrajectory(b));
+  }
+  if(req.method==='POST'&&u.pathname==='/api/context/decision'){
+    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
+    const b=await body(req);
+    if(!b.trajectoryId||!b.program) return send(res,400,{error:'trajectoryId and program are required'});
+    const result=contextKernel.run({trajectoryId:String(b.trajectoryId),agent:String(b.agent??'unknown-agent'),sink:String(b.sink??'unknown-sink'),program:b.program});
+    return send(res,result.decision==='allow'?200:403,result);
+  }
 
   if(req.method==='POST'&&u.pathname==='/api/redact'){
     const b=await body(req), r=redactSensitive(String(b.text??''));
