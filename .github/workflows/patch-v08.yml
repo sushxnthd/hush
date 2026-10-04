@@ -1,0 +1,44 @@
+name: Patch v0.8 joint-choice API
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-v08.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Patch server and validate
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/server.js')
+          s=p.read_text()
+          old="version:'0.7.0'"
+          count=s.count(old)
+          assert count >= 3, count
+          s=s.replace(old,"version:'0.8.0'")
+          old="return send(res,200,{items:contextKernel.list(),exposure:contextKernel.exposure(),partition:contextKernel.partitionExposure()});"
+          new="return send(res,200,{items:contextKernel.list(),exposure:contextKernel.exposure(),partition:contextKernel.partitionExposure(),jointChoice:contextKernel.jointChoiceExposure()});"
+          assert old in s
+          s=s.replace(old,new,1)
+          old="return send(res,200,{fields:contextKernel.exposure(),partition:contextKernel.partitionExposure()});"
+          new="return send(res,200,{fields:contextKernel.exposure(),partition:contextKernel.partitionExposure(),jointChoice:contextKernel.jointChoiceExposure()});"
+          assert old in s
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+          npm run check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/server.js
+          git commit -m "Expose redacted joint-choice privacy telemetry"
+          git push
