@@ -1,36 +1,111 @@
 # Supakeep
 
-**AI should query you, not copy you.**
+**Private Mode for every AI.**
 
-Supakeep is an experimental **personal Context Kernel for AI**: a local trust boundary where agents can use private context and real-world authority without receiving unrestricted copies of either.
+Supakeep is an experimental local trust layer for **deep AI personalization without handing every AI a copy of your private profile**.
 
-Instead of treating privacy as a one-time permission prompt, Supakeep governs an entire task trajectory:
+The core idea is simple:
 
-- **what an AI may learn**
-- **what an AI may infer through repeated queries**
-- **what an AI may do**
+> **AI should query you, not copy you.**
 
-The model is not the security boundary.
+Instead of moving your calendar, finances, identity, preferences, credentials and history into model context, an agent can send a bounded decision problem to Supakeep. Supakeep computes against private state locally and returns the minimum useful result.
 
-## Context Kernel prototype
+## Blind personalization
 
-A user-authorized task receives a Supakeep-minted **privacy trajectory**. Agents and sub-agents receive opaque, revocable context leases bound to that trajectory, agent, destination and private context atom.
+A travel agent should not need your complete personal profile just to choose a flight.
 
-The agent can request bounded computations such as presence checks, comparisons, ranges or masked views. Exact disclosure is an escalation rather than the default retrieval primitive.
+```text
+public flight options
+        │
+        ▼
+      AI agent
+        │  candidates + bounded decision request
+        ▼
+     Supakeep
+        │  locally uses private budget, calendar,
+        │  preferences, identity state, etc.
+        ▼
+ chosen candidate / bounded result
+```
 
-Critically, Supakeep accounts for **query composition**. Repeating the exact same predicate has no additional privacy cost, but changing an adaptive predicate is treated as new information. This is designed to stop an agent from reconstructing a private value through a sequence of individually innocuous yes/no questions.
+The private values remain behind the Supakeep boundary.
 
-See `research/CONTEXT_KERNEL.md`.
+The same pattern can apply to shopping, scheduling, job matching, browser actions, eligibility checks and other personalized agent workflows.
 
-## Implemented alpha
+See `research/BLIND_PERSONALIZATION.md`.
+
+## Private Decision Programs
+
+Supakeep now includes an experimental declarative runtime for computations over private state.
+
+Current program types include:
+
+- boolean predicates
+- coarse numeric buckets
+- `choose` over public candidates using private constraints and preferences
+
+Raw/exact private output is deliberately not part of this decision language.
+
+### Information-bounded outputs
+
+If an explicit result can take one of `|Ω|` possible values, then its controlled output channel has the conservative bound:
+
+```text
+I(S;Y) <= H(Y) <= log2(|Ω|)
+```
+
+Supakeep tracks these bounds across one runtime-minted task trajectory. For example:
+
+- boolean -> at most 1 explicit bit
+- 4 buckets -> at most 2 explicit bits
+- choose 1 of 15 candidates or no match -> 16 outputs -> at most 4 explicit bits
+
+This is an **explicit-channel bound**, not a claim of total information leakage. Timing, failures, side effects, covert channels and anything that bypasses Supakeep remain outside that guarantee.
+
+## Current prototype evidence
+
+All results below are synthetic engineering tests, not real-world privacy claims.
+
+### Blind personalization
+
+A reproducible demo supplies 15 public flight candidates and uses three private travel fields locally.
+
+- raw private values returned: **0**
+- selected result: one candidate ID
+- explicit output cardinality: **16**
+- worst-case explicit-channel capacity: **4 bits**
+- trajectory budget: **4 bits**
+- second distinct 4-bit decision in the same trajectory: **DENY**
+
+### Adaptive reconstruction
+
+A hidden integer in `0..999999` is attacked through adaptive greater-than queries.
+
+- unrestricted predicate oracle: exact recovery in **20** queries
+- naive per-field boolean accounting: exact recovery in **20** queries
+- Supakeep trajectory accounting: stopped on query **6**, with **31,250** candidates remaining
+
+### Cumulative-disclosure simulation
+
+Across 10,000 synthetic adversarial trajectories:
+
+- allow-all baseline crossing synthetic leak threshold: **100.00%**
+- per-call sensitive filter: **99.93%**
+- Supakeep cumulative budget: **0.00%**
+
+A separate benign smoke test completes **99.14%** of synthetic tasks without an approval interruption.
+
+See `bench/RESULTS.md` for assumptions and caveats.
+
+## Existing security/authority layer
+
+Supakeep also implements:
 
 ### Private context
 - opaque, revocable context leases
 - runtime-minted privacy trajectories
 - cross-agent trajectory accounting
-- disclosure levels: presence, boolean, derived, coarse, masked, exact
-- cumulative and sink-aware privacy budgets
-- compositional predicate accounting
+- cumulative and sink-aware disclosure budgets
 - user-controlled trust profiles
 - AI-footprint summaries without raw values
 
@@ -40,19 +115,18 @@ See `research/CONTEXT_KERNEL.md`.
 - agent / purpose / action / resource binding
 - spend, merchant and recipient constraints
 - allow / ask / deny policy engine
-- exact-action human approvals with replay protection
-- tamper-evident action receipt chain
+- exact-action approvals with replay protection
+- tamper-evident action receipts
 
 ### MCP enforcement
 - observed `tools/list` catalog
 - tool-call risk classification
-- explicit trust boundary for MCP annotations
-- fail-closed handling for unknown/untrusted tools
+- fail-closed unknown/untrusted tools
+- untrusted annotation handling
 - hard deny for raw secret material in tool arguments
-- exact-call approval binding
 - transparent MCP enforcement proxy
 - heuristic MCP exposure scanner
-- vault-backed authorization brokerage so credentials need not enter model context
+- vault-backed authorization brokerage
 
 ## Run
 
@@ -61,54 +135,29 @@ Requires Node.js 22+.
 ```bash
 npm start
 npm test
-node bench/predicate-reconstruction.js
+npm run bench
 ```
 
 Open `http://127.0.0.1:8787` for the current local dashboard.
 
-## Model
+## The target product
 
-```text
-private user state
-       │
-       ▼
- Supakeep Context Kernel
-       │
-       ├─ privacy trajectory
-       ├─ context leases
-       ├─ compositional disclosure ledger
-       ├─ encrypted credential broker
-       ├─ Grant verifier
-       └─ exact-action approval gate
-       │
-       ▼
-AI / agent / sub-agent
-       │
-       ▼
-apps · APIs · MCP servers · browser · payments
-```
+A user should eventually be able to tell any compatible AI:
 
-The intended default is that an AI receives the **minimum useful result of a computation over private state**, not a raw copy of that state.
+> **Book me the best Tokyo trip next month under my normal budget.**
 
-## Current evidence
+The AI searches and plans normally. Supakeep locally applies private calendar, budget, identity and preference state, returns only bounded decision outputs, and brokers passport/payment details directly to the authorized booking destination when execution requires them.
 
-The repository contains synthetic engineering tests, not a claim of real-world privacy safety.
+The user gets deep personalization. The AI provider does not need to own the personal profile that produced it.
 
-The original 10,000-trajectory simulation tests cumulative disclosure budgets. A newer adversarial reconstruction test gives an agent a boolean comparison oracle over a hidden integer in `0..999999`. Unrestricted and naive field-level predicate access can continue toward exact reconstruction; the current Supakeep prototype interrupts the adaptive sequence on the sixth distinct predicate, leaving 31,250 candidate values.
+That is the thesis we are now trying to falsify.
 
-That result demonstrates a mechanism invariant only. The research goal is to test whether trajectory-bound context computation can reduce recoverable private information while preserving useful agent task performance on real traces and against stronger inference attacks.
+## Research boundary
 
-## Next falsification targets
+Personal data stores, local recommendation, information-flow control, inference-leakage budgets, zero-knowledge predicates, opaque handles, task-conditioned minimization and on-device ranking all have substantial prior art. Supakeep should **not** claim those individual ideas as inventions.
 
-1. colluding agents within one trajectory
-2. colluding external sinks
-3. sink aliasing and destination canonicalization
-4. logically equivalent predicates expressed differently
-5. high-cardinality membership and set queries
-6. adversarial transforms that appear coarse but identify a user
-7. real MCP/A2A task traces with privacy, task-success, approval and latency measurements
-8. comparison against strong minimization, information-flow and inference-budget baselines
+The hypothesis worth testing is the system-level combination: a provider-neutral personal-AI runtime where agents send bounded computations toward user-owned context, exact values remain sealed until necessary execution boundaries, and cumulative information/authority is governed across agents and providers.
 
-Supakeep can only enforce context and actions routed through a boundary it controls. It is an alpha/reference implementation, not a production security product.
+Supakeep is currently an alpha/reference implementation, not a production security product.
 
-See `ARCHITECTURE.md`, `THREAT_MODEL.md`, `ROADMAP.md`, `research/PRODUCT_THESIS.md`, and `research/CONTEXT_KERNEL.md`.
+See `ARCHITECTURE.md`, `THREAT_MODEL.md`, `ROADMAP.md`, `research/PRODUCT_THESIS.md`, `research/CONTEXT_KERNEL.md`, and `research/BLIND_PERSONALIZATION.md`.
