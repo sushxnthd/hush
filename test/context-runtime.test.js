@@ -63,8 +63,8 @@ test('adaptive binary search is cut off before exact reconstruction',()=>{
     if(q.result) lo=mid+1; else hi=mid;
   }
   assert.equal(blocked,true);
-  assert.ok(hi-lo+1>1);
-  assert.ok(queries<20);
+  assert.equal(queries,6);
+  assert.equal(hi-lo+1,31250);
 });
 
 test('revoked lease cannot be queried',()=>{
