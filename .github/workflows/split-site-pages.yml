@@ -1,0 +1,112 @@
+name: Multi-page site routing
+
+on:
+  push:
+    paths:
+      - '.github/workflows/split-site-pages.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Split website into real pages
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          src = Path('index.html').read_text(encoding='utf-8')
+          head = src[:src.index('</head>') + len('</head>')]
+          script = src[src.rfind('<script>'):]
+
+          def between(start, end):
+              a = src.index(start)
+              b = src.index(end, a)
+              return src[a:b]
+
+          hero = between('<div class="hero" id="top">', '<article class="memo"')
+          memo = between('<article class="memo"', '<section class="section" id="what">')
+          what = between('<section class="section" id="what">', '<section class="section" id="production"')
+          production = between('<section class="section" id="production"', '<section class="section" id="security"')
+          security = between('<section class="section" id="security"', '<aside class="cta"')
+          cta = between('<aside class="cta"', '<section class="section" id="writing"')
+          writing = between('<section class="section" id="writing"', '<section class="section" id="careers"')
+
+          brandmark = '''<span class="brandmark"><svg viewBox="0 0 30 24" fill="none" aria-hidden="true"><path d="M2 4.5 9 11.5 2 18.5" stroke="currentColor" stroke-width="3"/><path d="M28 4.5 21 11.5 28 18.5" stroke="currentColor" stroke-width="3"/><path d="M11 3 19 21" stroke="currentColor" stroke-width="2" opacity=".5"/></svg></span>'''
+
+          def page_head(title, description):
+              out = re.sub(r'<title>.*?</title>', f'<title>{title}</title>', head, count=1, flags=re.S)
+              out = re.sub(r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{description}">', out, count=1)
+              return out
+
+          def rail(depth, current, toc):
+              root = './' if depth == 0 else '../'
+              current_attr = lambda name: ' aria-current="page"' if name == current else ''
+              toc_html = ''.join(f'<a href="#{sid}" data-section="{sid}">{label}</a>' for sid, label in toc)
+              return f'''<aside class="rail" aria-label="Site" data-reveal="load" style="--d:0ms">
+  <a class="brand" href="{root}">{brandmark}<span class="brandname">supakeep</span></a>
+  <div class="format-wrap"><div class="format-switch"><a aria-current="page" href="#top">Human</a><a href="https://github.com/sushxnthd/supakeep">Agent</a></div></div>
+  <span class="mobile-menu">Menu</span>
+  <nav class="nav nav-doors"><a href="{root}"{current_attr('home')}>Home</a><a href="{root}product/"{current_attr('product')}>Product</a><a href="{root}writing/"{current_attr('writing')}>Writing</a><a href="{root}changelog/"{current_attr('changelog')}>Changelog</a><a href="https://github.com/sushxnthd/supakeep/tree/main/research">Research</a><a href="https://github.com/sushxnthd/supakeep">Docs</a><a href="https://github.com/sushxnthd/supakeep">GitHub</a></nav>
+  <hr class="rail-rule">
+  <nav class="nav nav-here" aria-label="Sections" data-toc><span class="nav-ruler" aria-hidden="true"></span>{toc_html}</nav><span class="nav-mark" aria-hidden="true"></span>
+</aside>'''
+
+          def footer(depth):
+              root = './' if depth == 0 else '../'
+              return f'''<footer class="foot" data-reveal><div class="foot-grid"><div class="foot-brand"><a class="brand" href="{root}">{brandmark}<span class="brandname">supakeep</span></a><p class="foot-line">Private context and authority for AI agents.</p><span class="foot-place">Local first</span></div><nav class="foot-group"><span class="foot-head">Product</span><ul class="foot-links"><li><a href="{root}product/">Product</a></li><li><a href="{root}product/#production">Evidence</a></li><li><a href="https://github.com/sushxnthd/supakeep">Docs</a></li></ul></nav><nav class="foot-group"><span class="foot-head">Research</span><ul class="foot-links"><li><a href="{root}writing/">Writing</a></li><li><a href="https://github.com/sushxnthd/supakeep/blob/main/THREAT_MODEL.md">Threat model</a></li><li><a href="https://github.com/sushxnthd/supakeep/blob/main/ROADMAP.md">Roadmap</a></li></ul></nav><nav class="foot-group"><span class="foot-head">Connect</span><ul class="foot-links"><li><a href="{root}changelog/">Changelog</a></li><li><a href="https://github.com/sushxnthd/supakeep">GitHub</a></li><li><a href="#top">Back to top ↑</a></li></ul></nav></div><div class="foot-legal"><span>© 2026 Supakeep</span><a href="https://github.com/sushxnthd/supakeep/blob/main/LICENSE">License</a><a href="https://github.com/sushxnthd/supakeep/blob/main/THREAT_MODEL.md">Responsible disclosure</a><span class="foot-status">● Alpha</span><a class="foot-top" href="#top">Back to top ↑</a></div></footer>'''
+
+          def shell(depth, current, title, description, body, toc):
+              return page_head(title, description) + '\n<body>\n<div class="page">\n' + rail(depth, current, toc) + '\n<main class="col" id="content">\n' + body + '\n' + footer(depth) + '\n</main>\n</div>\n' + script
+
+          # Home keeps only the actual homepage narrative. Cross-page anchors become real routes.
+          home_body = (hero + memo + cta)
+          home_body = home_body.replace('href="#what"', 'href="./product/"')
+          home_body = home_body.replace('href="#production"', 'href="./product/#production"')
+          home_body = home_body.replace('href="#writing"', 'href="./writing/"')
+          home = shell(0, 'home', 'Supakeep — Private Mode for every AI', 'Supakeep is building the private context and authority layer for AI agents.', home_body, [('top','Overview'),('memo','Mission')])
+
+          product_hero = '''<div class="hero" id="top"><span class="note" data-reveal="load" style="--d:40ms"><span class="note-live"></span><span>Product</span></span><h1 class="statement" data-reveal="load" style="--d:120ms">Private context and authority, without handing the model your life.</h1><p class="dek" data-reveal="load" style="--d:200ms">Supakeep keeps personal state outside provider context, answers bounded questions locally, and brokers tightly scoped real-world actions.</p></div>\n'''
+          product_body = product_hero + what + production + security + cta
+          product = shell(1, 'product', 'Product — Supakeep', 'How Supakeep provides private context, bounded disclosure and constrained authority for AI agents.', product_body, [('top','Overview'),('what','What we do'),('production','Evidence'),('security','Security')])
+
+          writing_hero = '''<div class="hero" id="top"><span class="note" data-reveal="load" style="--d:40ms"><span class="note-live"></span><span>Writing</span></span><h1 class="statement" data-reveal="load" style="--d:120ms">Research notes on private context, agent authority and measurable disclosure.</h1><p class="dek" data-reveal="load" style="--d:200ms">Technical notes, threat models and falsifiable claims behind the system.</p></div>\n'''
+          writing_body = writing_hero + writing
+          writing_page = shell(1, 'writing', 'Writing — Supakeep', 'Research notes and technical writing from Supakeep.', writing_body, [('top','Overview'),('writing','Writing')])
+
+          changelog_body = '''<div class="hero" id="top"><span class="note" data-reveal="load" style="--d:40ms"><span class="note-live"></span><span>Changelog</span></span><h1 class="statement" data-reveal="load" style="--d:120ms">What changed, and what the change actually proves.</h1><p class="dek" data-reveal="load" style="--d:200ms">A concise record of shipped research and engineering milestones.</p></div>
+<section class="section" id="latest" data-reveal><h2>October 4, 2026</h2><dl class="rows">
+<div class="row"><span class="row-icon">04</span><dt>Website moved to real page routes.</dt><dd>Home, Product, Writing and Changelog now have independent URLs and page-local navigation instead of sharing one long document.</dd></div>
+<div class="row"><span class="row-icon">03</span><dt>Private decision runtime and disclosure accounting.</dt><dd>Bounded outputs, cumulative trajectory accounting and blind-personalization experiments are represented as reproducible checks rather than broad privacy claims.</dd></div>
+<div class="row"><span class="row-icon">02</span><dt>MCP enforcement boundary.</dt><dd>Tool-call guarding, hard denies, approval binding, credential brokerage and exposure scanning were added to the project.</dd></div>
+<div class="row"><span class="row-icon">01</span><dt>Supakeep alpha.</dt><dd>The initial local vault, scoped grants, approvals, receipts and dashboard established the first end-to-end product surface.</dd></div>
+</dl></section>
+<section class="section" id="status" data-reveal><h2 class="eyebrow">Current status</h2><p class="creed">Alpha. Claims remain deliberately narrow: <b>measurable, bounded disclosure</b>, constrained authority and reproducible tests.</p><a class="more" href="https://github.com/sushxnthd/supakeep/commits/main">View commit history ↗</a></section>'''
+          changelog = shell(1, 'changelog', 'Changelog — Supakeep', 'Supakeep product and research changelog.', changelog_body, [('top','Overview'),('latest','Latest'),('status','Status')])
+
+          Path('index.html').write_text(home, encoding='utf-8')
+          for path, content in [('product/index.html', product), ('writing/index.html', writing_page), ('changelog/index.html', changelog)]:
+              p = Path(path); p.parent.mkdir(parents=True, exist_ok=True); p.write_text(content, encoding='utf-8')
+
+          # Basic route/link assertions.
+          checks = {
+              'index.html': ['href="./product/"','href="./writing/"','href="./changelog/"'],
+              'product/index.html': ['href="../"','aria-current="page">Product</a>'],
+              'writing/index.html': ['aria-current="page">Writing</a>'],
+              'changelog/index.html': ['aria-current="page">Changelog</a>'],
+          }
+          for path, needles in checks.items():
+              text = Path(path).read_text(encoding='utf-8')
+              for needle in needles:
+                  assert needle in text, (path, needle)
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html product/index.html writing/index.html changelog/index.html
+          git commit -m "Split website into dedicated pages"
+          git push
