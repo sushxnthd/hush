@@ -27,10 +27,14 @@ function masked(value) {
 /**
  * Experimental personal-context runtime.
  *
- * Agents receive opaque lease handles instead of raw context. They may ask bounded
- * questions about a value. Each distinct predicate is accounted as a distinct
- * disclosure so adaptive query sequences cannot evade cumulative privacy budgets
- * by repeatedly asking same-level boolean questions about the same private atom.
+ * Agents receive opaque lease handles instead of raw context. Every lease belongs
+ * to a Supakeep-minted privacy trajectory representing one user-authorized task.
+ * Agents cannot rename the purpose to reset privacy accounting: the opaque
+ * trajectory id is the accounting scope and follows delegated/sub-agent leases.
+ *
+ * Each distinct predicate is accounted as a distinct disclosure so adaptive query
+ * sequences cannot evade cumulative privacy budgets by repeatedly asking same-level
+ * boolean questions about the same private atom.
  */
 export class PrivateContextRuntime {
   constructor({trustRegistry = new TrustRegistry(), ledger = null, now = () => Date.now()} = {}) {
@@ -38,6 +42,7 @@ export class PrivateContextRuntime {
     this.ledger = ledger ?? new DisclosureLedger({trustRegistry});
     this.now = now;
     this.atoms = new Map();
+    this.trajectories = new Map();
     this.leases = new Map();
   }
 
@@ -47,22 +52,62 @@ export class PrivateContextRuntime {
     return {id: atomId, category: String(category)};
   }
 
-  issueLease({agent, purpose, sink, atomId, ttlMs = 5 * 60 * 1000}) {
+  beginTrajectory({purpose='unspecified', ttlMs = 30 * 60 * 1000} = {}) {
+    const id = `traj_${crypto.randomBytes(24).toString('base64url')}`;
+    const trajectory = {
+      id,
+      purposeLabel: String(purpose),
+      issuedAt: this.now(),
+      expiresAt: this.now() + Math.max(1000, Math.min(Number(ttlMs), 24 * 60 * 60 * 1000)),
+      revokedAt: null
+    };
+    this.trajectories.set(id, trajectory);
+    return {trajectoryId:id, purpose:trajectory.purposeLabel, expiresAt:trajectory.expiresAt};
+  }
+
+  revokeTrajectory(trajectoryId) {
+    const trajectory = this.trajectories.get(String(trajectoryId));
+    if (!trajectory) return false;
+    trajectory.revokedAt = this.now();
+    return true;
+  }
+
+  _trajectory(trajectoryId) {
+    const trajectory = this.trajectories.get(String(trajectoryId));
+    if (!trajectory) throw new Error('Privacy trajectory not found');
+    if (trajectory.revokedAt) throw new Error('Privacy trajectory revoked');
+    if (this.now() >= trajectory.expiresAt) throw new Error('Privacy trajectory expired');
+    return trajectory;
+  }
+
+  issueLease({agent, sink, atomId, trajectoryId, ttlMs = 5 * 60 * 1000}) {
     const atom = this.atoms.get(String(atomId));
     if (!atom) throw new Error('Context atom not found');
+    const trajectory = this._trajectory(trajectoryId);
     const handle = `ctx_${crypto.randomBytes(24).toString('base64url')}`;
+    const expiresAt = Math.min(
+      trajectory.expiresAt,
+      this.now() + Math.max(1000, Math.min(Number(ttlMs), 60 * 60 * 1000))
+    );
     const lease = {
       handle,
       agent: String(agent || 'unknown-agent'),
-      purpose: String(purpose || 'unspecified'),
       sink: String(sink || 'unknown-sink'),
       atomId: atom.id,
+      trajectoryId: trajectory.id,
       issuedAt: this.now(),
-      expiresAt: this.now() + Math.max(1000, Math.min(Number(ttlMs), 60 * 60 * 1000)),
+      expiresAt,
       revokedAt: null
     };
     this.leases.set(handle, lease);
-    return {handle, agent: lease.agent, purpose: lease.purpose, sink: lease.sink, expiresAt: lease.expiresAt};
+    return {
+      handle,
+      agent: lease.agent,
+      sink: lease.sink,
+      trajectoryId: trajectory.id,
+      purpose: trajectory.purposeLabel,
+      expiresAt: lease.expiresAt
+    };
   }
 
   revoke(handle) {
@@ -72,14 +117,14 @@ export class PrivateContextRuntime {
     return true;
   }
 
-  _lease(handle, {agent, purpose, sink}) {
+  _lease(handle, {agent, sink}) {
     const lease = this.leases.get(String(handle));
     if (!lease) throw new Error('Context lease not found');
     if (lease.revokedAt) throw new Error('Context lease revoked');
     if (this.now() >= lease.expiresAt) throw new Error('Context lease expired');
     if (lease.agent !== String(agent)) throw new Error('Context lease is bound to another agent');
-    if (lease.purpose !== String(purpose)) throw new Error('Context lease is bound to another purpose');
     if (lease.sink !== String(sink)) throw new Error('Context lease is bound to another sink');
+    this._trajectory(lease.trajectoryId);
     return lease;
   }
 
@@ -91,8 +136,8 @@ export class PrivateContextRuntime {
       disclosureAtomId = `${atom.id}:presence`;
     } else if (BOOLEAN_OPS.has(op)) {
       level = 'boolean';
-      // Critical: distinct predicates are distinct disclosures. Repeating the exact
-      // same predicate is free, but adaptive threshold changes consume more budget.
+      // Distinct predicates are distinct disclosures. Repeating the exact same
+      // predicate is free; adaptive threshold changes consume more budget.
       const predicateId = sha256(canonicalize({op,arg}));
       disclosureAtomId = `${atom.id}:predicate:${predicateId}`;
     } else if (op === 'masked') {
@@ -106,7 +151,8 @@ export class PrivateContextRuntime {
     }
     return {
       agent: lease.agent,
-      purpose: lease.purpose,
+      // The accounting scope is runtime-minted, not agent-supplied prose.
+      purpose: lease.trajectoryId,
       sink: lease.sink,
       category: atom.category,
       level,
@@ -114,10 +160,11 @@ export class PrivateContextRuntime {
     };
   }
 
-  query({handle, agent, purpose, sink, op, arg, approvedByHuman=false}) {
-    const lease = this._lease(handle, {agent,purpose,sink});
+  query({handle, agent, sink, op, arg, approvedByHuman=false}) {
+    const lease = this._lease(handle, {agent,sink});
     const atom = this.atoms.get(lease.atomId);
     if (!atom) throw new Error('Context atom no longer exists');
+    const trajectory = this._trajectory(lease.trajectoryId);
     const request = this._disclosureRequest(lease, atom, String(op), arg);
     const evaluation = this.ledger.evaluate(request, this.now());
     if (evaluation.decision === 'deny') return {decision:'deny', reason:evaluation.reason, privacy:evaluation};
@@ -140,7 +187,8 @@ export class PrivateContextRuntime {
         v:1,
         at:this.now(),
         agent:lease.agent,
-        purpose:lease.purpose,
+        trajectoryId:lease.trajectoryId,
+        purpose:trajectory.purposeLabel,
         sink:lease.sink,
         operation:String(op),
         queryHash:sha256(canonicalize({op,arg})),
