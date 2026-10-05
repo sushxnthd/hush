@@ -105,6 +105,25 @@ export const NATIVE_MCP_TOOLS=Object.freeze([
     annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false}
   },
   {
+    name:'hush_route_task',
+    description:'Choose among user-registered AI models using declared capability, cost, latency, locality, trust, and the private-context disclosure mode required by the task. Hush never routes a task declared to require raw private context.',
+    inputSchema:{
+      type:'object',
+      properties:{
+        task:{type:'string',maxLength:1000},
+        requiredCapabilities:{type:'array',items:{type:'string',maxLength:120},maxItems:32},
+        privateContext:{enum:['none','bounded','sanitized'],default:'none'},
+        privacyPreference:{enum:['strict','balanced','capability'],default:'balanced'},
+        requiresTools:{type:'boolean'},
+        maxInputCostPerMillion:{type:'number',minimum:0},
+        maxOutputCostPerMillion:{type:'number',minimum:0},
+        maxLatencyMs:{type:'number',minimum:0}
+      },
+      additionalProperties:false
+    },
+    annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false}
+  },
+  {
     name:'hush_propose_memory',
     description:'Propose a fact or preference for the user-controlled shared Hush memory. This does not write memory immediately: the proposal is held for explicit local approval, and its private value is not echoed back in the tool response.',
     inputSchema:{
@@ -167,6 +186,10 @@ export function callNativeMcpTool({name,args={},kernel,agent='unknown-agent',sin
     if(tool==='hush_private_decision'){
       if(!args.trajectoryId||!args.program) throw new Error('trajectoryId and program are required');
       const result=kernel.run({trajectoryId:String(args.trajectoryId),agent:String(agent),sink:String(sink),program:args.program});
+      return toolResult(result,{isError:result.decision!=='allow'});
+    }
+    if(tool==='hush_route_task'){
+      const result=kernel.routeTask(args);
       return toolResult(result,{isError:result.decision!=='allow'});
     }
     if(tool==='hush_propose_memory'){
