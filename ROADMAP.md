@@ -1,87 +1,90 @@
 # Roadmap
 
-Hush's goal is not to become another password manager or generic MCP gateway. The roadmap is organized around proving and productizing the **personal trust layer for AI**.
+Hush is the user-controlled trust layer between people and AI systems: private context stays under user control, AI receives only the minimum result it needs, and side effects require scoped authority.
 
-## Phase 0 — alpha enforcement core
+## Current state — 2026-10-05
 
-Status: largely implemented.
+### Implemented and merged
 
-- encrypted local vault
-- signed scoped Grants
-- exact-action approvals
-- allow / ask / deny policy
-- tamper-evident receipts
-- prompt secret detection/redaction
-- disclosure ledger and trust profiles
-- cumulative purpose/sink privacy budgets
-- cross-agent privacy accounting
-- MCP tool catalog, classifier and enforcement proxy
-- heuristic MCP exposure scan
-- vault-backed authorization brokerage
-- synthetic privacy and utility benchmarks
+- encrypted local Context Kernel and durable sealed state
+- signed scoped Grants, allow / ask / deny policy, exact-action approvals, tamper-evident receipts
+- path-free semantic private queries and task-aware context compilation
+- cumulative disclosure accounting, cross-agent accounting, reconstruction / partition / joint-choice firewalls
+- approval-gated sanitized-context fallback for tasks that cannot be expressed as bounded private computation
+- encrypted connector ingestion plus bounded live clients for Gmail, Google Calendar, Google Drive, Google Contacts and GitHub
+- provider-neutral shared memory with approval-gated writes
+- privacy-aware model routing
+- universal consent rules including allow-once, always-allow, ask and never
+- secretless action brokerage with opaque credential handles and replay-safe action tickets
+- signed encrypted multi-device sync and ciphertext-only recovery kits
+- browser, desktop and mobile companion surfaces built on the same loopback-safe client SDK
+- executable privacy / utility / reconstruction / parity benchmarks in CI
+- preregistered internal privacy–utility evaluation
+- frozen external contextual-integrity confirmatory evaluation with all preregistered gates passing
 
-## Phase 1 — falsify the privacy thesis
+### What the current evidence establishes
 
-Goal: determine whether cumulative disclosure accounting provides a measurable advantage without unacceptable approval fatigue.
+Hush now has reproducible evidence that its context boundary can reduce protected-context exposure while preserving high task-context completeness on a frozen external holdout. This is meaningful validation of the architecture, but it is not yet proof of production readiness or universal superiority.
 
-- adaptive multi-turn inference attacks
-- multi-agent collusion attacks
-- colluding-sink scenarios
-- prompt-injection attacks against category/purpose/sink labeling
-- privacy vs task-success Pareto curves
-- approval-fatigue measurement
-- gateway latency benchmarks
-- replay real MCP traces from multiple agent stacks
+The largest measured research weakness is still absolute protected-context violation on the external holdout. Independent reproduction, semantic-leakage scoring and full end-to-end task evaluation remain open.
 
-Success criterion: a reproducible benchmark where Hush reduces cumulative leakage/exposure while retaining useful task completion, with all assumptions and synthetic components clearly separated from real-world evidence.
+## Milestone A — zero-terminal provider onboarding
 
-## Phase 2 — real integrations
+Goal: make Hush usable by a normal consumer without manually supplying bearer tokens or running setup commands.
 
-- Google OAuth connector with brokered tokens
-- GitHub OAuth connector with brokered tokens
-- MCP Streamable HTTP interoperability hardening
-- browser extension for page/action mediation
-- connector-specific minimum-disclosure transformations
+- OAuth 2.0 / PKCE onboarding for Google and GitHub
+- local token brokerage so long-lived credentials never enter model context
+- encrypted refresh-token storage and explicit connector revocation
+- connection-health and re-authentication states in the companion UI
+- one-click initial sync into the Context Kernel
+- connector-specific least-privilege scopes and bounded collection defaults
 
-Success criterion: complete real tasks without placing long-lived credentials into model context and with verifiable action/disclosure receipts.
+Success criterion: a fresh user can install Hush, connect supported accounts through browser consent, and reach a usable private context state without touching a terminal or copying an access token.
 
-## Phase 3 — consumer trust surface
+## Milestone B — real end-to-end task proof
+
+Goal: demonstrate that Hush completes useful tasks with materially less private-context exposure than an unguarded semantic context path.
+
+- task-success benchmark spanning search, scheduling, document lookup and bounded actions
+- real connector data fixtures separated from synthetic research fixtures
+- semantic leakage scoring in addition to exact-value leakage
+- approval count and approval-friction metrics
+- gateway latency and action latency measurements
+- multi-agent collusion, colluding-sink and prompt-injection stress tests
+- side-effect consequences and action-result leakage tests
+
+Success criterion: preregistered evidence of a better privacy / task-success tradeoff on end-to-end tasks, with no hidden tuning on the final holdout.
+
+## Milestone C — consumer trust surface
 
 - AI Footprint dashboard across connected agents
 - per-agent trust profiles
-- disclosure history by category/purpose/destination
-- authority inventory: send / buy / modify / delete / publish
-- revocation and emergency lockdown
-- understandable approval UX
+- disclosure history by category, purpose and destination
+- authority inventory for send / buy / modify / delete / publish
+- global revocation and emergency lockdown
+- understandable approval UX with clear consequences
+- recovery, device and connector management
 
-Success criterion: a user can answer, from one place, what each AI knows, what it can do, where information went, and what happened on their behalf.
+Success criterion: from one screen, a user can understand what each AI knows, what it may do, where information went, what happened on the user's behalf and how to revoke it.
 
-## Phase 4 — hardened local product
+## Milestone D — hardened local product
 
-- durable encrypted storage
-- OS keychain / secure enclave integration
-- signed updates
-- crash-safe receipt chain
-- policy migration/versioning
-- backup and recovery without exposing plaintext secrets
-- desktop packaging
+- OS keychain / secure enclave integration where available
+- signed installers and signed updates
+- crash-safe receipt and sync state
+- policy migration / versioning
+- native desktop packaging and browser-store packaging
+- authenticated device pairing for mobile
+- adversarial security review and independent reproduction of core claims
 
-## Phase 5 — portable trust layer
+## Milestone E — portable trust layer
 
-- documented Grant format
-- documented receipt format
-- developer SDK
+- documented Grant and receipt formats
+- stable developer SDK
 - adapters for major agent runtimes
 - standards alignment where practical
-- third-party verification / external red-team work
+- external red-team work and third-party verification
 
-## Non-goals for now
+## Product rule
 
-- largest tool catalog
-- password-manager replacement
-- enterprise IAM suite
-- proprietary OAuth replacement
-- generic AI memory product
-- model training company
-
-The product should only add features that strengthen Hush's position as the neutral, user-controlled trust layer across AI systems.
+New features should strengthen one of four things: minimum disclosure, user-owned context, scoped authority, or verifiable accountability. Hush should not drift into becoming a generic password manager, generic memory product, enterprise IAM suite, or model-training company.
