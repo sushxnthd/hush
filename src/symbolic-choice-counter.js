@@ -168,6 +168,78 @@ function classifyChoice(program,box,fields,evaluateProgram){
   return {known:false};
 }
 
+
+function classifyPredicate(program,box,fields,evaluateProgram){
+  const field=String(program?.private||'');
+  const range=box[field];
+  if(!range) return {known:false};
+  if(range[0]===range[1]) return {known:true,result:evaluateProgram(program,exactAssignment(box,fields))};
+  const [lo,hi]=range;
+  const op=String(program?.op||'');
+  const raw=program?.value;
+
+  if(op==='eq'||op==='neq'){
+    const v=Number(raw);
+    const equalPossible=Number.isSafeInteger(v)&&v>=lo&&v<=hi;
+    const equalCertain=lo===hi&&lo===v;
+    if(!equalPossible) return {known:true,result:op==='neq'};
+    if(equalCertain) return {known:true,result:op==='eq'};
+    return {known:false};
+  }
+
+  if(op==='in'||op==='notIn'){
+    if(!Array.isArray(raw)) return {known:false};
+    const values=[...new Set(raw.map(Number).filter(value=>Number.isSafeInteger(value)&&value>=lo&&value<=hi))];
+    const covered=values.length;
+    const width=hi-lo+1;
+    if(covered===0) return {known:true,result:op==='notIn'};
+    if(covered===width) return {known:true,result:op==='in'};
+    return {known:false};
+  }
+
+  const x=Number(raw);
+  if(!Number.isFinite(x)) return {known:false};
+  if(op==='lt'){
+    if(hi<x) return {known:true,result:true};
+    if(lo>=x) return {known:true,result:false};
+  }else if(op==='lte'){
+    if(hi<=x) return {known:true,result:true};
+    if(lo>x) return {known:true,result:false};
+  }else if(op==='gt'){
+    if(lo>x) return {known:true,result:true};
+    if(hi<=x) return {known:true,result:false};
+  }else if(op==='gte'){
+    if(lo>=x) return {known:true,result:true};
+    if(hi<x) return {known:true,result:false};
+  }
+  return {known:false};
+}
+
+function classifyBucket(program,box,fields,evaluateProgram){
+  const field=String(program?.private||'');
+  const range=box[field];
+  if(!range) return {known:false};
+  if(range[0]===range[1]) return {known:true,result:evaluateProgram(program,exactAssignment(box,fields))};
+  const thresholds=Array.isArray(program?.thresholds)?program.thresholds.map(Number):[];
+  if(!thresholds.length||!thresholds.every(Number.isFinite)) return {known:false};
+  const bucketAt=value=>{
+    let bucket=0;
+    while(bucket<thresholds.length&&value>thresholds[bucket]) bucket++;
+    return bucket;
+  };
+  const a=bucketAt(range[0]),b=bucketAt(range[1]);
+  return a===b?{known:true,result:a}:{known:false};
+}
+
+function classifyProgram(program,box,fields,evaluateProgram){
+  const kind=String(program?.kind||'');
+  if(kind==='choose') return classifyChoice(program,box,fields,evaluateProgram);
+  if(kind==='predicate') return classifyPredicate(program,box,fields,evaluateProgram);
+  if(kind==='bucket') return classifyBucket(program,box,fields,evaluateProgram);
+  if(isSingleton(box,fields)) return {known:true,result:evaluateProgram(program,exactAssignment(box,fields))};
+  return {known:false};
+}
+
 function splitBox(box,fields){
   let splitField=null,maxWidth=0;
   for(const field of fields){
@@ -239,7 +311,7 @@ export function countChoicePosterior({fields,fieldStates,observations=[],program
 
   const walkAfter=(box)=>{
     visit();
-    const classification=classifyChoice(program,box,ordered,evaluateProgram);
+    const classification=classifyProgram(program,box,ordered,evaluateProgram);
     if(classification.known){
       if(Object.is(classification.result,result)) add('after',boxCount(box,ordered));
       return;
@@ -256,7 +328,7 @@ export function countChoicePosterior({fields,fieldStates,observations=[],program
   const walkBefore=(box)=>{
     visit();
     for(const observation of prior){
-      const classification=classifyChoice(observation.program,box,ordered,evaluateProgram);
+      const classification=classifyProgram(observation.program,box,ordered,evaluateProgram);
       if(classification.known && !Object.is(classification.result,observation.result)) return;
       if(!classification.known){
         const children=splitBox(box,ordered);

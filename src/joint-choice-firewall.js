@@ -86,6 +86,11 @@ export class JointChoiceReconstructionFirewall {
     return before!==this.observations.length;
   }
 
+  hasObservationFor(fields=[]){
+    const requested=uniqueFields(fields);
+    return requested.length>0&&this.observations.some(observation=>intersects(requested,observation.fields));
+  }
+
   evaluate({fields,getFieldState,program,result,evaluateProgram}={}){
     const requested=uniqueFields(fields);
     if(requested.length<1) return {decision:'skip',reason:'Choice accounting requires at least one private field.'};
