@@ -1,0 +1,85 @@
+name: research-agentcibench-dev-v1g
+
+on:
+  push:
+    branches:
+      - research/agentcibench-task-evidence-v1g
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AGENTCIBENCH_SHA: 7b3fad424d0c5a450ac3bc3dc4050c38094c6dc6
+  TOKENIZERS_PARALLELISM: 'false'
+
+jobs:
+  development-sweep:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned CPU model runtime
+        run: |
+          python -m pip install --disable-pip-version-check --index-url https://download.pytorch.org/whl/cpu 'torch==2.5.1'
+          python -m pip install --disable-pip-version-check 'transformers==4.46.3' 'safetensors==0.4.5' 'numpy==2.1.3'
+      - name: Fetch pinned independent AgentCIBench revision
+        run: |
+          git clone --filter=blob:none https://github.com/UKPLab/emnlp2026-agentcibench.git agentcibench
+          git -C agentcibench checkout --detach "${AGENTCIBENCH_SHA}"
+          test "$(git -C agentcibench rev-parse HEAD)" = "${AGENTCIBENCH_SHA}"
+      - name: Run v1g development-only task-evidence sweep
+        id: evaluator
+        run: |
+          set +e
+          python research/external/agentcibench_context_dev_v1g.py \
+            --dev-dir agentcibench/data/generated_merged \
+            --holdout-dir agentcibench/data/eval_set_e2e_50 \
+            --output agentcibench-dev-v1g.json | tee agentcibench-dev-v1g.txt
+          code=${PIPESTATUS[0]}
+          echo "${code}" > agentcibench-dev-v1g.exit
+          if [ -f agentcibench-dev-v1g.json ]; then sha256sum agentcibench-dev-v1g.json > agentcibench-dev-v1g.sha256; fi
+          exit 0
+      - name: Record provenance
+        if: always()
+        run: |
+          {
+            echo "hush_sha=$(git rev-parse HEAD)"
+            echo "agentcibench_sha=$(git -C agentcibench rev-parse HEAD)"
+            echo "python=$(python --version 2>&1)"
+            python - <<'PY'
+          import importlib.metadata as m
+          for p in ['torch','transformers','safetensors','numpy']:
+              print(f'{p}={m.version(p)}')
+          PY
+          } | tee agentcibench-dev-v1g-runtime.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hush-agentcibench-dev-v1g-${{ github.sha }}
+          path: |
+            agentcibench-dev-v1g.json
+            agentcibench-dev-v1g.txt
+            agentcibench-dev-v1g.sha256
+            agentcibench-dev-v1g.exit
+            agentcibench-dev-v1g-runtime.txt
+          if-no-files-found: warn
+      - name: Interpret v1g sweep
+        if: always()
+        run: |
+          test -f agentcibench-dev-v1g.exit || { echo 'No evaluator exit record' >&2; exit 1; }
+          code="$(cat agentcibench-dev-v1g.exit)"
+          if [ "${code}" = '1' ]; then
+            echo 'Technical evaluator error.' >&2
+            exit 1
+          elif [ "${code}" = '2' ]; then
+            echo 'No v1g configuration met freeze-readiness gates. Result preserved.'
+          elif [ "${code}" = '0' ]; then
+            echo 'At least one v1g configuration met the pre-existing freeze-readiness gates on development data.'
+          else
+            echo "Unexpected evaluator exit ${code}." >&2
+            exit 1
+          fi
