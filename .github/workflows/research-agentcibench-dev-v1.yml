@@ -27,17 +27,17 @@ jobs:
           git clone --filter=blob:none https://github.com/UKPLab/emnlp2026-agentcibench.git agentcibench
           git -C agentcibench checkout --detach 7b3fad424d0c5a450ac3bc3dc4050c38094c6dc6
           test "$(git -C agentcibench rev-parse HEAD)" = '7b3fad424d0c5a450ac3bc3dc4050c38094c6dc6'
-      - name: Run atomic development-only context-boundary sweep
+      - name: Run final development-only freeze-readiness sweep
         env:
           TOKENIZERS_PARALLELISM: 'false'
         run: |
           set +e
-          python research/external/agentcibench_context_dev_v1c.py \
+          python research/external/agentcibench_context_dev_v1d.py \
             --dev-dir agentcibench/data/generated_merged \
             --holdout-dir agentcibench/data/eval_set_e2e_50 \
-            --output agentcibench-dev-v1c.json | tee agentcibench-dev-v1c.txt
+            --output agentcibench-dev-v1d.json | tee agentcibench-dev-v1d.txt
           code=${PIPESTATUS[0]}
-          echo "evaluator_exit=${code}" > agentcibench-dev-v1c-exit.txt
+          echo "evaluator_exit=${code}" > agentcibench-dev-v1d-exit.txt
           exit 0
       - name: Record provenance
         if: always()
@@ -51,16 +51,16 @@ jobs:
           for p in ['torch','transformers','safetensors','numpy']:
               print(f'{p}={m.version(p)}')
           PY
-          } | tee agentcibench-dev-v1c-runtime.txt
-          if [ -f agentcibench-dev-v1c.json ]; then sha256sum agentcibench-dev-v1c.json > agentcibench-dev-v1c.sha256; fi
+          } | tee agentcibench-dev-v1d-runtime.txt
+          if [ -f agentcibench-dev-v1d.json ]; then sha256sum agentcibench-dev-v1d.json > agentcibench-dev-v1d.sha256; fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: agentcibench-dev-v1c-${{ github.sha }}
+          name: agentcibench-dev-v1d-${{ github.sha }}
           path: |
-            agentcibench-dev-v1c.json
-            agentcibench-dev-v1c.txt
-            agentcibench-dev-v1c-runtime.txt
-            agentcibench-dev-v1c.sha256
-            agentcibench-dev-v1c-exit.txt
+            agentcibench-dev-v1d.json
+            agentcibench-dev-v1d.txt
+            agentcibench-dev-v1d-runtime.txt
+            agentcibench-dev-v1d.sha256
+            agentcibench-dev-v1d-exit.txt
           if-no-files-found: warn
