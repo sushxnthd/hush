@@ -63,12 +63,14 @@ function scoreRecord(record,ref){
     const categoryTokens=new Set(tokens(record.category));
     const tagTokens=new Set(record.tags.flatMap(tokens));
     if(queryNorm&&queryNorm===label) score+=24;
+    let queryScore=0;
     for(const token of q){
-      if(labelTokens.has(token)) score+=6;
-      if(tagTokens.has(token)) score+=5;
-      if(categoryTokens.has(token)) score+=3;
+      if(labelTokens.has(token)) queryScore+=6;
+      if(tagTokens.has(token)) queryScore+=5;
+      if(categoryTokens.has(token)) queryScore+=3;
     }
-    if(score===0) return null;
+    if(queryScore===0) return null;
+    score+=queryScore;
   }
   return score;
 }
@@ -104,6 +106,17 @@ function compilePrivateSlot(records,node){
   return {...structuredClone(rest),private:resolvePrivateRef(records,privateRef)};
 }
 
+function compilePreference(records,node){
+  if(!node||typeof node!=='object'||Array.isArray(node)) throw new ContextSelectionError('Preference clause must be an object.',{code:'invalid_program'});
+  if(Object.hasOwn(node,'private')) throw new ContextSelectionError('Semantic private programs must use privateRef rather than a raw private path.',{code:'raw_path_forbidden'});
+  const kind=text(node.kind);
+  if(kind==='lowerPublic'||kind==='higherPublic'){
+    if(Object.hasOwn(node,'privateRef')) throw new ContextSelectionError('Public-only preferences must not include privateRef.',{code:'invalid_program'});
+    return structuredClone(node);
+  }
+  return compilePrivateSlot(records,node);
+}
+
 /**
  * Compile a path-free semantic Private Decision Program into the existing bounded
  * PDP language. The compiled program is intended to stay inside ContextKernel.
@@ -116,9 +129,9 @@ export function compileSemanticProgram(records,program){
   if(kind==='predicate'||kind==='bucket') return compilePrivateSlot(records,program);
 
   if(kind==='choose'){
-    if(Object.hasOwn(program,'privateRef')) throw new ContextSelectionError('Choose programs attach privateRef to constraints and preferences.',{code:'invalid_program'});
+    if(Object.hasOwn(program,'privateRef')) throw new ContextSelectionError('Choose programs attach privateRef to constraints and private preferences.',{code:'invalid_program'});
     const constraints=Array.isArray(program.constraints)?program.constraints.map(clause=>compilePrivateSlot(records,clause)):[];
-    const preferences=Array.isArray(program.preferences)?program.preferences.map(clause=>compilePrivateSlot(records,clause)):[];
+    const preferences=Array.isArray(program.preferences)?program.preferences.map(clause=>compilePreference(records,clause)):[];
     return {
       ...structuredClone(program),
       constraints,
