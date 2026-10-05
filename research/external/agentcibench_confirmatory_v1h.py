@@ -150,7 +150,7 @@ def main() -> int:
         ap.add_argument("--output", type=Path, default=Path("agentcibench-confirmatory-v1h.json"))
         args = ap.parse_args()
 
-        originals, public, gold = load_holdout(args.holdout_dir)
+        _, public, gold = load_holdout(args.holdout_dir)
         if any("ground_truth" in s for s in public):
             raise RuntimeError("Gold isolation failed before retrieval")
         models = base.run_models(public)
@@ -188,7 +188,7 @@ def main() -> int:
 
         print("AgentCIBench frozen holdout re-evaluation v1h")
         print(f"n={len(public)} failure_modes={result['failure_mode_counts']}")
-        for arm in arms if False else ("raw_context", "semantic_only", "lexical_minimization", "hush_ci"):
+        for arm in ("raw_context", "semantic_only", "lexical_minimization", "hush_ci"):
             x = summary[arm]
             print(
                 f"{arm:22s} completeness={x['mean_completeness']:.4f} useful={x['fully_useful_rate']:.4f} "
