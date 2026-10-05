@@ -44,7 +44,7 @@ jobs:
           set +e
           root="$(cat pisas-dataset-root.txt)"
           rev="$(cat pisas-dataset-sha.txt)"
-          python research/external/pisas_context_dev_v1.py \
+          python research/external/pisas_context_dev_v1b.py \
             --dataset-root "${root}" \
             --dataset-revision "${rev}" \
             --output pisas-dev-v1.json | tee pisas-dev-v1.txt
