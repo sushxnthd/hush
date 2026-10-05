@@ -154,9 +154,10 @@ export class ContextKernel {
   /**
    * Compile a path-free semantic request entirely inside the trusted local process.
    * Raw private paths are never accepted from, or returned to, the calling agent.
+   * Task text is used only as local context-selection evidence.
    */
-  runSemantic({program,...input}={}){
-    const compiled=compileSemanticProgram(this.list(),program);
+  runSemantic({program,task='',...input}={}){
+    const compiled=compileSemanticProgram(this.list(),program,{task});
     return stripSemanticPaths(this.run({...input,program:compiled}));
   }
 
