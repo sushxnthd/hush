@@ -38,10 +38,10 @@ test('fails closed on ambiguous numeric evidence',()=>{
   );
 });
 
-test('compiles enum evidence from fused text using an allowlist',()=>{
+test('trusted anchors select task evidence across a contrastive fused private clause',()=>{
   const contract={
     id:'pilot.recency',
-    extractor:{kind:'enum',anchors:['certificate','knowledge'],values:[
+    extractor:{kind:'enum',anchors:['aeronautical','knowledge'],values:[
       {value:'current',label:'current',aliases:['current aeronautical knowledge','certificate is current']},
       {value:'expired',label:'expired',aliases:['expired','out of date']}
     ]},
@@ -51,6 +51,21 @@ test('compiles enum evidence from fused text using an allowlist',()=>{
   assert.equal(result.value,'current');
   assert.equal(result.statement,'Pilot certification and knowledge status: current.');
   assert.equal(result.statement.includes('relative'),false);
+});
+
+test('equally relevant contradictory clauses still fail closed',()=>{
+  const contract={
+    id:'pilot.status-conflict',
+    extractor:{kind:'enum',anchors:['certification','status'],values:[
+      {value:'current',aliases:['current']},
+      {value:'expired',aliases:['expired']}
+    ]},
+    release:{label:'Pilot certification status'}
+  };
+  assert.throws(
+    ()=>compilePrivateConstraint('Certification status is current, but certification status is expired.',contract),
+    error=>error instanceof ConstraintCompilationError&&error.code==='constraint_evidence_ambiguous'
+  );
 });
 
 test('supports structured private fields without exposing sibling fields',()=>{

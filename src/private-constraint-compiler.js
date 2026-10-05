@@ -10,6 +10,7 @@ const OPERATORS=new Set(['eq','neq','gt','gte','lt','lte','between']);
 const KINDS=new Set(['number','enum','boolean','date_bucket']);
 const RELEASE_OPS=new Set(['identity','compare','bucket']);
 const SAFE_SEGMENT=/[^.!?\n]+(?:[.!?]+|$)/g;
+const DISCOURSE_BOUNDARY=/\s*,?\s*\b(?:although|however|whereas|even\s+though|but|nevertheless|nonetheless)\b\s*/gi;
 const FORBIDDEN_PATH_PARTS=new Set(['__proto__','prototype','constructor']);
 
 export class ConstraintCompilationError extends Error{
@@ -44,9 +45,9 @@ function atPath(value,path){
   }
   return current;
 }
-function normalizeWords(values,label){
+function normalizeWords(values,label,limit=MAX_ANCHORS){
   if(values===undefined) return [];
-  if(!Array.isArray(values)||values.length>MAX_ANCHORS) throw new ConstraintCompilationError(`${label} must be a bounded array.`,{code:'invalid_constraint_contract'});
+  if(!Array.isArray(values)||values.length>limit) throw new ConstraintCompilationError(`${label} must be a bounded array.`,{code:'invalid_constraint_contract'});
   return uniq(values.map(value=>boundedText(value,MAX_ALIAS,label)).map(norm).filter(Boolean));
 }
 function normalizePrivateRef(value){
@@ -58,18 +59,18 @@ function normalizePrivateRef(value){
 }
 function normalizeEnumValues(values){
   if(!Array.isArray(values)||!values.length||values.length>MAX_ENUM_VALUES) throw new ConstraintCompilationError('Enum extractor requires a bounded values list.',{code:'invalid_constraint_contract'});
-  const normalized=[];
-  const ids=new Set();
+  const out=[];
+  const seen=new Set();
   for(const row of values){
     if(!row||typeof row!=='object'||Array.isArray(row)) throw new ConstraintCompilationError('Enum values must be objects.',{code:'invalid_constraint_contract'});
     const value=boundedText(row.value,MAX_ALIAS,'enum value');
-    if(ids.has(value)) throw new ConstraintCompilationError('Enum values must be unique.',{code:'invalid_constraint_contract'});
-    ids.add(value);
-    const label=boundedText(row.label??row.value,MAX_LABEL,'enum label');
-    const aliases=normalizeWords(row.aliases??[row.value,row.label??row.value],'enum aliases');
-    normalized.push({value,label,aliases:uniq([norm(value),norm(label),...aliases]).filter(Boolean)});
+    if(seen.has(value)) throw new ConstraintCompilationError('Enum values must be unique.',{code:'invalid_constraint_contract'});
+    seen.add(value);
+    const label=boundedText(row.label??value,MAX_LABEL,'enum label');
+    const aliases=normalizeWords(row.aliases??[value,label],'enum aliases',MAX_ENUM_VALUES);
+    out.push({value,label,aliases:uniq([norm(value),norm(label),...aliases]).filter(Boolean)});
   }
-  return normalized;
+  return out;
 }
 function normalizeExtractor(extractor={}){
   if(!extractor||typeof extractor!=='object'||Array.isArray(extractor)) throw new ConstraintCompilationError('extractor must be an object.',{code:'invalid_constraint_contract'});
@@ -80,12 +81,12 @@ function normalizeExtractor(extractor={}){
     const min=extractor.min===undefined?null:Number(extractor.min);
     const max=extractor.max===undefined?null:Number(extractor.max);
     if((min!==null&&!Number.isFinite(min))||(max!==null&&!Number.isFinite(max))||(min!==null&&max!==null&&min>max)) throw new ConstraintCompilationError('Invalid numeric bounds.',{code:'invalid_constraint_contract'});
-    return {...common,units:normalizeWords(extractor.units??[],'units'),min,max,allowUnitless:Boolean(extractor.allowUnitless)};
+    return {...common,units:normalizeWords(extractor.units??[],'units'),min,max};
   }
   if(kind==='enum') return {...common,values:normalizeEnumValues(extractor.values)};
   if(kind==='boolean'){
-    const truthy=normalizeWords(extractor.truthy??['true','yes','valid','current','enabled','available','ready'],'truthy');
-    const falsy=normalizeWords(extractor.falsy??['false','no','invalid','expired','disabled','unavailable','not ready'],'falsy');
+    const truthy=normalizeWords(extractor.truthy??['true','yes','valid','current','enabled','available','ready'],'truthy',MAX_ENUM_VALUES);
+    const falsy=normalizeWords(extractor.falsy??['false','no','invalid','expired','disabled','unavailable','not ready'],'falsy',MAX_ENUM_VALUES);
     if(!truthy.length||!falsy.length) throw new ConstraintCompilationError('Boolean extractor requires truthy and falsy aliases.',{code:'invalid_constraint_contract'});
     return {...common,truthy,falsy};
   }
@@ -101,19 +102,15 @@ function normalizeRelease(release={},kind){
   const unit=release.unit===undefined?'':text(release.unit);
   if(unit.length>32) throw new ConstraintCompilationError('Release unit is too long.',{code:'invalid_constraint_contract'});
   if(op==='compare'){
-    if(kind!=='number'&&kind!=='date_bucket'&&kind!=='enum'&&kind!=='boolean') throw new ConstraintCompilationError('Compare release is unsupported for this extractor.',{code:'invalid_constraint_contract'});
     const operator=text(release.operator);
-    if(!OPERATORS.has(operator)) throw new ConstraintCompilationError('Invalid compare operator.',{code:'invalid_constraint_contract'});
-    if(release.arg===undefined) throw new ConstraintCompilationError('Compare release requires arg.',{code:'invalid_constraint_contract'});
+    if(!OPERATORS.has(operator)||release.arg===undefined) throw new ConstraintCompilationError('Invalid compare release.',{code:'invalid_constraint_contract'});
     return {op,label,unit,operator,arg:structuredClone(release.arg),trueLabel:text(release.trueLabel||'yes'),falseLabel:text(release.falseLabel||'no')};
   }
   if(op==='bucket'){
-    if(kind!=='number') throw new ConstraintCompilationError('Bucket release requires a numeric extractor.',{code:'invalid_constraint_contract'});
-    if(!Array.isArray(release.edges)||!Array.isArray(release.labels)||release.labels.length!==release.edges.length+1) throw new ConstraintCompilationError('Bucket release requires N edges and N+1 labels.',{code:'invalid_constraint_contract'});
+    if(kind!=='number'||!Array.isArray(release.edges)||!Array.isArray(release.labels)||release.labels.length!==release.edges.length+1) throw new ConstraintCompilationError('Bucket release requires numeric N edges and N+1 labels.',{code:'invalid_constraint_contract'});
     const edges=release.edges.map(Number);
-    if(edges.some(value=>!Number.isFinite(value))||edges.some((value,index)=>index&&value<=edges[index-1])) throw new ConstraintCompilationError('Bucket edges must be finite and increasing.',{code:'invalid_constraint_contract'});
-    const labels=release.labels.map(value=>boundedText(value,MAX_LABEL,'bucket label'));
-    return {op,label,unit,edges,labels};
+    if(edges.some(value=>!Number.isFinite(value))||edges.some((value,index)=>index>0&&value<=edges[index-1])) throw new ConstraintCompilationError('Bucket edges must be finite and increasing.',{code:'invalid_constraint_contract'});
+    return {op,label,unit,edges,labels:release.labels.map(value=>boundedText(value,MAX_LABEL,'bucket label'))};
   }
   return {op,label,unit};
 }
@@ -133,7 +130,11 @@ function sourceSegments(value){
   const source=text(value);
   if(!source) throw new ConstraintCompilationError('Constraint source is empty.',{code:'constraint_source_missing'});
   if(source.length>MAX_SOURCE_TEXT) throw new ConstraintCompilationError('Constraint source exceeds the local compilation bound.',{code:'constraint_source_too_large'});
-  return source.match(SAFE_SEGMENT)?.map(text).filter(Boolean)??[source];
+  // Contrastive discourse often fuses authoritative task evidence with hearsay,
+  // incentives, or personal context. Treat those markers as boundaries, never as
+  // a signal that either side is true. Trusted anchors still decide relevance.
+  const bounded=source.replace(DISCOURSE_BOUNDARY,'. ');
+  return bounded.match(SAFE_SEGMENT)?.map(text).filter(Boolean)??[bounded];
 }
 function anchorScore(segment,anchors){
   if(!anchors.length) return 1;
@@ -143,16 +144,15 @@ function anchorScore(segment,anchors){
   return score;
 }
 function bestSegments(value,anchors){
-  const segments=sourceSegments(value).map(segment=>({segment,score:anchorScore(segment,anchors)}));
-  if(!anchors.length) return segments;
-  const max=Math.max(...segments.map(row=>row.score));
+  const rows=sourceSegments(value).map(segment=>({segment,score:anchorScore(segment,anchors)}));
+  if(!anchors.length) return rows;
+  const max=Math.max(...rows.map(row=>row.score));
   if(max===0) throw new ConstraintCompilationError('No source segment satisfies the contract anchors.',{code:'constraint_evidence_missing'});
-  return segments.filter(row=>row.score===max);
+  return rows.filter(row=>row.score===max);
 }
 function unitPattern(units){
   if(!units.length) return '';
-  const escaped=units.map(unit=>unit.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s+'));
-  return `(?:${escaped.join('|')})`;
+  return `(?:${units.map(unit=>unit.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s+')).join('|')})`;
 }
 function numericCandidates(value,extractor){
   if(typeof value==='number') return Number.isFinite(value)?[value]:[];
@@ -162,7 +162,7 @@ function numericCandidates(value,extractor){
     const re=unit?new RegExp(`(-?\\d+(?:\\.\\d+)?)\\s*${unit}\\b`,'gi'):/(-?\d+(?:\.\d+)?)/g;
     for(const match of segment.matchAll(re)) rows.push(Number(match[1]));
   }
-  return uniq(rows.filter(Number.isFinite).filter(value=>(extractor.min===null||value>=extractor.min)&&(extractor.max===null||value<=extractor.max)));
+  return uniq(rows.filter(Number.isFinite).filter(candidate=>(extractor.min===null||candidate>=extractor.min)&&(extractor.max===null||candidate<=extractor.max)));
 }
 function extractNumber(value,extractor){
   const candidates=numericCandidates(value,extractor);
@@ -175,12 +175,12 @@ function extractEnum(value,extractor){
   const haystacks=bestSegments(value,extractor.anchors).map(row=>norm(row.segment));
   const matches=[];
   for(const item of extractor.values){
-    if(haystacks.some(hay=>item.aliases.some(alias=>hay===alias||hay.includes(alias)))) matches.push(item);
+    if(haystacks.some(hay=>item.aliases.some(alias=>hay===alias||hay.includes(alias)))) matches.push(item.value);
   }
-  const unique=uniq(matches.map(item=>item.value));
+  const unique=uniq(matches);
   if(!unique.length) throw new ConstraintCompilationError('No enum evidence satisfies the contract.',{code:'constraint_evidence_missing'});
   if(unique.length!==1) throw new ConstraintCompilationError('Enum evidence is ambiguous.',{code:'constraint_evidence_ambiguous'});
-  return matches.find(item=>item.value===unique[0]).value;
+  return unique[0];
 }
 function extractBoolean(value,extractor){
   if(typeof value==='boolean') return value;
@@ -191,8 +191,7 @@ function extractBoolean(value,extractor){
   return yes;
 }
 function extractDateBucket(value,extractor){
-  const source=typeof value==='string'||typeof value==='number'?value:text(value);
-  const date=new Date(source);
+  const date=new Date(value);
   if(Number.isNaN(date.getTime())) throw new ConstraintCompilationError('Date evidence is unavailable.',{code:'constraint_evidence_missing'});
   const y=date.getUTCFullYear();
   const m=String(date.getUTCMonth()+1).padStart(2,'0');
@@ -237,18 +236,11 @@ function renderRelease(value,contract){
   return {value:bucket,statement:`${release.label}: ${bucket}.`,releaseKind:'bucket'};
 }
 
-/**
- * Compile a private source into a minimal typed constraint. Caller-visible output
- * is generated solely from the trusted contract and the bounded typed atom. Raw
- * source prose and private paths are never copied to `statement` or `value`.
- */
 export function compilePrivateConstraint(privateValue,rawContract){
   const contract=normalizeConstraintContract(rawContract);
   const selected=atPath(privateValue,contract.privateField);
   const extracted=extractTyped(selected,contract.extractor);
   const released=renderRelease(extracted,contract);
-  const sourceDigest=sha256(canonicalize(selected));
-  const contractDigest=sha256(canonicalize(contract));
   return {
     v:1,
     contractId:contract.id,
@@ -256,8 +248,8 @@ export function compilePrivateConstraint(privateValue,rawContract){
     value:structuredClone(released.value),
     statement:released.statement,
     releaseKind:released.releaseKind,
-    sourceDigest,
-    contractDigest,
+    sourceDigest:sha256(canonicalize(selected)),
+    contractDigest:sha256(canonicalize(contract)),
     rawSourceIncluded:false,
     rawPrivatePathIncluded:false,
     derivedDisclosure:true
