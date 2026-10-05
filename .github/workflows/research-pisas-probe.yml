@@ -1,0 +1,35 @@
+name: research-pisas-probe
+
+on:
+  push:
+    branches:
+      - research/pisas-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dev-schema-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --disable-pip-version-check 'huggingface_hub==0.36.2'
+      - name: Download exact PiSAs snapshot and inspect development families only
+        run: |
+          python - <<'PY'
+          from huggingface_hub import snapshot_download
+          from pathlib import Path
+          sha='8a1ba30ba210d4a430bbd25cf4a3500d0e22c5b9'
+          root=snapshot_download('ServiceNow/PiSAs',repo_type='dataset',revision=sha)
+          Path('pisas-root.txt').write_text(root+'\n')
+          PY
+          python research/external/pisas_dev_probe.py --dataset-root "$(cat pisas-root.txt)" --output pisas-dev-probe.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hush-pisas-dev-probe-${{ github.sha }}
+          path: pisas-dev-probe.json
