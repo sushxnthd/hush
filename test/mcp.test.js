@@ -61,10 +61,10 @@ test('human preapproval cannot override a hard secret-exfiltration deny',()=>{
 });
 
 test('brokered auth replaces inbound authorization and preserves MCP headers',()=>{
-  const h=sanitizeForwardHeaders({'authorization':'Bearer client-secret','mcp-protocol-version':'2026-07-28','mcp-name':'tool','x-supakeep-agent':'claude'},{brokeredAuth:'Bearer broker-secret'});
+  const h=sanitizeForwardHeaders({'authorization':'Bearer client-secret','mcp-protocol-version':'2026-07-28','mcp-name':'tool','x-hush-agent':'claude'},{brokeredAuth:'Bearer broker-secret'});
   assert.equal(h.authorization,'Bearer broker-secret');
   assert.equal(h['mcp-protocol-version'],'2026-07-28');
-  assert.equal(h['x-supakeep-agent'],undefined);
+  assert.equal(h['x-hush-agent'],undefined);
 });
 
 test('read-only classification remains conservative for open-world tools',()=>{

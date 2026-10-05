@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {ContextKernel} from '../src/context-kernel.js';
 
-function temp(){ return fs.mkdtempSync(path.join(os.tmpdir(),'supakeep-kernel-')); }
+function temp(){ return fs.mkdtempSync(path.join(os.tmpdir(),'hush-kernel-')); }
 
 function predicate(kernel,threshold){
   const t=kernel.beginTrajectory({purpose:`eligibility-${threshold}`,maxBits:1,sinkMaxBits:1});

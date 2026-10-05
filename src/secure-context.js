@@ -79,7 +79,7 @@ export class SealedContextStore {
     const kdf={...DEFAULT_KDF,salt:b64(salt)};
     const wrappingKey=deriveWrappingKey(this.passphrase,kdf);
     const dek=crypto.randomBytes(32);
-    const wrappedKey=sealBuffer(dek,wrappingKey,'supakeep/context-key/v1');
+    const wrappedKey=sealBuffer(dek,wrappingKey,'hush/context-key/v1');
     const bundle={v:1,kdf,wrappedKey,records:[],state:null,createdAt:this.now(),updatedAt:this.now()};
     atomicWrite(this.file,bundle);
     wrappingKey.fill(0); dek.fill(0);
@@ -96,7 +96,7 @@ export class SealedContextStore {
   _unwrapDek(bundle){
     const wrappingKey=deriveWrappingKey(this.passphrase,bundle.kdf);
     try{
-      const dek=openBuffer(bundle.wrappedKey,wrappingKey,'supakeep/context-key/v1');
+      const dek=openBuffer(bundle.wrappedKey,wrappingKey,'hush/context-key/v1');
       if(dek.length!==32) throw new Error('Invalid data key length');
       return dek;
     } catch {
@@ -111,8 +111,8 @@ export class SealedContextStore {
     atomicWrite(this.file,this.bundle);
   }
 
-  _recordAad(id){ return `supakeep/context-record/v1/${id}`; }
-  _stateAad(){ return 'supakeep/context-state/v1'; }
+  _recordAad(id){ return `hush/context-record/v1/${id}`; }
+  _stateAad(){ return 'hush/context-state/v1'; }
 
   _decryptRecord(record){
     const value=openJson(record.payload,this.dek,this._recordAad(record.id));

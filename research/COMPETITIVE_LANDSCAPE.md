@@ -1,6 +1,6 @@
-# Supakeep competitive landscape — October 2026
+# Hush competitive landscape — October 2026
 
-This file is a product-research snapshot, not a claim of exhaustive parity. It focuses on what competitors publicly ship or document today and what Supakeep should *not* try to copy as a standalone wedge.
+This file is a product-research snapshot, not a claim of exhaustive parity. It focuses on what competitors publicly ship or document today and what Hush should *not* try to copy as a standalone wedge.
 
 ## Charlie / Inrupt
 
@@ -14,7 +14,7 @@ Public strengths:
 - agent-to-agent workflows
 - experimental privacy ideas such as controlled inaccuracy / false-data release
 
-Strategic implication: **personal-data ownership + purpose-bound access is already occupied.** Supakeep should not position as “Charlie but with permissions.”
+Strategic implication: **personal-data ownership + purpose-bound access is already occupied.** Hush should not position as “Charlie but with permissions.”
 
 ## 1Password for Claude
 
@@ -25,7 +25,7 @@ Public strengths:
 - session-scoped access instead of standing access
 - direct browser authentication/injection
 
-Strategic implication: **credential brokerage alone is not a moat.** Supakeep should integrate with or complement password managers rather than reinventing them.
+Strategic implication: **credential brokerage alone is not a moat.** Hush should integrate with or complement password managers rather than reinventing them.
 
 ## Arcade
 
@@ -38,7 +38,7 @@ Public strengths:
 - pre-authorization for longer-running jobs
 - audit / governance surfaces
 
-Strategic implication: **developer-focused tool authorization and integration breadth are already crowded.** Supakeep should not try to out-catalog Arcade early.
+Strategic implication: **developer-focused tool authorization and integration breadth are already crowded.** Hush should not try to out-catalog Arcade early.
 
 ## Permit.io
 
@@ -69,13 +69,13 @@ Public strengths:
 - in-tenant deployment
 - tamper-resistant audit and multi-hop identity concepts
 
-Strategic implication: enterprise runtime security is becoming a well-funded category. Supakeep should avoid competing head-on as another enterprise agent firewall.
+Strategic implication: enterprise runtime security is becoming a well-funded category. Hush should avoid competing head-on as another enterprise agent firewall.
 
-# White space Supakeep should own
+# White space Hush should own
 
 **Cross-agent personal trust.**
 
-Supakeep should be the user-controlled layer that answers, across providers and agents:
+Hush should be the user-controlled layer that answers, across providers and agents:
 
 1. What does this AI know about me?
 2. What is it allowed to learn next?
@@ -98,4 +98,4 @@ The differentiating primitives are therefore:
 
 # Product rule
 
-Do not add a feature merely because a competitor has it. Add it only if it strengthens Supakeep's position as **the personal trust layer across AI systems**.
+Do not add a feature merely because a competitor has it. Add it only if it strengthens Hush's position as **the personal trust layer across AI systems**.

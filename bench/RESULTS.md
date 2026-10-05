@@ -1,6 +1,6 @@
-# Supakeep synthetic privacy benchmarks
+# Hush synthetic privacy benchmarks
 
-These are **synthetic engineering benchmarks**, not claims about any other system. They test whether Supakeep's own invariants behave as intended.
+These are **synthetic engineering benchmarks**, not claims about any other system. They test whether Hush's own invariants behave as intended.
 
 ## 1. Adversarial cumulative-disclosure simulation
 
@@ -17,7 +17,7 @@ Observed results:
 |---|---:|---:|
 | Allow everything | 100.00% | 26.74 |
 | Per-call sensitive filter only | 99.93% | 15.99 |
-| Supakeep cumulative budget | 0.00% | 3.01 |
+| Hush cumulative budget | 0.00% | 3.01 |
 
 The useful result is an implementation invariant: **many individually acceptable disclosures cannot accumulate indefinitely without eventually triggering ASK/DENY.** The threshold and privacy-cost scale are synthetic and do not establish real-world privacy safety.
 
@@ -46,13 +46,13 @@ A hidden integer is selected from `0..999999`. An adversarial caller receives a 
 |---|---:|---:|---:|
 | Unrestricted predicate oracle | Yes | 20 | 1 |
 | Naive per-field boolean accounting | Yes | 20 | 1 |
-| Supakeep trajectory accounting | **No** | **6** | **31,250** |
+| Hush trajectory accounting | **No** | **6** | **31,250** |
 
 This demonstrates query-composition behavior only; it is not a universal inference-privacy guarantee.
 
 ## 4. Blind personalization / Private Decision Programs
 
-The agent supplies **15 public flight candidates**. Supakeep locally evaluates them using three private fields: travel budget, preferred airline and preferred departure time.
+The agent supplies **15 public flight candidates**. Hush locally evaluates them using three private fields: travel budget, preferred airline and preferred departure time.
 
 Observed result:
 

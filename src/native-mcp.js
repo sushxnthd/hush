@@ -27,7 +27,7 @@ const PRIVATE_PROGRAM_SCHEMA={
 
 export const NATIVE_MCP_TOOLS=Object.freeze([
   {
-    name:'supakeep_begin_private_task',
+    name:'hush_begin_private_task',
     description:'Start a short-lived private-computation task. Returns an opaque trajectory handle. The handle carries a per-task disclosure budget and is also subject to persistent cross-task reconstruction limits.',
     inputSchema:{
       type:'object',
@@ -42,8 +42,8 @@ export const NATIVE_MCP_TOOLS=Object.freeze([
     annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false}
   },
   {
-    name:'supakeep_private_decision',
-    description:'Evaluate a bounded decision over private user context without returning the private values. Use the trajectory handle from supakeep_begin_private_task. The result may be denied when cumulative disclosure could enable reconstruction.',
+    name:'hush_private_decision',
+    description:'Evaluate a bounded decision over private user context without returning the private values. Use the trajectory handle from hush_begin_private_task. The result may be denied when cumulative disclosure could enable reconstruction.',
     inputSchema:{
       type:'object',
       properties:{trajectoryId:{type:'string'},program:PRIVATE_PROGRAM_SCHEMA},
@@ -52,7 +52,7 @@ export const NATIVE_MCP_TOOLS=Object.freeze([
     annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false}
   },
   {
-    name:'supakeep_revoke_private_task',
+    name:'hush_revoke_private_task',
     description:'Revoke a private-computation trajectory so it cannot be used again.',
     inputSchema:{type:'object',properties:{trajectoryId:{type:'string'}},required:['trajectoryId'],additionalProperties:false},
     annotations:{readOnlyHint:false,destructiveHint:true,openWorldHint:false}
@@ -76,7 +76,7 @@ function finiteBits(value,fallback){
 }
 
 /**
- * Execute only Supakeep-native MCP tools. Private values never appear in these
+ * Execute only Hush-native MCP tools. Private values never appear in these
  * responses; the decision runtime returns bounded outputs plus capacity receipts.
  * Agent identity is audit metadata only and is never used as the security boundary.
  */
@@ -84,23 +84,23 @@ export function callNativeMcpTool({name,args={},kernel,agent='unknown-agent',sin
   if(!kernel) return toolResult({decision:'deny',reason:'Private context is locked on this device.'},{isError:true});
   const tool=String(name||'');
   try{
-    if(tool==='supakeep_begin_private_task'){
+    if(tool==='hush_begin_private_task'){
       const maxBits=finiteBits(args.maxBits,4);
       const sinkMaxBits=finiteBits(args.sinkMaxBits,maxBits);
       const trajectory=kernel.beginTrajectory({purpose:String(args.purpose??'agent task'),maxBits,sinkMaxBits,ttlMs:args.ttlMs});
       return toolResult({decision:'allow',trajectory});
     }
-    if(tool==='supakeep_private_decision'){
+    if(tool==='hush_private_decision'){
       if(!args.trajectoryId||!args.program) throw new Error('trajectoryId and program are required');
       const result=kernel.run({trajectoryId:String(args.trajectoryId),agent:String(agent),sink:String(sink),program:args.program});
       return toolResult(result,{isError:result.decision!=='allow'});
     }
-    if(tool==='supakeep_revoke_private_task'){
+    if(tool==='hush_revoke_private_task'){
       if(!args.trajectoryId) throw new Error('trajectoryId is required');
       const revoked=kernel.revokeTrajectory(String(args.trajectoryId));
       return toolResult({decision:revoked?'allow':'deny',revoked},{isError:!revoked});
     }
-    return toolResult({decision:'deny',reason:'Unknown Supakeep tool.'},{isError:true});
+    return toolResult({decision:'deny',reason:'Unknown Hush tool.'},{isError:true});
   }catch(error){
     return toolResult({decision:'deny',reason:error?.message||'Private-context tool failed.'},{isError:true});
   }

@@ -2,15 +2,15 @@
 
 ## Research question
 
-Supakeep's `choose` primitive lets an agent submit public candidates while private preferences and constraints remain local. Returning only a candidate id is substantially better than returning the private profile, but the chosen id is still an observation about that profile.
+Hush's `choose` primitive lets an agent submit public candidates while private preferences and constraints remain local. Returning only a candidate id is substantially better than returning the private profile, but the chosen id is still an observation about that profile.
 
 The core question is:
 
-> Can an adversarial agent design the public candidate set itself so that the candidate Supakeep selects acts as a high-information probe of several private fields at once?
+> Can an adversarial agent design the public candidate set itself so that the candidate Hush selects acts as a high-information probe of several private fields at once?
 
 The answer in the synthetic construction below is **yes**. Output-cardinality accounting alone can badly underprice the realized information contained in a rare winning candidate.
 
-Preference elicitation and information-seeking recommendation queries have substantial prior art. Supakeep does not claim that a choice can reveal preferences as a new discovery. The contribution being tested here is a system mechanism for measuring and blocking that realized joint leakage before a provider-neutral AI runtime releases the selected result.
+Preference elicitation and information-seeking recommendation queries have substantial prior art. Hush does not claim that a choice can reveal preferences as a new discovery. The contribution being tested here is a system mechanism for measuring and blocking that realized joint leakage before a provider-neutral AI runtime releases the selected result.
 
 ## Falsifying the old accounting rule
 
@@ -40,7 +40,7 @@ This is a concrete counterexample to treating output alphabet size as a sufficie
 
 `JointChoiceReconstructionFirewall` performs pre-release posterior accounting for protected `choose` programs.
 
-For referenced private fields, Supakeep:
+For referenced private fields, Hush:
 
 1. requires declared finite domains when any protected field participates;
 2. composes prior released `choose` observations through overlapping field sets;
@@ -71,7 +71,7 @@ later analysis treats `A,B,C,D` as a connected reconstruction problem rather tha
 
 ### Persistence
 
-Allowed informative choice observations are stored inside encrypted Context Kernel state. Restarting Supakeep does not reset the joint reconstruction history. If an involved private field changes or is removed, observations involving that field are invalidated rather than being applied to the new value.
+Allowed informative choice observations are stored inside encrypted Context Kernel state. Restarting Hush does not reset the joint reconstruction history. If an involved private field changes or is removed, observations involving that field are invalidated rather than being applied to the new value.
 
 ## v0.9: scalable symbolic analysis
 
@@ -117,7 +117,7 @@ The standalone symbolic tests also resolve a one-million-value threshold choice 
 
 ### Work-budget behavior
 
-Symbolic analysis is bounded by a node budget. If an unsupported or adversarial program cannot be certified within that budget, Supakeep does not guess. It falls back to exact enumeration only when the currently feasible state is small enough. Otherwise the result is withheld.
+Symbolic analysis is bounded by a node budget. If an unsupported or adversarial program cannot be certified within that budget, Hush does not guess. It falls back to exact enumeration only when the currently feasible state is small enough. Otherwise the result is withheld.
 
 This prevents the privacy analyzer itself from becoming an unbounded compute path while preserving fail-closed behavior.
 
@@ -153,7 +153,7 @@ This matters once the state space is large. For example, removing one state from
 
 The defensible claim is:
 
-> For declared finite integer domains and the currently modeled `choose` constraints/preferences, Supakeep can detect adversarial candidate-set queries whose realized winning candidate reveals substantially more joint private information than the output alphabet suggests, can compose prior overlapping releases, and can withhold high-information results before release. Structured joint spaces with billions of states can be analyzed symbolically without explicit Cartesian enumeration.
+> For declared finite integer domains and the currently modeled `choose` constraints/preferences, Hush can detect adversarial candidate-set queries whose realized winning candidate reveals substantially more joint private information than the output alphabet suggests, can compose prior overlapping releases, and can withhold high-information results before release. Structured joint spaces with billions of states can be analyzed symbolically without explicit Cartesian enumeration.
 
 This does **not** establish general privacy of recommendation systems or arbitrary AI personalization.
 
@@ -166,8 +166,8 @@ The v0.9 mechanism does not yet solve:
 - every possible future `choose` operation or arbitrary user-defined computation;
 - symbolic programs whose decision boundaries cannot be certified within the configured work budget;
 - timing, failure, network, resource-use or other side channels;
-- public auxiliary information outside the declared Supakeep state;
-- compromised local hosts or traffic that bypasses Supakeep;
+- public auxiliary information outside the declared Hush state;
+- compromised local hosts or traffic that bypasses Hush;
 - information revealed through the consequences of real-world actions after authorization.
 
 ## Next falsification target

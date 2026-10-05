@@ -34,7 +34,7 @@ const second=runtime.run({trajectoryId:trajectory.trajectoryId,agent:'travel-age
 
 console.log(JSON.stringify({
   benchmark:'blind personalization',
-  statement:'The agent supplies public candidates; Supakeep chooses locally using private context and returns only a bounded result.',
+  statement:'The agent supplies public candidates; Hush chooses locally using private context and returns only a bounded result.',
   publicCandidates:candidates.length,
   privateFieldsUsed:['travel.maxBudget','travel.preferredAirline','travel.preferredDepartureHour'],
   rawPrivateValuesReturned:0,
@@ -51,5 +51,5 @@ console.log(JSON.stringify({
     trajectoryBitsAlreadySpent:second.capacity?.spentBits,
     trajectoryBitBudget:second.capacity?.maxBits
   },
-  caveat:'The bit bound covers the controlled explicit return channel only, not timing, crashes, side effects, or data released outside Supakeep.'
+  caveat:'The bit bound covers the controlled explicit return channel only, not timing, crashes, side effects, or data released outside Hush.'
 },null,2));

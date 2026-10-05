@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export const DEFAULT_POLICY={version:1,rules:[
-{id:'deny-secret-export',match:{category:'secrets',action:'export_raw'},decision:'deny',reason:'Raw secrets never leave Supakeep.'},
+{id:'deny-secret-export',match:{category:'secrets',action:'export_raw'},decision:'deny',reason:'Raw secrets never leave Hush.'},
 {id:'ask-purchase',match:{category:'money',action:'purchase'},decision:'ask',reason:'Purchases require approval by default.'},
 {id:'ask-send',match:{category:'communication',action:'send'},decision:'ask',reason:'External sends require approval by default.'},
 {id:'ask-delete',match:{category:'destructive',action:'delete'},decision:'ask',reason:'Destructive actions require approval by default.'},
@@ -25,7 +25,7 @@ export function assertGrantAllows(g,r,useCount=0){if(g.agent!==r.agent)throw Err
 
 const DETECTORS=[['openai_api_key',/\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b/g],['github_token',/\b(?:ghp|github_pat)_[A-Za-z0-9_]{20,}\b/g],['aws_access_key',/\bAKIA[0-9A-Z]{16}\b/g],['private_key',/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g],['bearer_token',/\bBearer\s+[A-Za-z0-9._~+/=-]{20,}\b/gi],['email',/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi]];
 export function detectSensitive(text){const hits=[];for(const[type,re]of DETECTORS){re.lastIndex=0;let m;while((m=re.exec(text))!==null)hits.push({type,value:m[0],start:m.index,end:m.index+m[0].length})}return hits.sort((a,b)=>a.start-b.start||b.end-a.end)}
-export function redactSensitive(text){const hits=detectSensitive(text),chosen=[],used=[];for(const h of hits){if(used.some(([s,e])=>h.start<e&&h.end>s))continue;used.push([h.start,h.end]);chosen.push({...h,id:crypto.randomUUID()})}let out=text;for(const s of chosen.sort((a,b)=>b.start-a.start))out=out.slice(0,s.start)+`{{SUPAKEEP:${s.type}:${s.id}}}`+out.slice(s.end);return{text:out,secrets:chosen.map(({start,end,...x})=>x)}}
+export function redactSensitive(text){const hits=detectSensitive(text),chosen=[],used=[];for(const h of hits){if(used.some(([s,e])=>h.start<e&&h.end>s))continue;used.push([h.start,h.end]);chosen.push({...h,id:crypto.randomUUID()})}let out=text;for(const s of chosen.sort((a,b)=>b.start-a.start))out=out.slice(0,s.start)+`{{HUSH:${s.type}:${s.id}}}`+out.slice(s.end);return{text:out,secrets:chosen.map(({start,end,...x})=>x)}}
 
 function matches(m={},r={}){return Object.entries(m).every(([k,e])=>e==='*'||r[k]===e||(Array.isArray(e)&&e.includes(r[k])))}
 export function evaluatePolicy(policy,r){for(const rule of policy.rules??[])if(matches(rule.match,r))return{decision:rule.decision,ruleId:rule.id,reason:rule.reason??null};return{decision:policy.defaultDecision??'ask',ruleId:null,reason:'No specific policy matched.'}}

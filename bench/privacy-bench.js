@@ -16,4 +16,4 @@ for(let t=0;t<N;t++){
   naiveExposure+=n;perCallExposure+=p;supaExposure+=s;if(n>=leakThreshold)naiveLeaks++;if(p>=leakThreshold)perCallLeaks++;if(s>=leakThreshold)supaLeaks++;
 }
 const pct=x=>(100*x/N).toFixed(2)+'%';
-console.log(JSON.stringify({trajectories:N,stepsPerTrajectory:STEPS,syntheticLeakThreshold:leakThreshold,leakRate:{allowAll:pct(naiveLeaks),perCallFilter:pct(perCallLeaks),supakeep:pct(supaLeaks)},meanAutomaticExposure:{allowAll:+(naiveExposure/N).toFixed(2),perCallFilter:+(perCallExposure/N).toFixed(2),supakeep:+(supaExposure/N).toFixed(2)},supakeep:{asks:supaAsks,denies:supaDenies}},null,2));
+console.log(JSON.stringify({trajectories:N,stepsPerTrajectory:STEPS,syntheticLeakThreshold:leakThreshold,leakRate:{allowAll:pct(naiveLeaks),perCallFilter:pct(perCallLeaks),hush:pct(supaLeaks)},meanAutomaticExposure:{allowAll:+(naiveExposure/N).toFixed(2),perCallFilter:+(perCallExposure/N).toFixed(2),hush:+(supaExposure/N).toFixed(2)},hush:{asks:supaAsks,denies:supaDenies}},null,2));

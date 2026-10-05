@@ -7,7 +7,7 @@ import {ContextKernel} from '../src/context-kernel.js';
 
 const WIDTH=8;
 
-function temp(){ return fs.mkdtempSync(path.join(os.tmpdir(),'supakeep-joint-choice-')); }
+function temp(){ return fs.mkdtempSync(path.join(os.tmpdir(),'hush-joint-choice-')); }
 
 function program(){
   const rare={id:'rare-profile',bias:WIDTH-0.5};

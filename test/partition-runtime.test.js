@@ -8,7 +8,7 @@ import {ContextKernel} from '../src/context-kernel.js';
 
 const domain={type:'integer',min:0,max:999999};
 const secret=734219;
-const temp=()=>fs.mkdtempSync(path.join(os.tmpdir(),'supakeep-partition-'));
+const temp=()=>fs.mkdtempSync(path.join(os.tmpdir(),'hush-partition-'));
 
 test('runtime denies a rare exact-match branch before releasing the result',()=>{
   const r=new PrivateDecisionRuntime();

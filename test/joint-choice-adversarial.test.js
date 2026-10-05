@@ -162,10 +162,10 @@ test('updating an involved field resets stale joint observations but unrelated u
 });
 
 test('native MCP withholds a rare joint-choice result before it reaches the client',()=>{
-  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'supakeep-joint-mcp-'));
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-joint-mcp-'));
   const kernel=new ContextKernel({dir,passphrase:'joint mcp privacy test passphrase'});
   for(let i=0;i<9;i++) kernel.put(`secret.bit${i}`,1,{domain:{type:'integer',min:0,max:1}});
-  const start=callNativeMcpTool({name:'supakeep_begin_private_task',args:{purpose:'recommend',maxBits:16,sinkMaxBits:16},kernel,agent:'assistant',sink:'mcp:joint'});
+  const start=callNativeMcpTool({name:'hush_begin_private_task',args:{purpose:'recommend',maxBits:16,sinkMaxBits:16},kernel,agent:'assistant',sink:'mcp:joint'});
   const trajectoryId=start.structuredContent.trajectory.trajectoryId;
   const rare={id:'rare',bias:0};
   const fallback={id:'fallback',bias:8.5};
@@ -176,7 +176,7 @@ test('native MCP withholds a rare joint-choice result before it reaches the clie
     preferences.push({kind:'matchPrivate',candidate:`bit${i}`,private:`secret.bit${i}`,weight:1});
   }
   preferences.push({kind:'higherPublic',candidate:'bias',weight:1,scale:1});
-  const out=callNativeMcpTool({name:'supakeep_private_decision',args:{trajectoryId,program:{kind:'choose',candidates:[rare,fallback],preferences}},kernel,agent:'assistant',sink:'mcp:joint'});
+  const out=callNativeMcpTool({name:'hush_private_decision',args:{trajectoryId,program:{kind:'choose',candidates:[rare,fallback],preferences}},kernel,agent:'assistant',sink:'mcp:joint'});
   assert.equal(out.isError,true);
   assert.equal(out.structuredContent.decision,'deny');
   assert.equal('result' in out.structuredContent,false);

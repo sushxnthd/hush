@@ -1,4 +1,4 @@
-# Supakeep Context Kernel
+# Hush Context Kernel
 
 ## Thesis
 
@@ -6,7 +6,7 @@
 
 The default architecture for personal AI gives a model or agent a copy of the context it needs: messages, documents, memory, credentials, calendar events, financial facts, health facts, or other private state. Access controls can limit which copy is released, but once the value enters model context it is no longer under the user's local control.
 
-Supakeep's experimental Context Kernel changes the abstraction from **data access** to **context computation**.
+Hush's experimental Context Kernel changes the abstraction from **data access** to **context computation**.
 
 An agent receives an opaque, revocable, task-bound context lease. It can request bounded computations such as:
 
@@ -16,7 +16,7 @@ An agent receives an opaque, revocable, task-bound context lease. It can request
 - return a masked representation
 - escalate to exact disclosure when explicitly necessary
 
-The raw value remains behind the Supakeep boundary unless exact disclosure is separately authorized.
+The raw value remains behind the Hush boundary unless exact disclosure is separately authorized.
 
 ## Why predicate access is not enough
 
@@ -37,7 +37,7 @@ The Context Kernel therefore treats the **query trajectory** as the privacy obje
 
 ### Privacy trajectories
 
-Supakeep mints an opaque trajectory identifier for one user-authorized task. The identifier, not agent-supplied prose, is the cumulative privacy-accounting scope.
+Hush mints an opaque trajectory identifier for one user-authorized task. The identifier, not agent-supplied prose, is the cumulative privacy-accounting scope.
 
 Every delegated agent or sub-agent lease inherits that trajectory. Renaming the agent or claiming a new natural-language purpose does not create a fresh privacy budget.
 
@@ -73,7 +73,7 @@ The current synthetic reconstruction test places a hidden value in the integer d
 
 - unrestricted predicate access can binary-search the exact value
 - naive per-field boolean accounting also permits reconstruction because later predicates appear free
-- the current Supakeep compositional prototype interrupts the adaptive sequence before exact reconstruction
+- the current Hush compositional prototype interrupts the adaptive sequence before exact reconstruction
 
 This test demonstrates one security invariant only. It is **not** evidence of general privacy safety.
 
@@ -85,7 +85,7 @@ The research hypothesis is narrower:
 
 > A provider-neutral personal context runtime that combines task-bound context leases, cross-agent privacy trajectories, minimum-disclosure computation, and compositional disclosure accounting can materially reduce recoverable private information while preserving agent task utility.
 
-That hypothesis must survive comparison against strong existing approaches and real agent traces before Supakeep should make any breakthrough claim.
+That hypothesis must survive comparison against strong existing approaches and real agent traces before Hush should make any breakthrough claim.
 
 ## Falsification program
 
@@ -104,6 +104,6 @@ A result should count as progress only if it survives adversarial evaluation. Pr
 
 ## Product consequence
 
-If the hypothesis holds, Supakeep is not primarily a vault or permission dashboard.
+If the hypothesis holds, Hush is not primarily a vault or permission dashboard.
 
 It becomes the **context syscall layer between AI and a person's life**: models request the smallest computation they need, while the user's private state and cumulative information exposure remain under a neutral local boundary.

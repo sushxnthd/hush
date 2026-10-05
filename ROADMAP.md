@@ -1,6 +1,6 @@
 # Roadmap
 
-Supakeep's goal is not to become another password manager or generic MCP gateway. The roadmap is organized around proving and productizing the **personal trust layer for AI**.
+Hush's goal is not to become another password manager or generic MCP gateway. The roadmap is organized around proving and productizing the **personal trust layer for AI**.
 
 ## Phase 0 — alpha enforcement core
 
@@ -33,7 +33,7 @@ Goal: determine whether cumulative disclosure accounting provides a measurable a
 - gateway latency benchmarks
 - replay real MCP traces from multiple agent stacks
 
-Success criterion: a reproducible benchmark where Supakeep reduces cumulative leakage/exposure while retaining useful task completion, with all assumptions and synthetic components clearly separated from real-world evidence.
+Success criterion: a reproducible benchmark where Hush reduces cumulative leakage/exposure while retaining useful task completion, with all assumptions and synthetic components clearly separated from real-world evidence.
 
 ## Phase 2 — real integrations
 
@@ -84,4 +84,4 @@ Success criterion: a user can answer, from one place, what each AI knows, what i
 - generic AI memory product
 - model training company
 
-The product should only add features that strengthen Supakeep's position as the neutral, user-controlled trust layer across AI systems.
+The product should only add features that strengthen Hush's position as the neutral, user-controlled trust layer across AI systems.

@@ -1,6 +1,6 @@
 # Architecture
 
-Supakeep is a local enforcement boundary between AI systems and private context/actions. The model may propose; Supakeep authorizes outside the model.
+Hush is a local enforcement boundary between AI systems and private context/actions. The model may propose; Hush authorizes outside the model.
 
 ## Authority path
 
@@ -25,7 +25,7 @@ The ledger stores hashes/metadata for accounting rather than raw private values 
 
 ## MCP path
 
-Supakeep observes `tools/list`, classifies tools, and mediates `tools/call` requests before execution.
+Hush observes `tools/list`, classifies tools, and mediates `tools/call` requests before execution.
 
 Security rules include:
 
@@ -40,6 +40,6 @@ The exposure scanner is heuristic and is not a vulnerability scanner.
 
 ## Boundary
 
-Supakeep only controls traffic routed through it. Direct agent-to-service connections remain outside its enforcement boundary.
+Hush only controls traffic routed through it. Direct agent-to-service connections remain outside its enforcement boundary.
 
 The current implementation is an alpha/reference implementation. Production work still requires durable storage, hardened key management, OAuth connectors, browser/device mediation, formalized schemas, and substantially broader adversarial testing.

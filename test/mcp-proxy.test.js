@@ -19,11 +19,11 @@ async function json(url,payload,headers={}){
 }
 async function waitFor(url,child){
   for(let i=0;i<80;i++){
-    if(child.exitCode!=null) throw new Error(`Supakeep exited early with ${child.exitCode}`);
+    if(child.exitCode!=null) throw new Error(`Hush exited early with ${child.exitCode}`);
     try{const r=await fetch(url);if(r.ok)return await r.json()}catch{}
     await new Promise(r=>setTimeout(r,50));
   }
-  throw new Error('Supakeep did not start');
+  throw new Error('Hush did not start');
 }
 
 test('MCP proxy enforces exact one-shot approval before forwarding', {timeout:15000}, async t=>{
@@ -50,7 +50,7 @@ test('MCP proxy enforces exact one-shot approval before forwarding', {timeout:15
   const port=await freePort();
   const child=spawn(process.execPath,['src/server.js'],{
     cwd:process.cwd(),
-    env:{...process.env,PORT:String(port),SUPAKEEP_MCP_UPSTREAM:`http://127.0.0.1:${upstreamPort}/mcp`,SUPAKEEP_MCP_TRUST_TOOL_ANNOTATIONS:'0',SUPAKEEP_MCP_BEARER_TOKEN:'server-only-secret'},
+    env:{...process.env,PORT:String(port),HUSH_MCP_UPSTREAM:`http://127.0.0.1:${upstreamPort}/mcp`,HUSH_MCP_TRUST_TOOL_ANNOTATIONS:'0',HUSH_MCP_BEARER_TOKEN:'server-only-secret'},
     stdio:['ignore','pipe','pipe']
   });
   let stderr='';child.stderr.on('data',d=>stderr+=d);
@@ -58,7 +58,7 @@ test('MCP proxy enforces exact one-shot approval before forwarding', {timeout:15
 
   const base=`http://127.0.0.1:${port}`;
   await waitFor(`${base}/api/status`,child);
-  const h={'x-supakeep-agent':'claude','x-supakeep-purpose':'research','authorization':'Bearer client-visible-token'};
+  const h={'x-hush-agent':'claude','x-hush-purpose':'research','authorization':'Bearer client-visible-token'};
 
   const listed=await json(`${base}/mcp`,{jsonrpc:'2.0',id:1,method:'tools/list',params:{}},h);
   assert.equal(listed.body.result.tools[0].name,'search');

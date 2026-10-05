@@ -7,7 +7,7 @@ import {ContextKernel} from '../src/context-kernel.js';
 import {NATIVE_MCP_TOOLS,callNativeMcpTool,isNativeMcpTool} from '../src/native-mcp.js';
 
 function kernel(){
-  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'supakeep-native-mcp-'));
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-native-mcp-'));
   const k=new ContextKernel({dir,passphrase:'native mcp test passphrase'});
   k.put('travel.maxBudget',1500,{category:'finance'});
   k.put('travel.preferredAirline','ANA',{category:'preference'});
@@ -16,19 +16,19 @@ function kernel(){
 
 test('native MCP surface exposes bounded-computation tools only',()=>{
   assert.deepEqual(NATIVE_MCP_TOOLS.map(x=>x.name),[
-    'supakeep_begin_private_task','supakeep_private_decision','supakeep_revoke_private_task'
+    'hush_begin_private_task','hush_private_decision','hush_revoke_private_task'
   ]);
-  assert.equal(isNativeMcpTool('supakeep_private_decision'),true);
+  assert.equal(isNativeMcpTool('hush_private_decision'),true);
   assert.equal(isNativeMcpTool('get_raw_context'),false);
   assert.equal(NATIVE_MCP_TOOLS.some(x=>/raw|secret|password/i.test(x.name)),false);
 });
 
 test('MCP client can personalize without receiving private values',()=>{
   const k=kernel();
-  const start=callNativeMcpTool({name:'supakeep_begin_private_task',args:{purpose:'choose flight',maxBits:3},kernel:k});
+  const start=callNativeMcpTool({name:'hush_begin_private_task',args:{purpose:'choose flight',maxBits:3},kernel:k});
   assert.equal(start.isError,undefined);
   const trajectoryId=start.structuredContent.trajectory.trajectoryId;
-  const out=callNativeMcpTool({name:'supakeep_private_decision',args:{trajectoryId,program:{
+  const out=callNativeMcpTool({name:'hush_private_decision',args:{trajectoryId,program:{
     kind:'choose',
     candidates:[{id:'a',price:1200,airline:'JAL'},{id:'b',price:1490,airline:'ANA'},{id:'c',price:1800,airline:'ANA'}],
     constraints:[{op:'candidateLtePrivate',candidate:'price',private:'travel.maxBudget'}],
@@ -42,12 +42,12 @@ test('MCP client can personalize without receiving private values',()=>{
 });
 
 test('partition-aware privacy guard denies rare result through native MCP before release',()=>{
-  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'supakeep-native-mcp-partition-'));
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-native-mcp-partition-'));
   const k=new ContextKernel({dir,passphrase:'native partition test passphrase'});
   k.put('finance.balance',734219,{category:'finance',domain:{type:'integer',min:0,max:999999}});
-  const start=callNativeMcpTool({name:'supakeep_begin_private_task',args:{purpose:'eligibility',maxBits:8,sinkMaxBits:8},kernel:k,agent:'assistant',sink:'mcp:test'});
+  const start=callNativeMcpTool({name:'hush_begin_private_task',args:{purpose:'eligibility',maxBits:8,sinkMaxBits:8},kernel:k,agent:'assistant',sink:'mcp:test'});
   const trajectoryId=start.structuredContent.trajectory.trajectoryId;
-  const out=callNativeMcpTool({name:'supakeep_private_decision',args:{trajectoryId,program:{kind:'predicate',private:'finance.balance',op:'eq',value:734219}},kernel:k,agent:'assistant',sink:'mcp:test'});
+  const out=callNativeMcpTool({name:'hush_private_decision',args:{trajectoryId,program:{kind:'predicate',private:'finance.balance',op:'eq',value:734219}},kernel:k,agent:'assistant',sink:'mcp:test'});
   assert.equal(out.isError,true);
   assert.equal(out.structuredContent.decision,'deny');
   assert.equal('result' in out.structuredContent,false);
@@ -57,18 +57,18 @@ test('partition-aware privacy guard denies rare result through native MCP before
 });
 
 test('locked context fails closed through MCP',()=>{
-  const out=callNativeMcpTool({name:'supakeep_begin_private_task',args:{},kernel:null});
+  const out=callNativeMcpTool({name:'hush_begin_private_task',args:{},kernel:null});
   assert.equal(out.isError,true);
   assert.equal(out.structuredContent.decision,'deny');
 });
 
 test('revocation invalidates MCP trajectory',()=>{
   const k=kernel();
-  const start=callNativeMcpTool({name:'supakeep_begin_private_task',args:{maxBits:1},kernel:k});
+  const start=callNativeMcpTool({name:'hush_begin_private_task',args:{maxBits:1},kernel:k});
   const trajectoryId=start.structuredContent.trajectory.trajectoryId;
-  const revoked=callNativeMcpTool({name:'supakeep_revoke_private_task',args:{trajectoryId},kernel:k});
+  const revoked=callNativeMcpTool({name:'hush_revoke_private_task',args:{trajectoryId},kernel:k});
   assert.equal(revoked.structuredContent.revoked,true);
-  const out=callNativeMcpTool({name:'supakeep_private_decision',args:{trajectoryId,program:{kind:'predicate',private:'travel.maxBudget',op:'gte',value:1000}},kernel:k});
+  const out=callNativeMcpTool({name:'hush_private_decision',args:{trajectoryId,program:{kind:'predicate',private:'travel.maxBudget',op:'gte',value:1000}},kernel:k});
   assert.equal(out.isError,true);
   assert.match(out.structuredContent.reason,/revoked/);
 });

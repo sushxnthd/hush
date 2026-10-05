@@ -23,7 +23,7 @@ function finiteNonNegative(value, fallback) {
  *
  * This is still an explicit-channel defense. It does not claim to cover timing,
  * crashes, network metadata, external side effects or information released outside
- * Supakeep's boundary.
+ * Hush's boundary.
  */
 export class PersistentReconstructionFirewall {
   constructor({

@@ -1,4 +1,4 @@
-# Blind Personalization: the Supakeep breakthrough hypothesis
+# Blind Personalization: the Hush breakthrough hypothesis
 
 ## One-line product
 
@@ -12,19 +12,19 @@ Most personalized AI systems move user context toward the model:
 user data -> retrieval / memory -> model context -> personalized answer
 ```
 
-Supakeep's proposed abstraction moves the decision toward the user instead:
+Hush's proposed abstraction moves the decision toward the user instead:
 
 ```text
 public candidates + bounded decision program
                     |
                     v
-        Supakeep on private user state
+        Hush on private user state
                     |
                     v
           bounded personalized result
 ```
 
-The remote agent should ask Supakeep to **compute with** private context rather than asking Supakeep to **copy** private context into its prompt.
+The remote agent should ask Hush to **compute with** private context rather than asking Hush to **copy** private context into its prompt.
 
 This is the product idea behind **blind personalization**.
 
@@ -39,10 +39,10 @@ A conventional deeply personalized agent may need a large profile: exact budget,
 Under blind personalization:
 
 1. the cloud agent searches public flight/hotel inventory;
-2. it sends candidate options to Supakeep;
-3. Supakeep filters/ranks locally using the user's private state;
+2. it sends candidate options to Hush;
+3. Hush filters/ranks locally using the user's private state;
 4. the agent receives only the chosen/viable candidate identifiers or another deliberately bounded result;
-5. when an exact passport/address/card value is finally required by an authorized booking action, Supakeep brokers it directly to the destination rather than placing it in model context;
+5. when an exact passport/address/card value is finally required by an authorized booking action, Hush brokers it directly to the destination rather than placing it in model context;
 6. the user receives one trajectory receipt describing what was computed, disclosed, and executed.
 
 The agent can be highly personalized without owning the personal profile that made the personalization possible.
@@ -77,7 +77,7 @@ For an adaptive transcript `Y1..Yn`, the chain rule gives the conservative expli
 I(S;Y1..Yn) <= sum_i log2(|Ω_i|)
 ```
 
-Supakeep can therefore attach a hard information-capacity budget to a task trajectory.
+Hush can therefore attach a hard information-capacity budget to a task trajectory.
 
 Examples:
 
@@ -87,7 +87,7 @@ Examples:
 
 Repeating the exact same deterministic decision against the same private-state revision is free; a changed program or changed private profile is charged again.
 
-This is intentionally conservative. It bounds the controlled explicit result channel, **not all possible leakage**. Timing, crashes, side effects, covert channels, destination behavior, and anything bypassing Supakeep remain separate problems.
+This is intentionally conservative. It bounds the controlled explicit result channel, **not all possible leakage**. Timing, crashes, side effects, covert channels, destination behavior, and anything bypassing Hush remain separate problems.
 
 ## Why this is more than a privacy toggle
 
@@ -129,7 +129,7 @@ Important adjacent ideas already exist:
 
 The mathematical entropy bound above is also standard information theory, not a new theorem.
 
-The narrower Supakeep hypothesis is that these ideas become substantially more useful when turned into a **provider-neutral runtime contract for personal AI**:
+The narrower Hush hypothesis is that these ideas become substantially more useful when turned into a **provider-neutral runtime contract for personal AI**:
 
 1. one user-controlled private state;
 2. one cross-agent task trajectory;
@@ -153,7 +153,7 @@ A privacy layer removes or coarsens sensitive context before the model sees it.
 ### Baseline C — governed retrieval
 The agent retrieves approved pieces of personal context on demand.
 
-### Supakeep — blind personalization
+### Hush — blind personalization
 The agent sends candidate decisions to private context and receives bounded outputs; exact private values are brokered only to authorized execution targets.
 
 Measure:
@@ -170,7 +170,7 @@ A compelling target is to preserve at least 90–95% of raw-context task utility
 
 ## Current prototype evidence
 
-The current synthetic flight demo supplies 15 public candidates and uses three private travel fields locally. Supakeep returns one candidate ID from 15 possibilities or `null`:
+The current synthetic flight demo supplies 15 public candidates and uses three private travel fields locally. Hush returns one candidate ID from 15 possibilities or `null`:
 
 - raw private values returned: 0;
 - explicit output cardinality: 16;
@@ -178,7 +178,7 @@ The current synthetic flight demo supplies 15 public candidates and uses three p
 - task trajectory budget: 4 bits;
 - a second distinct 4-bit decision in that same trajectory: denied.
 
-Separately, the adaptive predicate benchmark shows why composition matters: naive field-level boolean accounting allows exact recovery of a hidden value in 20 threshold queries, while the current Supakeep trajectory prototype stops the sequence on query 6 with 31,250 candidates still possible.
+Separately, the adaptive predicate benchmark shows why composition matters: naive field-level boolean accounting allows exact recovery of a hidden value in 20 threshold queries, while the current Hush trajectory prototype stops the sequence on query 6 with 31,250 candidates still possible.
 
 Both are synthetic mechanism tests, not real-world privacy claims.
 
@@ -188,7 +188,7 @@ A user should be able to say:
 
 > **Book me the best Tokyo trip next month under my normal budget.**
 
-and watch a real cloud agent finish the task while a Supakeep panel shows:
+and watch a real cloud agent finish the task while a Hush panel shows:
 
 ```text
 Private context used locally
@@ -204,4 +204,4 @@ Exact disclosures              0
 Authorized destination writes  1 booking
 ```
 
-If that works across multiple major AI clients with comparable task success to giving the model the full profile, Supakeep stops looking like another security product. It starts looking like infrastructure for a different way of personalizing AI.
+If that works across multiple major AI clients with comparable task success to giving the model the full profile, Hush stops looking like another security product. It starts looking like infrastructure for a different way of personalizing AI.

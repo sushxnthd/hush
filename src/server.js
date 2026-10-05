@@ -30,19 +30,19 @@ for (const [agent, profile] of Object.entries(store.load('trust.json', {}))) tru
 const disclosureLedger = new DisclosureLedger({ trustRegistry });
 disclosureLedger.events = store.load('disclosures.json', []);
 
-const contextPassphrase = process.env.SUPAKEEP_CONTEXT_PASSPHRASE || null;
+const contextPassphrase = process.env.HUSH_CONTEXT_PASSPHRASE || null;
 const contextKernel = contextPassphrase ? new ContextKernel({dir:path.join(dataDir,'context'),passphrase:contextPassphrase}) : null;
 
 const mcpCatalog = new McpToolCatalog();
 const mcpApprovals = new Map();
-const mcpUpstream = process.env.SUPAKEEP_MCP_UPSTREAM || null;
-const trustMcpAnnotations = process.env.SUPAKEEP_MCP_TRUST_TOOL_ANNOTATIONS === '1';
-const configuredBearer = process.env.SUPAKEEP_MCP_BEARER_TOKEN || null;
-const configuredVaultAuthId = process.env.SUPAKEEP_MCP_AUTH_VAULT_ID || null;
-const configuredAuthScheme = process.env.SUPAKEEP_MCP_AUTH_SCHEME || 'Bearer';
+const mcpUpstream = process.env.HUSH_MCP_UPSTREAM || null;
+const trustMcpAnnotations = process.env.HUSH_MCP_TRUST_TOOL_ANNOTATIONS === '1';
+const configuredBearer = process.env.HUSH_MCP_BEARER_TOKEN || null;
+const configuredVaultAuthId = process.env.HUSH_MCP_AUTH_VAULT_ID || null;
+const configuredAuthScheme = process.env.HUSH_MCP_AUTH_SCHEME || 'Bearer';
 if (mcpUpstream) {
   const protocol = new URL(mcpUpstream).protocol;
-  if (!['http:','https:'].includes(protocol)) throw new Error('SUPAKEEP_MCP_UPSTREAM must use http or https');
+  if (!['http:','https:'].includes(protocol)) throw new Error('HUSH_MCP_UPSTREAM must use http or https');
 }
 
 const send = (res, status, payload) => {
@@ -124,7 +124,7 @@ function brokeredMcpAuth(){
   return value.toLowerCase().startsWith(`${scheme.toLowerCase()} `)?value:`${scheme} ${value}`;
 }
 async function fetchMcpUpstream(req,u,raw){
-  if(!mcpUpstream) throw Object.assign(new Error('MCP upstream is not configured. Set SUPAKEEP_MCP_UPSTREAM.'),{code:'NO_MCP_UPSTREAM'});
+  if(!mcpUpstream) throw Object.assign(new Error('MCP upstream is not configured. Set HUSH_MCP_UPSTREAM.'),{code:'NO_MCP_UPSTREAM'});
   const headers=sanitizeForwardHeaders(req.headers,{brokeredAuth:brokeredMcpAuth()});
   return fetch(mcpTargetUrl(u),{
     method:req.method,
@@ -152,21 +152,21 @@ async function mcp(req,res,u){
   const raw=await rawBody(req);
   let rpc;
   try{rpc=raw.length?JSON.parse(raw.toString()):null}catch{return sendRpc(res,jsonRpcError(null,-32700,'Invalid JSON.'));}
-  if(Array.isArray(rpc)) return sendRpc(res,jsonRpcError(null,-32040,'JSON-RPC batches are not supported by the Supakeep alpha proxy.'));
+  if(Array.isArray(rpc)) return sendRpc(res,jsonRpcError(null,-32040,'JSON-RPC batches are not supported by the Hush alpha proxy.'));
   if(!rpc||typeof rpc!=='object') return sendRpc(res,jsonRpcError(null,-32600,'Invalid JSON-RPC request.'));
 
   const envelope=rpc.params?._meta??{};
   const clientInfo=envelope['io.modelcontextprotocol/clientInfo'];
-  const agent=String(req.headers['x-supakeep-agent']||clientInfo?.name||'unknown-agent');
-  const purpose=String(req.headers['x-supakeep-purpose']||'unspecified');
+  const agent=String(req.headers['x-hush-agent']||clientInfo?.name||'unknown-agent');
+  const purpose=String(req.headers['x-hush-purpose']||'unspecified');
   const requestedVersion=String(req.headers['mcp-protocol-version']||envelope['io.modelcontextprotocol/protocolVersion']||'');
   const modern=requestedVersion==='2026-07-28'||rpc.method==='server/discover';
-  const serverMeta={'io.modelcontextprotocol/serverInfo':{name:'supakeep',version:'0.9.0'}};
+  const serverMeta={'io.modelcontextprotocol/serverInfo':{name:'hush',version:'0.9.0'}};
   const complete=result=>modern?{...result,resultType:'complete',_meta:{...(result?._meta??{}),...serverMeta}}:result;
   const rpcResult=result=>sendRpc(res,{jsonrpc:'2.0',id:rpc.id,result:complete(result)});
 
-  if(rpc.method==='server/discover') return rpcResult({supportedVersions:['2026-07-28','2025-11-25'],capabilities:{tools:{listChanged:false}},instructions:'Supakeep provides bounded private computation. Private values are not exposed as MCP tools.'});
-  if(rpc.method==='initialize'&&!mcpUpstream) return sendRpc(res,{jsonrpc:'2.0',id:rpc.id,result:{protocolVersion:'2025-11-25',capabilities:{tools:{listChanged:false}},serverInfo:{name:'supakeep',version:'0.9.0'},instructions:'Supakeep provides bounded private computation. Private values are not exposed as MCP tools.'}});
+  if(rpc.method==='server/discover') return rpcResult({supportedVersions:['2026-07-28','2025-11-25'],capabilities:{tools:{listChanged:false}},instructions:'Hush provides bounded private computation. Private values are not exposed as MCP tools.'});
+  if(rpc.method==='initialize'&&!mcpUpstream) return sendRpc(res,{jsonrpc:'2.0',id:rpc.id,result:{protocolVersion:'2025-11-25',capabilities:{tools:{listChanged:false}},serverInfo:{name:'hush',version:'0.9.0'},instructions:'Hush provides bounded private computation. Private values are not exposed as MCP tools.'}});
   if(rpc.method==='notifications/initialized'){res.writeHead(204);res.end();return;}
   if(rpc.method==='ping') return rpcResult({});
   if(rpc.method==='tools/list'&&!mcpUpstream) return rpcResult({tools:NATIVE_MCP_TOOLS});
@@ -188,7 +188,7 @@ async function mcp(req,res,u){
 
     if(evaluation.decision==='deny'){
       const r=receipt(audit,'deny',null,{mcp:true,hardDeny:Boolean(evaluation.hardDeny),reason:evaluation.reason});
-      return sendRpc(res,jsonRpcError(rpc.id,-32003,'Supakeep blocked this MCP tool call.',{decision:'deny',reason:evaluation.reason,receiptHash:r.hash}));
+      return sendRpc(res,jsonRpcError(rpc.id,-32003,'Hush blocked this MCP tool call.',{decision:'deny',reason:evaluation.reason,receiptHash:r.hash}));
     }
     if(evaluation.decision==='ask'){
       let pending=findPendingMcp(evaluation.requestHash);
@@ -197,7 +197,7 @@ async function mcp(req,res,u){
         pending={id,kind:'mcp',request:audit,requestHash:evaluation.requestHash,mcp:{tool:String(params.name||'unknown-tool'),agent,purpose},reason:evaluation.reason,risk:evaluation.request.mcp?.risk??'unknown',createdAt:Date.now(),status:'pending'};
         store.pending.set(id,pending);
       }
-      return sendRpc(res,jsonRpcError(rpc.id,-32001,'Supakeep requires approval for this MCP tool call.',{decision:'ask',pendingId:pending.id,retryAfterApproval:true,reason:evaluation.reason}));
+      return sendRpc(res,jsonRpcError(rpc.id,-32001,'Hush requires approval for this MCP tool call.',{decision:'ask',pendingId:pending.id,retryAfterApproval:true,reason:evaluation.reason}));
     }
 
     if(hadApproval) mcpApprovals.delete(evaluation.requestHash);
@@ -224,7 +224,7 @@ async function mcp(req,res,u){
 }
 
 async function api(req,res,u){
-  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Supakeep',version:'0.9.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:contextKernel?{enabled:true,...contextKernel.stats()}:{enabled:false},mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});
+  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Hush',version:'0.9.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:contextKernel?{enabled:true,...contextKernel.stats()}:{enabled:false},mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});
   if(req.method==='GET'&&u.pathname==='/api/vault') return send(res,200,{items:vault.list()});
   if(req.method==='GET'&&u.pathname==='/api/pending') return send(res,200,{requests:[...store.pending.values()].filter(x=>x.status==='pending')});
   if(req.method==='GET'&&u.pathname==='/api/receipts') return send(res,200,{receipts:store.receipts.slice(-50).reverse(),chainValid:verifyReceiptChain(store.receipts)});
@@ -233,7 +233,7 @@ async function api(req,res,u){
   if(req.method==='GET'&&u.pathname==='/api/mcp/scan') return send(res,200,scanMcpCatalog(mcpCatalog.list(),{annotationsTrusted:trustMcpAnnotations}));
 
   if(req.method==='GET'&&u.pathname==='/api/context'){
-    if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with SUPAKEEP_CONTEXT_PASSPHRASE.'});
+    if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with HUSH_CONTEXT_PASSPHRASE.'});
     return send(res,200,{items:contextKernel.list(),exposure:contextKernel.exposure(),partition:contextKernel.partitionExposure(),jointChoice:contextKernel.jointChoiceExposure()});
   }
   if(req.method==='GET'&&u.pathname==='/api/context/exposure'){
@@ -245,7 +245,7 @@ async function api(req,res,u){
     return send(res,200,{bundle:contextKernel.exportCiphertextBundle(),fingerprint:contextKernel.ciphertextFingerprint(),plaintextIncluded:false});
   }
   if(req.method==='POST'&&u.pathname==='/api/context'){
-    if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with SUPAKEEP_CONTEXT_PASSPHRASE.'});
+    if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with HUSH_CONTEXT_PASSPHRASE.'});
     const b=await body(req);
     if(!b.path||!Object.hasOwn(b,'value')) return send(res,400,{error:'path and value are required'});
     const item=contextKernel.put(String(b.path),b.value,{label:b.label??null,category:String(b.category??'general'),tags:Array.isArray(b.tags)?b.tags:[],domain:b.domain??undefined});
@@ -302,7 +302,7 @@ async function api(req,res,u){
 
   if(req.method==='POST'&&u.pathname==='/api/evaluate'){
     const b=await body(req),r=b.request??{},secretHits=detectSensitive(JSON.stringify(r));
-    if(secretHits.some(x=>x.type!=='email')) return send(res,403,{decision:'deny',reason:'Raw secret material detected. Use a Supakeep reference.',receipt:receipt(r,'deny',null,{reason:'raw-secret'})});
+    if(secretHits.some(x=>x.type!=='email')) return send(res,403,{decision:'deny',reason:'Raw secret material detected. Use a Hush reference.',receipt:receipt(r,'deny',null,{reason:'raw-secret'})});
     let g=null;
     if(b.grantToken){
       try{g=verifyGrantToken(b.grantToken,publicKey);if(store.revokedGrants.has(g.id))throw Error('Grant revoked');assertGrantAllows(g,r,store.grantUses.get(g.id)??0)}
@@ -361,7 +361,7 @@ http.createServer(async(req,res)=>{
   }
   catch(e){
     console.error(e);
-    if(u.pathname==='/mcp') return sendRpc(res,jsonRpcError(null,-32603,e.code==='NO_MCP_UPSTREAM'?e.message:'Supakeep MCP proxy error.'));
+    if(u.pathname==='/mcp') return sendRpc(res,jsonRpcError(null,-32603,e.code==='NO_MCP_UPSTREAM'?e.message:'Hush MCP proxy error.'));
     send(res,500,{error:e.message||'Internal error'});
   }
-}).listen(port,'127.0.0.1',()=>console.log(`Supakeep running at http://127.0.0.1:${port}`));
+}).listen(port,'127.0.0.1',()=>console.log(`Hush running at http://127.0.0.1:${port}`));

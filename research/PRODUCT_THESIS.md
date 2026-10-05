@@ -1,10 +1,10 @@
-# Supakeep product thesis
+# Hush product thesis
 
 ## Category
 
-Supakeep is not a password manager, an MCP gateway, an enterprise policy engine, or a personal data vault by itself.
+Hush is not a password manager, an MCP gateway, an enterprise policy engine, or a personal data vault by itself.
 
-**Supakeep is the personal trust layer for AI.**
+**Hush is the personal trust layer for AI.**
 
 It should sit between a person and every AI system they use, governing both:
 
@@ -41,7 +41,7 @@ The system should prefer the least revealing level that still lets the task succ
 
 ### 2. Disclosure budget
 
-Privacy is cumulative. Multiple harmless-looking facts can compose into a sensitive inference. Supakeep therefore tracks disclosure across a whole purpose/trajectory, not only per request.
+Privacy is cumulative. Multiple harmless-looking facts can compose into a sensitive inference. Hush therefore tracks disclosure across a whole purpose/trajectory, not only per request.
 
 Budgets are:
 - agent-aware
@@ -95,11 +95,11 @@ A user running Claude, ChatGPT, coding agents, browser agents, and MCP tools sho
 - generic AI memory
 - model training
 
-Those are crowded and capital-intensive. Supakeep should integrate with them and own the user-level trust graph above them.
+Those are crowded and capital-intensive. Hush should integrate with them and own the user-level trust graph above them.
 
 ## Moat hypothesis
 
-If Supakeep succeeds, its defensibility comes from the combination of:
+If Hush succeeds, its defensibility comes from the combination of:
 
 - cross-provider integration graph
 - user-specific trust graph

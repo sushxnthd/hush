@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {SealedContextStore} from '../src/secure-context.js';
 
-function temp(){ return fs.mkdtempSync(path.join(os.tmpdir(),'supakeep-sealed-')); }
+function temp(){ return fs.mkdtempSync(path.join(os.tmpdir(),'hush-sealed-')); }
 
 test('private values are not present in persisted ciphertext bundle',()=>{
   const dir=temp();

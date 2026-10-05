@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import {Vault} from '../src/core.js';
 
 test('vault list never exposes secret value but internal broker can resolve by id',()=>{
-  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'supakeep-vault-'));
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-vault-'));
   try{
     const vault=new Vault(dir,crypto.randomBytes(32));
     const item=vault.put({label:'MCP token',type:'credential',value:'super-secret-token'});

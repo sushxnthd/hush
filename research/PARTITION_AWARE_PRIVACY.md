@@ -18,11 +18,11 @@ Relevant background includes:
 - Chen-Yu Zhang, Andrew Campbell, Anna Scaglione, Sean Peisert, *Reconstruction Limits for Repeated Differentially Private Aggregates: A Cramer-Rao Perspective on Query Geometry*, 2026. The paper emphasizes that repeated-query reconstruction depends on the identifiable directions introduced by release geometry, not just release count.
 - Irit Dinur and Kobbi Nissim, *Revealing Information while Preserving Privacy*, PODS 2003, and subsequent reconstruction-attack literature.
 
-Supakeep does **not** claim these information-theoretic ideas as novel. The research question is whether a provider-neutral personal-AI runtime can use a tractable form of realized, partition-aware accounting to safely expose useful private decisions.
+Hush does **not** claim these information-theoretic ideas as novel. The research question is whether a provider-neutral personal-AI runtime can use a tractable form of realized, partition-aware accounting to safely expose useful private decisions.
 
 ## Mechanism
 
-`PartitionAwareReconstructionFirewall` accepts a declared finite integer domain for a private field. It maintains the set of values still consistent with every answer Supakeep has released.
+`PartitionAwareReconstructionFirewall` accepts a declared finite integer domain for a private field. It maintains the set of values still consistent with every answer Hush has released.
 
 Before a predicate or bucket result is returned, the firewall computes the posterior feasible set induced by the actual result and measures:
 
@@ -102,7 +102,7 @@ The current mechanisms still do not solve:
 - categorical and structured domains outside the current finite-integer model;
 - correlated or non-uniform priors;
 - timing, crash, network or side-effect channels;
-- traffic that bypasses Supakeep;
+- traffic that bypasses Hush;
 - compromised local hosts;
 - inference from external public data that was never represented in the declared domain.
 

@@ -1,8 +1,8 @@
-# Supakeep Design System
+# Hush Design System
 
 ## Canonical direction
 
-Supakeep uses the supplied reference homepage bundle as a **measurement reference**, not as loose moodboard inspiration. The public page should preserve reference's compact rail/editorial-column anatomy while replacing product content, diagrams, branding, and evidence with Supakeep's own.
+Hush uses the supplied reference homepage bundle as a **measurement reference**, not as loose moodboard inspiration. The public page should preserve reference's compact rail/editorial-column anatomy while replacing product content, diagrams, branding, and evidence with Hush's own.
 
 ## Exact desktop constants recovered from the supplied CSS
 
@@ -47,7 +47,7 @@ Desktop page width is therefore approximately `208 + 108 + 640 = 956px`, centere
 
 ## Typography
 
-The reference uses Geist and Geist Mono. Supakeep should use the same metrics where available, with neutral system fallbacks.
+The reference uses Geist and Geist Mono. Hush should use the same metrics where available, with neutral system fallbacks.
 
 - hero statement: `40px / 1.12`, weight 400, `-0.03em`
 - deck/body: `17px`, body leading around `1.6–1.65`
@@ -117,19 +117,19 @@ At `<=600px`:
 - field becomes 16:9
 - evidence and deployment grids collapse to one column
 
-## Supakeep content model
+## Hush content model
 
 The repeated product abstraction remains:
 
 ```text
 private user state
       →
-Supakeep Context Kernel
+Hush Context Kernel
       →
 bounded result / authorized action
 ```
 
-The visual design may closely match the reference system; the actual branding, copy, product diagrams, claims, data, and destinations must remain Supakeep-specific.
+The visual design may closely match the reference system; the actual branding, copy, product diagrams, claims, data, and destinations must remain Hush-specific.
 
 ## Avoid
 

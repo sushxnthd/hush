@@ -1,12 +1,12 @@
-# Supakeep
+# Hush
 
 **Private Mode for every AI.**
 
-Supakeep is an experimental local trust layer for **deep AI personalization without handing every AI a copy of your private profile**.
+Hush is an experimental local trust layer for **deep AI personalization without handing every AI a copy of your private profile**.
 
 > **AI should query you, not copy you.**
 
-Instead of moving your calendar, finances, identity, preferences, credentials and history into model context, an agent can send a bounded decision problem to Supakeep. Supakeep computes against private state locally and returns the minimum useful result.
+Instead of moving your calendar, finances, identity, preferences, credentials and history into model context, an agent can send a bounded decision problem to Hush. Hush computes against private state locally and returns the minimum useful result.
 
 ## How it works
 
@@ -17,7 +17,7 @@ public candidates / bounded question
              AI agent
                 │
                 ▼
-         Supakeep Context Kernel
+         Hush Context Kernel
          ┌──────────────────────┐
          │ sealed private state │
          │ decision runtime     │
@@ -29,20 +29,20 @@ public candidates / bounded question
       bounded result / approved action
 ```
 
-Private values remain behind the Supakeep boundary. Raw/exact private output is deliberately not part of the normal private-decision language.
+Private values remain behind the Hush boundary. Raw/exact private output is deliberately not part of the normal private-decision language.
 
 ## Sealed private context
 
-Supakeep has a persistent encrypted Context Kernel rather than an in-memory-only profile.
+Hush has a persistent encrypted Context Kernel rather than an in-memory-only profile.
 
 - a random 256-bit data-encryption key encrypts private records with AES-256-GCM;
 - a scrypt-derived wrapping key protects that data key;
 - paths, labels, categories, tags, privacy-domain metadata, values and reconstruction state are encrypted rather than stored as readable metadata;
 - ciphertext is authenticated, so modified records fail closed;
 - exported sync bundles contain ciphertext and opaque identifiers, not readable context;
-- restarting Supakeep restores private context and cumulative reconstruction state.
+- restarting Hush restores private context and cumulative reconstruction state.
 
-The alpha currently unlocks this local store from `SUPAKEEP_CONTEXT_PASSPHRASE`. A consumer build should move key handling into the operating-system keychain / secure hardware rather than asking users to manage an environment variable.
+The alpha currently unlocks this local store from `HUSH_CONTEXT_PASSPHRASE`. A consumer build should move key handling into the operating-system keychain / secure hardware rather than asking users to manage an environment variable.
 
 ## Private Decision Programs
 
@@ -52,7 +52,7 @@ The declarative private-computation runtime currently supports:
 - coarse numeric buckets;
 - `choose` over public candidates using private constraints and preferences.
 
-For interfaces without an analyzable finite-domain model, Supakeep retains the conservative output-cardinality bound:
+For interfaces without an analyzable finite-domain model, Hush retains the conservative output-cardinality bound:
 
 ```text
 I(S;Y) <= H(Y) <= log2(|Ω|)
@@ -62,7 +62,7 @@ But output alphabet size is not enough to measure how informative the result tha
 
 ## Four privacy-accounting layers
 
-Supakeep v0.9 can combine:
+Hush v0.9 can combine:
 
 1. a short-lived task/sink budget;
 2. a persistent cross-task reconstruction firewall;
@@ -71,7 +71,7 @@ Supakeep v0.9 can combine:
 
 Changing an agent name, purpose label, task id, destination, or restarting the local runtime therefore does not automatically provide a fresh reconstruction budget.
 
-These remain **explicit-channel defenses**, not a claim of total information leakage. Timing, failures, network metadata, side effects, compromised hosts, covert channels and anything that bypasses Supakeep remain outside the guarantee.
+These remain **explicit-channel defenses**, not a claim of total information leakage. Timing, failures, network metadata, side effects, compromised hosts, covert channels and anything that bypasses Hush remain outside the guarantee.
 
 ## Why nominal output size is not enough
 
@@ -136,7 +136,7 @@ The joint guard composes prior released choices across overlapping private-field
 
 v0.9 removes the old hard 100,000-state enumeration boundary for supported `choose` semantics. It first performs exact symbolic interval branch-and-bound, counting whole private-state regions whenever the winner can be proven invariant. A 32-field binary benchmark therefore analyzes **4,294,967,296** possible joint profiles, detects a **32-bit** rare-winner disclosure, and denies it before release. The common branch leaves 4,294,967,295 profiles feasible and is allowed.
 
-If symbolic analysis exceeds its configured work budget, Supakeep falls back to exact enumeration only when the remaining state is small enough; otherwise it withholds the result. Internal accounting retains unrounded leakage even when public telemetry rounds a tiny marginal value to zero.
+If symbolic analysis exceeds its configured work budget, Hush falls back to exact enumeration only when the remaining state is small enough; otherwise it withholds the result. Internal accounting retains unrounded leakage even when public telemetry rounds a tiny marginal value to zero.
 
 ### Realized single-field partition leakage
 
@@ -167,7 +167,7 @@ For a hidden integer in `0..999999`:
 
 - unrestricted predicate oracle: exact recovery in **20** queries;
 - naive per-field boolean accounting: exact recovery in **20** queries;
-- Supakeep trajectory accounting: stopped after **6** answers, with **31,250** candidates remaining.
+- Hush trajectory accounting: stopped after **6** answers, with **31,250** candidates remaining.
 
 ### Cross-trajectory reconstruction
 
@@ -183,23 +183,23 @@ Across 10,000 synthetic adversarial trajectories:
 
 - allow-all baseline crossing synthetic leak threshold: **100.00%**;
 - per-call sensitive filter: **99.93%**;
-- Supakeep cumulative budget: **0.00%**.
+- Hush cumulative budget: **0.00%**.
 
 A separate benign smoke test completes **99.14%** of synthetic tasks without an approval interruption.
 
 ## Native AI connection
 
-Supakeep exposes bounded private computation over its local `/mcp` endpoint. The native agent surface intentionally contains **no raw-context dump tool**.
+Hush exposes bounded private computation over its local `/mcp` endpoint. The native agent surface intentionally contains **no raw-context dump tool**.
 
 Current native tools are:
 
 ```text
-supakeep_begin_private_task
-supakeep_private_decision
-supakeep_revoke_private_task
+hush_begin_private_task
+hush_private_decision
+hush_revoke_private_task
 ```
 
-Protected decisions are computed locally and privacy-assessed before their result enters the MCP response. Supakeep can also sit in front of another MCP server; upstream tools retain their existing order and Supakeep's private-computation tools are appended locally.
+Protected decisions are computed locally and privacy-assessed before their result enters the MCP response. Hush can also sit in front of another MCP server; upstream tools retain their existing order and Hush's private-computation tools are appended locally.
 
 The implementation includes the current discovery shape plus a legacy initialization path, but protocol interoperability still needs broader testing against production clients before claiming full MCP conformance.
 
@@ -250,7 +250,7 @@ The implementation includes the current discovery shape plus a legacy initializa
 Requires Node.js 22+.
 
 ```bash
-export SUPAKEEP_CONTEXT_PASSPHRASE='use-a-long-local-passphrase'
+export HUSH_CONTEXT_PASSPHRASE='use-a-long-local-passphrase'
 npm start
 ```
 
@@ -281,7 +281,7 @@ The v0.8 suite contains **84 automated tests** plus **seven benchmark programs**
 
 ## What is not finished
 
-Supakeep has a functional private-context research core, but it is not yet a finished consumer security product. Production/research work still includes:
+Hush has a functional private-context research core, but it is not yet a finished consumer security product. Production/research work still includes:
 
 - OS keychain / Secure Enclave-style key handling and recovery;
 - encrypted multi-device sync and device revocation;
@@ -299,10 +299,10 @@ Supakeep has a functional private-context research core, but it is not yet a fin
 
 ## Research boundary
 
-Personal data stores, local recommendation, preference elicitation, information-flow control, realized/privacy-loss accounting, inference-leakage budgets, zero-knowledge predicates, opaque handles, task-conditioned minimization and on-device ranking all have substantial prior art. Supakeep should **not** claim those individual ideas as inventions.
+Personal data stores, local recommendation, preference elicitation, information-flow control, realized/privacy-loss accounting, inference-leakage budgets, zero-knowledge predicates, opaque handles, task-conditioned minimization and on-device ranking all have substantial prior art. Hush should **not** claim those individual ideas as inventions.
 
 The hypothesis worth testing is the system-level combination: a provider-neutral personal-AI runtime where agents send bounded computations toward user-owned context, exact values remain sealed until necessary execution boundaries, and cumulative information / authority is governed across agents and providers.
 
-Supakeep is an alpha/reference implementation, not a certified production security product.
+Hush is an alpha/reference implementation, not a certified production security product.
 
 See `ARCHITECTURE.md`, `THREAT_MODEL.md`, `ROADMAP.md`, `research/PRODUCT_THESIS.md`, `research/CONTEXT_KERNEL.md`, `research/BLIND_PERSONALIZATION.md`, `research/RECONSTRUCTION_FIREWALL.md`, `research/PARTITION_AWARE_PRIVACY.md`, and `research/JOINT_CHOICE_PRIVACY.md`.

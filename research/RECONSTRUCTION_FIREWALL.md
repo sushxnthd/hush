@@ -10,7 +10,7 @@ Encrypting private context at rest prevents a storage provider or database leak 
 
 A second failure mode appears if privacy accounting exists only inside one short-lived task. An adaptive caller can start a fresh task, rename the agent, change its stated purpose, or rotate destinations and continue the reconstruction attack with a fresh budget.
 
-The firewall closes that reset loophole for Supakeep's controlled explicit output channel.
+The firewall closes that reset loophole for Hush's controlled explicit output channel.
 
 ## Threat model
 
@@ -23,15 +23,15 @@ Assume an adaptive caller can:
 - collude across those identities and sinks;
 - keep querying the same underlying private field.
 
-The attacker cannot directly read the local plaintext store or bypass Supakeep's decision boundary in this model.
+The attacker cannot directly read the local plaintext store or bypass Hush's decision boundary in this model.
 
 ## Mechanism
 
-Supakeep now has two accounting layers.
+Hush now has two accounting layers.
 
 ### 1. Task trajectory budget
 
-Each task gets a short-lived runtime-minted trajectory. If a result has `N` possible explicit outputs, Supakeep conservatively charges up to:
+Each task gets a short-lived runtime-minted trajectory. If a result has `N` possible explicit outputs, Hush conservatively charges up to:
 
 ```text
 log2(N) bits
@@ -59,7 +59,7 @@ For a decision that depends on several private fields, the current implementatio
 
 ## Persistence
 
-The reconstruction ledger is stored inside the encrypted Context Kernel state. Restarting Supakeep therefore does not reset the budget.
+The reconstruction ledger is stored inside the encrypted Context Kernel state. Restarting Hush therefore does not reset the budget.
 
 The persisted bundle does not contain private field names, ledger entries, labels, tags or values in plaintext. Those are encrypted using the same sealed-context data key.
 
@@ -101,7 +101,7 @@ The mechanism currently covers the explicit result channel controlled by `Privat
 - external side effects;
 - a compromised unlocked endpoint;
 - an AI or connector that receives private data outside the Context Kernel;
-- malicious code running with access to the local Supakeep process;
+- malicious code running with access to the local Hush process;
 - information the user explicitly authorizes for exact disclosure.
 
 It also does not establish that the default 8-bit and 6-bit budgets are optimal. Those values are alpha policy parameters and require empirical utility/privacy calibration on real workloads.
@@ -121,6 +121,6 @@ Before treating this as a production security property, test at least:
 
 ## Product implication
 
-The intended user experience does not expose any of this accounting machinery. A user connects Supakeep once and uses their AI normally. The AI asks Supakeep for a bounded decision; Supakeep either returns the minimum result or refuses because the accumulated questions are becoming too informative.
+The intended user experience does not expose any of this accounting machinery. A user connects Hush once and uses their AI normally. The AI asks Hush for a bounded decision; Hush either returns the minimum result or refuses because the accumulated questions are becoming too informative.
 
 The security boundary is therefore not "the model promises not to remember." It is a local runtime that controls both what can be computed over private context and how much explicit information can leave over time.

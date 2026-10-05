@@ -50,6 +50,6 @@ console.log(JSON.stringify({
   results:{
     unrestrictedPredicateOracle:unrestricted,
     perAtomBooleanAccounting:atomLevel,
-    supakeepTrajectoryAccounting:compositional
+    hushTrajectoryAccounting:compositional
   }
 },null,2));

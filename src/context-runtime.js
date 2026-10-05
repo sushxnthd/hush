@@ -28,7 +28,7 @@ function masked(value) {
  * Experimental personal-context runtime.
  *
  * Agents receive opaque lease handles instead of raw context. Every lease belongs
- * to a Supakeep-minted privacy trajectory representing one user-authorized task.
+ * to a Hush-minted privacy trajectory representing one user-authorized task.
  * Agents cannot rename the purpose to reset privacy accounting: the opaque
  * trajectory id is the accounting scope and follows delegated/sub-agent leases.
  *

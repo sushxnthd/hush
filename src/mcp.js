@@ -66,7 +66,7 @@ export function evaluateMcpCall({agent,purpose,params,catalog,policy,preapproved
   }
 
   if(!tool){
-    return {decision:'ask',reason:'Unknown MCP tool. Supakeep fails closed until the user approves the exact call.',request,requestHash:exactHash,tool:null};
+    return {decision:'ask',reason:'Unknown MCP tool. Hush fails closed until the user approves the exact call.',request,requestHash:exactHash,tool:null};
   }
   if(!trustAnnotations){
     return {decision:'ask',reason:'MCP tool annotations are untrusted for this upstream. Exact approval is required.',request,requestHash:exactHash,tool};
@@ -82,7 +82,7 @@ export function sanitizeForwardHeaders(headers,{brokeredAuth=null}={}){
   const out={};
   for(const [k,v] of Object.entries(headers??{})){
     const key=k.toLowerCase();
-    if(['host','content-length','connection','transfer-encoding','x-supakeep-agent','x-supakeep-purpose'].includes(key)) continue;
+    if(['host','content-length','connection','transfer-encoding','x-hush-agent','x-hush-purpose'].includes(key)) continue;
     if(key==='authorization'&&brokeredAuth) continue;
     if(key==='authorization'||key==='accept'||key==='content-type'||key==='user-agent'||key.startsWith('mcp-')||key==='last-event-id') out[key]=Array.isArray(v)?v.join(', '):v;
   }
