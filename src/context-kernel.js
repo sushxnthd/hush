@@ -1,6 +1,7 @@
 import {SealedContextStore} from './secure-context.js';
 import {PersistentReconstructionFirewall} from './reconstruction-firewall.js';
 import {PrivateDecisionRuntime} from './private-decision.js';
+import {compileSemanticProgram} from './context-compiler.js';
 
 /**
  * ContextKernel ties encrypted persistence to bounded private computation.
@@ -101,6 +102,15 @@ export class ContextKernel {
     const result=this.runtime.run(input);
     if(result.decision==='allow') this._persistState();
     return result;
+  }
+
+  /**
+   * Compile a path-free semantic request entirely inside the trusted local process.
+   * Raw private paths are never accepted from, or returned to, the calling agent.
+   */
+  runSemantic({program,...input}={}){
+    const compiled=compileSemanticProgram(this.list(),program);
+    return this.run({...input,program:compiled});
   }
 
   exposure(){ return this.firewall.footprint(); }
