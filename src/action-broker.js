@@ -19,6 +19,7 @@ function ttl(value){
 }
 function clone(value){ return structuredClone(value); }
 function unique(values=[]){ return [...new Set((values??[]).map(value=>String(value)).filter(Boolean))]; }
+function iso(value){ return value==null?null:new Date(value).toISOString(); }
 function credentialLikeHits(value){
   const raw=JSON.stringify(value??{});
   return detectSensitive(raw).filter(hit=>hit.type!=='email');
@@ -47,7 +48,7 @@ function safeReceipt(ticket,result,status,now){
   const body={
     v:1,
     id:`actrcpt_${crypto.randomBytes(18).toString('base64url')}`,
-    at:now,
+    at:iso(now),
     actionId:ticket.id,
     requestHash:ticket.requestHash,
     agent:ticket.agent,
@@ -88,11 +89,11 @@ function safeTicket(ticket){
     resource:ticket.resource,
     argumentKeys:Object.keys(ticket.arguments??{}).sort(),
     credentialCount:ticket.credentialRefs.length,
-    createdAt:ticket.createdAt,
-    expiresAt:ticket.expiresAt,
-    approvedAt:ticket.approvedAt,
-    deniedAt:ticket.deniedAt,
-    consumedAt:ticket.consumedAt,
+    createdAt:iso(ticket.createdAt),
+    expiresAt:iso(ticket.expiresAt),
+    approvedAt:iso(ticket.approvedAt),
+    deniedAt:iso(ticket.deniedAt),
+    consumedAt:iso(ticket.consumedAt),
     requestHash:ticket.requestHash,
     consent:ticket.consent??null,
     rawCredentialIncluded:false
@@ -189,7 +190,7 @@ export class ActionBroker {
   queue(){
     const now=this.now();
     for(const [id,ticket] of this.tickets) if(now>=ticket.expiresAt) this.tickets.delete(id);
-    return [...this.tickets.values()].map(safeTicket).sort((a,b)=>b.createdAt-a.createdAt);
+    return [...this.tickets.values()].sort((a,b)=>b.createdAt-a.createdAt).map(safeTicket);
   }
 
   approve(id){
