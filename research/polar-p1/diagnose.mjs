@@ -32,7 +32,7 @@ function simpleContract(row,i){
 function targetMatchesRows(target,rows){return rows.filter(r=>reveals(String(r.value),target)||reveals(target,String(r.value)));}
 
 for(const record of records){
-  const b=blindRecord(record), rows=sourceCandidates(b), protected=protectedFieldKeys(b,rows);
+  const b=blindRecord(record), rows=sourceCandidates(b), protectedKeys=protectedFieldKeys(b,rows);
   const allowed=record.scoring_targets?.allowed_values??[], blocked=record.scoring_targets?.do_not_disclose_values??[];
   const domain=String(record.domain??record?.metadata?.domain??''), attack=String(record?.metadata?.attack_type??'');
   const ds=nested(stats.domain,domain), as=nested(stats.attack,attack);
@@ -42,8 +42,8 @@ for(const record of records){
     const matches=targetMatchesRows(t,rows);
     if(matches.length){
       stats.protectedTargetsRepresentedByCandidate++;
-      if(matches.some(r=>protected.has(r.key))) stats.protectedTargetsRepresentedByPolicyProtectedCandidate++;
-      const unprotected=matches.filter(r=>!protected.has(r.key));
+      if(matches.some(r=>protectedKeys.has(r.key))) stats.protectedTargetsRepresentedByPolicyProtectedCandidate++;
+      const unprotected=matches.filter(r=>!protectedKeys.has(r.key));
       if(unprotected.length){
         stats.protectedLeaksFromUnprotectedCandidate++;
         inc(ds,'protectedTargetHasUnprotectedCandidate');inc(as,'protectedTargetHasUnprotectedCandidate');
@@ -55,7 +55,7 @@ for(const record of records){
     const matches=targetMatchesRows(t,rows);
     if(matches.length){
       stats.allowedTargetsRepresentedByCandidate++;
-      const usable=matches.filter(r=>!protected.has(r.key));
+      const usable=matches.filter(r=>!protectedKeys.has(r.key));
       if(usable.length) stats.allowedTargetsRepresentedByUnprotectedCandidate++;
       else {stats.allowedMissesProtectedCandidateOnly++;inc(ds,'allowedOnlyProtectedCandidate');}
       for(const r of matches) inc(fieldStats(r.key),'allowedTargetMatches');
@@ -66,7 +66,7 @@ for(const record of records){
   }
   rows.forEach((row,i)=>{
     const f=fieldStats(row.key);inc(f,'candidates');
-    if(protected.has(row.key))inc(f,'policyProtected');
+    if(protectedKeys.has(row.key))inc(f,'policyProtected');
     else{
       try{compilePrivateConstraint(row.value,simpleContract(row,i));stats.compile.ok++;inc(f,'compileOk');}
       catch(e){stats.compile.error++;inc(f,'compileError');inc(stats.compile.byField,row.key);inc(stats.compile.byDomain,domain);inc(f,`error:${e?.code||e?.name||'unknown'}`);}
