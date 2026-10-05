@@ -1,0 +1,102 @@
+name: research-agentcibench-confirmatory-v1h
+
+on:
+  push:
+    branches:
+      - research/agentcibench-hybrid-v1h-confirmatory
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AGENTCIBENCH_SHA: 7b3fad424d0c5a450ac3bc3dc4050c38094c6dc6
+  TOKENIZERS_PARALLELISM: 'false'
+
+jobs:
+  confirmatory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify frozen preregistration
+        run: |
+          test -f research/external/agentcibench_v1h_preregistration.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('research/external/agentcibench_v1h_preregistration.json').read_text())
+          assert p['frozen_before_holdout_run'] is True
+          assert p['selected_config_id']=='c28_p30_o35_d70'
+          assert p['development_commit']=='4e10051d81d8c68c4f02a4f328c883664ac68e0e'
+          PY
+      - name: Syntax-check frozen evaluator
+        run: |
+          python -m py_compile research/external/agentcibench_confirmatory_v1h.py research/external/agentcibench_context_dev_v1h.py
+      - name: Install pinned CPU model runtime
+        run: |
+          python -m pip install --disable-pip-version-check --index-url https://download.pytorch.org/whl/cpu 'torch==2.5.1'
+          python -m pip install --disable-pip-version-check 'transformers==4.46.3' 'safetensors==0.4.5' 'numpy==2.1.3'
+      - name: Fetch pinned independent AgentCIBench revision
+        run: |
+          git clone --filter=blob:none https://github.com/UKPLab/emnlp2026-agentcibench.git agentcibench
+          git -C agentcibench checkout --detach "${AGENTCIBENCH_SHA}"
+          test "$(git -C agentcibench rev-parse HEAD)" = "${AGENTCIBENCH_SHA}"
+      - name: Run frozen v1h holdout re-evaluation
+        id: evaluator
+        run: |
+          set +e
+          python research/external/agentcibench_confirmatory_v1h.py \
+            --holdout-dir agentcibench/data/eval_set_e2e_50 \
+            --output agentcibench-confirmatory-v1h.json | tee agentcibench-confirmatory-v1h.txt
+          code=${PIPESTATUS[0]}
+          echo "${code}" > agentcibench-confirmatory-v1h.exit
+          sha256sum agentcibench-confirmatory-v1h.json > agentcibench-confirmatory-v1h.sha256 || true
+          exit 0
+      - name: Record provenance
+        if: always()
+        run: |
+          {
+            echo "hush_sha=$(git rev-parse HEAD)"
+            echo "agentcibench_sha=$(git -C agentcibench rev-parse HEAD)"
+            echo "prereg_sha256=$(sha256sum research/external/agentcibench_v1h_preregistration.json | awk '{print $1}')"
+            echo "evaluator_sha256=$(sha256sum research/external/agentcibench_confirmatory_v1h.py | awk '{print $1}')"
+            echo "mechanism_sha256=$(sha256sum research/external/agentcibench_context_dev_v1h.py | awk '{print $1}')"
+            echo "python=$(python --version 2>&1)"
+            python - <<'PY'
+          import importlib.metadata as m
+          for p in ['torch','transformers','safetensors','numpy']:
+              print(f'{p}={m.version(p)}')
+          PY
+          } | tee agentcibench-confirmatory-v1h-runtime.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hush-agentcibench-confirmatory-v1h-${{ github.sha }}
+          path: |
+            agentcibench-confirmatory-v1h.json
+            agentcibench-confirmatory-v1h.txt
+            agentcibench-confirmatory-v1h.sha256
+            agentcibench-confirmatory-v1h.exit
+            agentcibench-confirmatory-v1h-runtime.txt
+            research/external/agentcibench_v1h_preregistration.json
+          if-no-files-found: warn
+      - name: Interpret frozen result
+        if: always()
+        run: |
+          test -f agentcibench-confirmatory-v1h.exit || { echo 'No evaluator exit record' >&2; exit 1; }
+          code="$(cat agentcibench-confirmatory-v1h.exit)"
+          if [ "${code}" = '0' ]; then
+            echo 'All preregistered v1h holdout gates passed.'
+          elif [ "${code}" = '2' ]; then
+            echo 'v1h completed but failed one or more preregistered scientific gates.'
+          elif [ "${code}" = '1' ]; then
+            echo 'Technical evaluator error.' >&2
+            exit 1
+          else
+            echo "Unexpected evaluator exit ${code}." >&2
+            exit 1
+          fi
