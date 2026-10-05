@@ -9,7 +9,7 @@ if(sha!==EXPECTED_DATA_SHA256)throw new Error(`dataset hash mismatch ${sha}`);
 const records=JSON.parse(bytes.toString('utf8')).filter(r=>Number(r?.metadata?.privacy_level)===2&&String(r?.metadata?.privacy_type)==='semantic_constraints');
 const inc=(m,k,n=1)=>m.set(k,(m.get(k)||0)+n),top=(m,n=60)=>[...m].sort((a,b)=>b[1]-a[1]||String(a[0]).localeCompare(String(b[0]))).slice(0,n);
 const missKey=new Map(),missDomain=new Map(),missAttack=new Map(),denyReason=new Map(),policyPattern=new Map(),leakKey=new Map();
-let allowed=0,missed=0,noCandidate=0,candidateDenied=0,candidateAllowedButMatcherMiss=0,protected=0,leaked=0;
+let allowed=0,missed=0,noCandidate=0,candidateDenied=0,candidateAllowedButMatcherMiss=0,protectedTargets=0,leaked=0;
 const examples=[];
 for(const r of records){
  const out=compileDisclosure(r),score=scoreTranscript(out.text,r.scoring_targets),facts=provenanceErasedFacts(r),policy=r.generated_texts?.privacy_policy_text??'';
@@ -35,13 +35,13 @@ for(const r of records){
   }
  }
  for(const t of r.scoring_targets?.do_not_disclose_values??[]){
-  protected++;
+  protectedTargets++;
   if(!reveals(out.text,t))continue;
   leaked++;
   for(const x of out.chosen.map(y=>y.row).filter(x=>reveals(String(x.value),t)||reveals(t,String(x.value))))inc(leakKey,x.key);
  }
  const normPolicy=policy.toLowerCase().replace(/\s+/g,' ').trim();inc(policyPattern,normPolicy);
 }
-const report={datasetSha256:sha,p2Cases:records.length,allowedTargets:allowed,missedAllowedTargets:missed,allowedTargetUtility:1-missed/allowed,noCandidate,candidateDenied,candidateAllowedButMatcherMiss,protectedTargets:protected,protectedLeaks:leaked,topMissKeys:top(missKey),topDenyReasons:top(denyReason),missByDomain:top(missDomain,20),missByAttack:top(missAttack,20),topPolicies:top(policyPattern,80),topLeakKeys:top(leakKey),examples};
+const report={datasetSha256:sha,p2Cases:records.length,allowedTargets:allowed,missedAllowedTargets:missed,allowedTargetUtility:1-missed/allowed,noCandidate,candidateDenied,candidateAllowedButMatcherMiss,protectedTargets,protectedLeaks:leaked,topMissKeys:top(missKey),topDenyReasons:top(denyReason),missByDomain:top(missDomain,20),missByAttack:top(missAttack,20),topPolicies:top(policyPattern,80),topLeakKeys:top(leakKey),examples};
 console.log(JSON.stringify(report,null,2));
 fs.mkdirSync('research/pcc-v2/out',{recursive:true});fs.writeFileSync('research/pcc-v2/out/p2-diagnostics.json',JSON.stringify(report,null,2)+'\n');
