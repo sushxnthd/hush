@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/disclosure-closure-compiler.js'
       - 'research/dcc/polar-development.mjs'
+      - 'research/dcc/probe-opened-p1.mjs'
       - '.github/workflows/dcc-polar-development.yml'
   workflow_dispatch:
 permissions:
@@ -33,6 +34,8 @@ jobs:
           h=hashlib.sha256(p.read_bytes()).hexdigest();print('dataset_sha256='+h)
           if h!='b1db0274228b1346df47d0a42bb75f9536ded1a6d750bb2720f43612c7abb266': raise SystemExit('hash mismatch')
           PY
+      - name: Probe remaining opened-P1 policy shapes
+        run: node research/dcc/probe-opened-p1.mjs /tmp/polar.json
       - name: Run development evaluation
         run: node research/dcc/polar-development.mjs /tmp/polar.json
       - uses: actions/upload-artifact@v4
