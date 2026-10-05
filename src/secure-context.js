@@ -12,6 +12,8 @@ function assertPassphrase(passphrase){
   if (typeof passphrase !== 'string' || passphrase.length < 8) throw new Error('Context passphrase must be at least 8 characters');
 }
 
+function freshKdf(){ return {...DEFAULT_KDF,salt:b64(crypto.randomBytes(16))}; }
+
 function deriveWrappingKey(passphrase, kdf){
   if (kdf?.name !== 'scrypt') throw new Error('Unsupported context KDF');
   return crypto.scryptSync(passphrase, unb64(kdf.salt), Number(kdf.keyLength || 32), {
@@ -45,6 +47,14 @@ function atomicWrite(file, value){
   try{fs.chmodSync(file,0o600)}catch{}
 }
 
+function assertCiphertextBundleShape(bundle){
+  if(bundle?.v!==1 || !bundle.kdf || !bundle.wrappedKey || !Array.isArray(bundle.records)) throw new Error('Unsupported ciphertext bundle');
+}
+function recordAad(id){ return `hush/context-record/v1/${id}`; }
+const STATE_AAD='hush/context-state/v1';
+const KEY_AAD='hush/context-key/v1';
+const RECOVERY_AAD='hush/context-recovery/v1';
+
 /**
  * SealedContextStore is a ciphertext-only persistence primitive for private context.
  *
@@ -75,11 +85,10 @@ export class SealedContextStore {
   }
 
   _create(){
-    const salt=crypto.randomBytes(16);
-    const kdf={...DEFAULT_KDF,salt:b64(salt)};
+    const kdf=freshKdf();
     const wrappingKey=deriveWrappingKey(this.passphrase,kdf);
     const dek=crypto.randomBytes(32);
-    const wrappedKey=sealBuffer(dek,wrappingKey,'hush/context-key/v1');
+    const wrappedKey=sealBuffer(dek,wrappingKey,KEY_AAD);
     const bundle={v:1,kdf,wrappedKey,records:[],state:null,createdAt:this.now(),updatedAt:this.now()};
     atomicWrite(this.file,bundle);
     wrappingKey.fill(0); dek.fill(0);
@@ -89,14 +98,14 @@ export class SealedContextStore {
   _openExisting(){
     let bundle;
     try{bundle=JSON.parse(fs.readFileSync(this.file,'utf8'));}catch{throw new Error('Context store is unreadable');}
-    if(bundle?.v!==1 || !bundle.kdf || !bundle.wrappedKey || !Array.isArray(bundle.records)) throw new Error('Unsupported or corrupt context store');
+    assertCiphertextBundleShape(bundle);
     return bundle;
   }
 
   _unwrapDek(bundle){
     const wrappingKey=deriveWrappingKey(this.passphrase,bundle.kdf);
     try{
-      const dek=openBuffer(bundle.wrappedKey,wrappingKey,'hush/context-key/v1');
+      const dek=openBuffer(bundle.wrappedKey,wrappingKey,KEY_AAD);
       if(dek.length!==32) throw new Error('Invalid data key length');
       return dek;
     } catch {
@@ -111,8 +120,8 @@ export class SealedContextStore {
     atomicWrite(this.file,this.bundle);
   }
 
-  _recordAad(id){ return `hush/context-record/v1/${id}`; }
-  _stateAad(){ return 'hush/context-state/v1'; }
+  _recordAad(id){ return recordAad(id); }
+  _stateAad(){ return STATE_AAD; }
 
   _decryptRecord(record){
     const value=openJson(record.payload,this.dek,this._recordAad(record.id));
@@ -177,9 +186,83 @@ export class SealedContextStore {
     return sha256(canonicalize(this.exportCiphertextBundle()));
   }
 
+  /**
+   * Create a recovery package that contains only ciphertext plus the same DEK
+   * re-wrapped under a separate recovery phrase. The recovery phrase itself and all
+   * plaintext context stay off the package.
+   */
+  createRecoveryKit(recoveryPhrase){
+    assertPassphrase(recoveryPhrase);
+    const kdf=freshKdf();
+    const wrappingKey=deriveWrappingKey(recoveryPhrase,kdf);
+    try{
+      const bundle=this.exportCiphertextBundle();
+      return {
+        v:1,
+        kdf,
+        wrappedRecoveryKey:sealBuffer(this.dek,wrappingKey,RECOVERY_AAD),
+        bundle,
+        bundleFingerprint:sha256(canonicalize(bundle)),
+        createdAt:this.now(),
+        plaintextIncluded:false
+      };
+    } finally {
+      wrappingKey.fill(0);
+    }
+  }
+
+  /**
+   * Recover a ciphertext store on a new device by unlocking the DEK with the recovery
+   * phrase and re-wrapping it under a new local passphrase. Records are never
+   * decrypted into an exportable recovery payload.
+   */
+  static recoverToDirectory({dir,recoveryKit,recoveryPhrase,newPassphrase,now=()=>Date.now()}={}){
+    if(!dir) throw new Error('Recovery destination directory is required');
+    assertPassphrase(recoveryPhrase);
+    assertPassphrase(newPassphrase);
+    if(recoveryKit?.v!==1||!recoveryKit.kdf||!recoveryKit.wrappedRecoveryKey||!recoveryKit.bundle) throw new Error('Unsupported recovery kit');
+    const source=structuredClone(recoveryKit.bundle);
+    assertCiphertextBundleShape(source);
+    const fingerprint=sha256(canonicalize(source));
+    if(fingerprint!==String(recoveryKit.bundleFingerprint)) throw new Error('Recovery bundle fingerprint mismatch');
+
+    const recoveryWrappingKey=deriveWrappingKey(recoveryPhrase,recoveryKit.kdf);
+    let dek;
+    try{
+      dek=openBuffer(recoveryKit.wrappedRecoveryKey,recoveryWrappingKey,RECOVERY_AAD);
+      if(dek.length!==32) throw new Error('Invalid recovery data key length');
+      for(const record of source.records){
+        const plain=openJson(record.payload,dek,recordAad(record.id));
+        if(plain?.id!==record.id) throw new Error('Context record identity mismatch');
+      }
+      if(source.state) openJson(source.state,dek,STATE_AAD);
+
+      const newKdf=freshKdf();
+      const newWrappingKey=deriveWrappingKey(newPassphrase,newKdf);
+      try{
+        const recovered={
+          ...source,
+          kdf:newKdf,
+          wrappedKey:sealBuffer(dek,newWrappingKey,KEY_AAD),
+          updatedAt:now()
+        };
+        atomicWrite(path.join(dir,'sealed-context.json'),recovered);
+      } finally {
+        newWrappingKey.fill(0);
+      }
+    } catch(error){
+      if(error?.message==='Context record identity mismatch'||error?.message==='Recovery bundle fingerprint mismatch') throw error;
+      throw new Error('Unable to recover context store with this recovery phrase');
+    } finally {
+      recoveryWrappingKey.fill(0);
+      dek?.fill(0);
+    }
+    return new SealedContextStore({dir,passphrase:newPassphrase,now});
+  }
+
   importCiphertextBundle(bundle){
     const candidate=structuredClone(bundle);
-    if(candidate?.v!==1 || !candidate.kdf || !candidate.wrappedKey || !Array.isArray(candidate.records)) throw new Error('Unsupported ciphertext bundle');
+    assertCiphertextBundleShape(candidate);
     const candidateDek=this._unwrapDek(candidate);
     try{
       // Authenticate every record and encrypted state before replacing the store.
