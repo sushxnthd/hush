@@ -1,8 +1,13 @@
+import crypto from 'node:crypto';
 import {SealedContextStore} from './secure-context.js';
 import {PersistentReconstructionFirewall} from './reconstruction-firewall.js';
 import {PrivateDecisionRuntime} from './private-decision.js';
-import {compileSemanticProgram} from './context-compiler.js';
+import {compileSemanticProgram,resolvePrivateRef} from './context-compiler.js';
 import {normalizeConnectorSnapshot,connectorSummary} from './connectors.js';
+import {sanitizeContextValue,contextSanitizationModes} from './context-sanitizer.js';
+
+const DEFAULT_RELEASE_TTL=5*60*1000;
+const MAX_RELEASE_TTL=15*60*1000;
 
 function stripSemanticPaths(result){
   const out=structuredClone(result);
@@ -15,6 +20,28 @@ function stripSemanticPaths(result){
     delete out.joint.fields;
   }
   return out;
+}
+
+function safeReleaseMetadata(release){
+  return {
+    releaseId:release.id,
+    decision:release.deniedAt?'deny':release.approvedAt?'approved':'ask',
+    reason:release.deniedAt?'Context fallback was denied.':release.approvedAt?'Sanitized context fallback approved for one release.':'Sanitized context fallback requires explicit local approval.',
+    agent:release.agent,
+    sink:release.sink,
+    purpose:release.purpose,
+    category:release.category,
+    mode:release.mode,
+    transformations:[...release.transformations],
+    outputBytes:release.outputBytes,
+    createdAt:release.createdAt,
+    expiresAt:release.expiresAt,
+    approvedAt:release.approvedAt,
+    deniedAt:release.deniedAt,
+    consumedAt:release.consumedAt,
+    exactPrivateValuesIntended:false,
+    bestEffortTextSanitization:true
+  };
 }
 
 /**
@@ -31,6 +58,7 @@ export class ContextKernel {
     this.firewall.restore(state.firewallEvents??[]);
     this.runtime=new PrivateDecisionRuntime({now,firewall:this.firewall});
     this.pathToId=new Map();
+    this.pendingContextReleases=new Map();
 
     for(const record of this.store.records()){
       if(record.kind!=='context' || !record.path) continue;
@@ -55,9 +83,17 @@ export class ContextKernel {
     });
   }
 
+  _invalidateContextReleases(path){
+    const key=String(path||'');
+    for(const [id,release] of this.pendingContextReleases){
+      if(release.path===key&&!release.consumedAt) this.pendingContextReleases.delete(id);
+    }
+  }
+
   put(path,value,{label=null,category='general',tags=[],domain=undefined,source=undefined}={}){
     const key=String(path||'');
     if(!key) throw new Error('Private context path is required');
+    this._invalidateContextReleases(key);
     const item=this.store.put({
       id:this.pathToId.get(key)??null,
       kind:'context',
@@ -79,6 +115,7 @@ export class ContextKernel {
     const key=String(path||'');
     const id=this.pathToId.get(key);
     if(!id) return false;
+    this._invalidateContextReleases(key);
     const partitionSnapshot=this.runtime.partitionFirewall?.snapshot()??null;
     const jointChoiceSnapshot=this.runtime.jointChoiceFirewall?.snapshot()??null;
     const ok=this.store.remove(id);
@@ -161,6 +198,99 @@ export class ContextKernel {
     return stripSemanticPaths(this.run({...input,program:compiled}));
   }
 
+  /**
+   * Prepare a sanitized content fallback without releasing the content. Unlike the
+   * bounded PDP path, free-form context cannot currently receive an exact leakage
+   * bound, so Hush always requires an explicit local approval before one-shot use.
+   */
+  prepareContextRelease({task='',privateRef={},mode='pseudonymous',agent='unknown-agent',sink='unknown-sink',purpose='unspecified',ttlMs=DEFAULT_RELEASE_TTL}={}){
+    const ttl=Number(ttlMs);
+    if(!Number.isFinite(ttl)||ttl<1000) throw new Error('Context release TTL must be finite and at least 1000 ms');
+    const path=resolvePrivateRef(this.list(),privateRef,{task:String(task??'')});
+    const recordId=this.pathToId.get(path);
+    if(!recordId) throw new Error('Selected private context is unavailable');
+    const record=this.store.get(recordId);
+    const prepared=sanitizeContextValue(record.value,{mode});
+    const now=this.now();
+    const release={
+      id:`ctxrel_${crypto.randomBytes(24).toString('base64url')}`,
+      path,
+      agent:String(agent||'unknown-agent'),
+      sink:String(sink||'unknown-sink'),
+      purpose:String(purpose||'unspecified'),
+      category:String(record.category||'general'),
+      mode:prepared.mode,
+      sanitized:prepared.sanitized,
+      transformations:prepared.transformations,
+      outputBytes:prepared.outputBytes,
+      digest:prepared.digest,
+      createdAt:now,
+      expiresAt:now+Math.min(ttl,MAX_RELEASE_TTL),
+      approvedAt:null,
+      deniedAt:null,
+      consumedAt:null
+    };
+    this.pendingContextReleases.set(release.id,release);
+    return safeReleaseMetadata(release);
+  }
+
+  _contextRelease(id){
+    const release=this.pendingContextReleases.get(String(id));
+    if(!release) throw new Error('Context release not found');
+    if(this.now()>=release.expiresAt){
+      this.pendingContextReleases.delete(release.id);
+      throw new Error('Context release expired');
+    }
+    return release;
+  }
+
+  contextReleaseQueue(){
+    const now=this.now();
+    for(const [id,release] of this.pendingContextReleases){
+      if(now>=release.expiresAt) this.pendingContextReleases.delete(id);
+    }
+    return [...this.pendingContextReleases.values()].map(safeReleaseMetadata).sort((a,b)=>b.createdAt-a.createdAt);
+  }
+
+  approveContextRelease(id){
+    const release=this._contextRelease(id);
+    if(release.deniedAt) throw new Error('Context release was denied');
+    if(release.consumedAt) throw new Error('Context release already consumed');
+    if(!release.approvedAt) release.approvedAt=this.now();
+    return safeReleaseMetadata(release);
+  }
+
+  denyContextRelease(id){
+    const release=this._contextRelease(id);
+    if(release.consumedAt) throw new Error('Context release already consumed');
+    release.deniedAt=this.now();
+    return safeReleaseMetadata(release);
+  }
+
+  consumeContextRelease({releaseId,agent='unknown-agent',sink='unknown-sink'}={}){
+    const release=this._contextRelease(releaseId);
+    if(release.agent!==String(agent)||release.sink!==String(sink)) throw new Error('Context release is bound to another agent or sink');
+    if(release.deniedAt) throw new Error('Context release was denied');
+    if(!release.approvedAt) return {...safeReleaseMetadata(release),decision:'ask'};
+    if(release.consumedAt) throw new Error('Context release already consumed');
+    release.consumedAt=this.now();
+    return {
+      decision:'allow',
+      context:structuredClone(release.sanitized),
+      category:release.category,
+      mode:release.mode,
+      transformations:[...release.transformations],
+      exactPrivateValuesIntended:false,
+      bestEffortTextSanitization:true,
+      receipt:{
+        v:1,at:release.consumedAt,releaseId:release.id,agent:release.agent,sink:release.sink,purpose:release.purpose,
+        sanitizedDigest:release.digest,outputBytes:release.outputBytes,oneShot:true,rawPrivatePathIncluded:false
+      }
+    };
+  }
+
+  contextReleaseModes(){ return contextSanitizationModes(); }
+
   exposure(){ return this.firewall.footprint(); }
   partitionExposure(){ return this.runtime.partitionFootprint(); }
   jointChoiceExposure(){ return this.runtime.jointChoiceFootprint(); }
@@ -171,6 +301,7 @@ export class ContextKernel {
     return {
       contextItems:this.list().length,
       connectors:this.connectorStats(),
+      pendingContextReleases:this.contextReleaseQueue().filter(release=>release.decision==='ask').length,
       profileRevision:this.runtime.profileRevision,
       exposureFields:this.exposure().length,
       partitionFields:this.partitionExposure().length,
