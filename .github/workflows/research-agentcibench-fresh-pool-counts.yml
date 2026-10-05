@@ -1,0 +1,28 @@
+name: research-agentcibench-fresh-pool-counts
+
+on:
+  push:
+    branches:
+      - research/agentcibench-v1h-confirmatory
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AGENTCIBENCH_SHA: 7b3fad424d0c5a450ac3bc3dc4050c38094c6dc6
+
+jobs:
+  counts:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned AgentCIBench revision
+        run: |
+          git clone --filter=blob:none https://github.com/UKPLab/emnlp2026-agentcibench.git agentcibench
+          git -C agentcibench checkout --detach "${AGENTCIBENCH_SHA}"
+      - name: Count unused pool only
+        run: |
+          python research/external/agentcibench_fresh_pool_counts.py \
+            --source-dir agentcibench/data/generated_merged \
+            --old-holdout-dir agentcibench/data/eval_set_e2e_50
