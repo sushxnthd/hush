@@ -94,7 +94,7 @@ export class ModelRouter {
 
   remove(id){ return this.models.delete(String(id)); }
   get(id){ const model=this.models.get(String(id)); return model?structuredClone(model):null; }
-  list(){ return [...this.models.values()].map(structuredClone).sort((a,b)=>a.id.localeCompare(b.id)); }
+  list(){ return [...this.models.values()].map(model=>structuredClone(model)).sort((a,b)=>a.id.localeCompare(b.id)); }
 
   route(input={}){
     const request=normalizeRequest(input);
