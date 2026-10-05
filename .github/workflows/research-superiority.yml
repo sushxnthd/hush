@@ -1,0 +1,45 @@
+name: research-superiority
+on:
+  push:
+    paths:
+      - 'bench/scientific-superiority.js'
+      - 'research/SUPERIORITY_PROTOCOL_V1.md'
+      - 'src/private-decision.js'
+      - 'src/context-kernel.js'
+      - 'src/reconstruction-firewall.js'
+      - 'src/partition-firewall.js'
+      - 'src/joint-choice-firewall.js'
+      - '.github/workflows/research-superiority.yml'
+  pull_request:
+    paths:
+      - 'bench/scientific-superiority.js'
+      - 'research/SUPERIORITY_PROTOCOL_V1.md'
+      - 'src/private-decision.js'
+      - 'src/context-kernel.js'
+      - 'src/reconstruction-firewall.js'
+      - 'src/partition-firewall.js'
+      - 'src/joint-choice-firewall.js'
+      - '.github/workflows/research-superiority.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reproduce:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Run preregistered protocol
+        run: |
+          mkdir -p research-artifacts
+          npm run bench:superiority:json | tee research-artifacts/superiority-report.json
+          sha256sum research-artifacts/superiority-report.json > research-artifacts/SHA256SUMS
+          git rev-parse HEAD > research-artifacts/COMMIT
+          node --version > research-artifacts/RUNTIME
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hush-superiority-v1-${{ github.sha }}
+          path: research-artifacts/
+          if-no-files-found: error
+          retention-days: 90
