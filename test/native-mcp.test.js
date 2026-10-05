@@ -22,6 +22,10 @@ test('native MCP surface exposes bounded-computation tools only',()=>{
   assert.equal(isNativeMcpTool('hush_private_decision'),true);
   assert.equal(isNativeMcpTool('get_raw_context'),false);
   assert.equal(NATIVE_MCP_TOOLS.some(x=>/raw|secret|password/i.test(x.name)),false);
+  const semantic=NATIVE_MCP_TOOLS.find(x=>x.name==='hush_private_query');
+  assert.equal(semantic.inputSchema.properties.task.maxLength,1000);
+  const predicate=semantic.inputSchema.properties.program.oneOf[0];
+  assert.equal(predicate.required.includes('privateRef'),false);
 });
 
 test('MCP client can personalize semantically without knowing private paths or values',()=>{
@@ -38,6 +42,32 @@ test('MCP client can personalize semantically without knowing private paths or v
       {kind:'lowerPublic',candidate:'price',scale:1000,weight:0.01}
     ]
   }},kernel:k,agent:'assistant',sink:'mcp:test'});
+  assert.equal(out.structuredContent.decision,'allow');
+  assert.equal(out.structuredContent.result,'b');
+  const wire=JSON.stringify(out);
+  assert.equal(wire.includes('travel.maxBudget'),false);
+  assert.equal(wire.includes('travel.preferredAirline'),false);
+  assert.equal(wire.includes('1500'),false);
+  assert.equal(wire.includes('ANA'),false);
+});
+
+test('MCP client can omit privateRef when task and clause roles identify context',()=>{
+  const k=kernel();
+  const start=callNativeMcpTool({name:'hush_begin_private_task',args:{purpose:'choose flight',maxBits:3},kernel:k});
+  const trajectoryId=start.structuredContent.trajectory.trajectoryId;
+  const out=callNativeMcpTool({name:'hush_private_query',args:{
+    trajectoryId,
+    task:'Choose a flight under my travel budget and prefer my usual airline.',
+    program:{
+      kind:'choose',
+      candidates:[{id:'a',price:1200,airline:'JAL'},{id:'b',price:1490,airline:'ANA'},{id:'c',price:1800,airline:'ANA'}],
+      constraints:[{op:'candidateLtePrivate',candidate:'price'}],
+      preferences:[
+        {kind:'matchPrivate',candidate:'airline',weight:10},
+        {kind:'lowerPublic',candidate:'price',scale:1000,weight:0.01}
+      ]
+    }
+  },kernel:k,agent:'assistant',sink:'mcp:test'});
   assert.equal(out.structuredContent.decision,'allow');
   assert.equal(out.structuredContent.result,'b');
   const wire=JSON.stringify(out);
@@ -84,7 +114,7 @@ test('semantic agent surface rejects raw private paths',()=>{
   const trajectoryId=start.structuredContent.trajectory.trajectoryId;
   const out=callNativeMcpTool({name:'hush_private_query',args:{trajectoryId,program:{kind:'predicate',private:'travel.maxBudget',op:'gte',value:1000}},kernel:k});
   assert.equal(out.isError,true);
-  assert.match(out.structuredContent.reason,/must not contain raw private paths|must use privateRef/i);
+  assert.match(out.structuredContent.reason,/must not contain raw private paths|must use privateRef|task inference/i);
 });
 
 test('partition-aware privacy guard denies rare result through native MCP before release',()=>{
