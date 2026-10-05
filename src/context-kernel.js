@@ -5,6 +5,7 @@ import {PrivateDecisionRuntime} from './private-decision.js';
 import {compileSemanticProgram,resolvePrivateRef} from './context-compiler.js';
 import {normalizeConnectorSnapshot,connectorSummary} from './connectors.js';
 import {sanitizeContextValue,contextSanitizationModes} from './context-sanitizer.js';
+import {SharedMemoryBroker} from './memory-broker.js';
 
 const DEFAULT_RELEASE_TTL=5*60*1000;
 const MAX_RELEASE_TTL=15*60*1000;
@@ -59,6 +60,7 @@ export class ContextKernel {
     this.runtime=new PrivateDecisionRuntime({now,firewall:this.firewall});
     this.pathToId=new Map();
     this.pendingContextReleases=new Map();
+    this.memoryBroker=new SharedMemoryBroker({kernel:this,now});
 
     for(const record of this.store.records()){
       if(record.kind!=='context' || !record.path) continue;
@@ -178,6 +180,11 @@ export class ContextKernel {
     const row=this.connectorStats().find(item=>item.provider===normalized.provider&&item.collection===normalized.collection);
     return {provider:normalized.provider,collection:normalized.collection,received:normalized.records.length,created,updated,removed,total:row?.items??0,replace:normalized.replace};
   }
+
+  proposeMemory(input={}){ return this.memoryBroker.propose(input); }
+  memoryProposalQueue(options={}){ return this.memoryBroker.queue(options); }
+  approveMemoryProposal(id){ return this.memoryBroker.approve(id); }
+  denyMemoryProposal(id){ return this.memoryBroker.deny(id); }
 
   beginTrajectory(options={}){ return this.runtime.beginTrajectory(options); }
   revokeTrajectory(id){ return this.runtime.revokeTrajectory(id); }
@@ -302,6 +309,7 @@ export class ContextKernel {
       contextItems:this.list().length,
       connectors:this.connectorStats(),
       pendingContextReleases:this.contextReleaseQueue().filter(release=>release.decision==='ask').length,
+      pendingMemoryProposals:this.memoryProposalQueue().filter(proposal=>proposal.decision==='ask').length,
       profileRevision:this.runtime.profileRevision,
       exposureFields:this.exposure().length,
       partitionFields:this.partitionExposure().length,
