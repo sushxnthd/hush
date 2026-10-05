@@ -1,0 +1,85 @@
+import {sanitizeContextValue} from './context-sanitizer.js';
+
+const WORD=/[\p{L}\p{N}][\p{L}\p{N}'’_-]*/gu;
+
+function norm(value){return String(value??'').normalize('NFKC').toLowerCase();}
+function collect(value,out=[],depth=0){
+  if(depth>8||value==null||typeof value==='boolean') return out;
+  if(typeof value==='string'||typeof value==='number'){
+    const text=String(value).trim();
+    if(text) out.push(text);
+    return out;
+  }
+  if(Array.isArray(value)){
+    for(const item of value.slice(0,256)) collect(item,out,depth+1);
+    return out;
+  }
+  if(typeof value==='object'){
+    for(const item of Object.values(value).slice(0,256)) collect(item,out,depth+1);
+  }
+  return out;
+}
+function words(text){
+  const out=[];
+  for(const match of String(text??'').matchAll(WORD)) out.push({v:norm(match[0]),start:match.index,end:match.index+match[0].length});
+  return out;
+}
+function copiedSpans(output,source,{minTokens=4,minChars=18}={}){
+  const a=words(output),b=words(source);
+  const byToken=new Map();
+  for(let j=0;j<b.length;j++){
+    const xs=byToken.get(b[j].v)??[];xs.push(j);byToken.set(b[j].v,xs);
+  }
+  const spans=[];
+  for(let i=0;i<a.length;i++){
+    for(const j of byToken.get(a[i].v)??[]){
+      let n=0;
+      while(i+n<a.length&&j+n<b.length&&a[i+n].v===b[j+n].v)n++;
+      if(n>=minTokens){
+        const start=a[i].start,end=a[i+n-1].end;
+        if(end-start>=minChars) spans.push({start,end});
+      }
+    }
+  }
+  spans.sort((x,y)=>x.start-y.start||y.end-x.end);
+  const merged=[];
+  for(const span of spans){
+    const last=merged.at(-1);
+    if(!last||span.start>last.end) merged.push({...span});
+    else last.end=Math.max(last.end,span.end);
+  }
+  return merged;
+}
+function redact(text,spans){
+  if(!spans.length)return {text,matches:0};
+  let out='',cursor=0;
+  for(const span of spans){out+=text.slice(cursor,span.start)+'[HUSH:PRIVATE]';cursor=span.end;}
+  out+=text.slice(cursor);
+  return {text:out,matches:spans.length};
+}
+
+/** Deterministically removes copied spans from locally protected context before egress. */
+export function guardOutboundValue(value,{protectedValues=[],mode='pseudonymous',minTokens=4,minChars=18}={}){
+  const sources=[...new Set((protectedValues??[]).flatMap(v=>collect(v)).filter(Boolean))];
+  let matches=0;
+  const walk=(item,depth=0)=>{
+    if(depth>8)return '[HUSH:TRUNCATED]';
+    if(typeof item==='string'){
+      const spans=[];
+      for(const source of sources)spans.push(...copiedSpans(item,source,{minTokens,minChars}));
+      const result=redact(item,spans.sort((a,b)=>a.start-b.start));
+      matches+=result.matches;
+      return result.text;
+    }
+    if(Array.isArray(item))return item.map(x=>walk(x,depth+1));
+    if(item&&typeof item==='object'){
+      const out={};
+      for(const [key,child] of Object.entries(item))out[key]=walk(child,depth+1);
+      return out;
+    }
+    return item;
+  };
+  const guarded=walk(structuredClone(value));
+  const sanitized=sanitizeContextValue(guarded,{mode});
+  return {...sanitized,protectedMatches:matches,protectedSourceCount:sources.length,verbatimPrivateCopyGuard:true};
+}
