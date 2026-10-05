@@ -1,0 +1,57 @@
+name: polar-p1-confirmatory-v1
+on:
+  push:
+    branches: [research/polar-p1-confirmatory]
+    paths:
+      - 'research/polar-p1/evaluate.mjs'
+      - 'research/polar-p1/evaluate.test.mjs'
+      - 'research/polar-p1/finalize.mjs'
+      - '.github/workflows/polar-p1-confirmatory.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  confirm:
+    runs-on: ubuntu-24.04
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+      HUSH_BASE_COMMIT: c6bf59886b5cbe2ee5ef05190ec9b53960706f16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Freeze scorer/mechanism unit tests before confirmatory output
+        run: node --test research/polar-p1/evaluate.test.mjs
+      - name: Download exact frozen POLAR release
+        run: |
+          python - <<'PY'
+          import hashlib, pathlib, urllib.request
+          url='https://huggingface.co/datasets/Qiaoyuan/POLAR-Bench/resolve/main/data/privacy_benchmark_rendered_repaired.json?download=true'
+          p=pathlib.Path('/tmp/polar.json')
+          with urllib.request.urlopen(url,timeout=180) as r, p.open('wb') as f:
+              while True:
+                  b=r.read(1024*1024)
+                  if not b: break
+                  f.write(b)
+          h=hashlib.sha256(p.read_bytes()).hexdigest()
+          expected='b1db0274228b1346df47d0a42bb75f9536ded1a6d750bb2720f43612c7abb266'
+          print('dataset_sha256='+h)
+          if h != expected: raise SystemExit('Frozen dataset hash mismatch')
+          PY
+      - name: Confirmatory run 1
+        run: node research/polar-p1/evaluate.mjs --input /tmp/polar.json --out research/polar-p1/out/run1.json
+      - name: Confirmatory run 2
+        run: node research/polar-p1/evaluate.mjs --input /tmp/polar.json --out research/polar-p1/out/run2.json
+      - name: Finalize preregistered gates and deterministic reproduction
+        run: node research/polar-p1/finalize.mjs research/polar-p1/out/run1.json research/polar-p1/out/run2.json research/polar-p1/out/final.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: polar-p1-confirmatory-v1
+          path: research/polar-p1/out/
+          if-no-files-found: error
+          retention-days: 90
