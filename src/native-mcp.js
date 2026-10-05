@@ -25,6 +25,45 @@ const PRIVATE_PROGRAM_SCHEMA={
   ]
 };
 
+const PRIVATE_REF_SCHEMA={
+  type:'object',
+  description:'Semantic selector resolved locally against non-secret context metadata. Raw private paths are not accepted.',
+  properties:{
+    query:{type:'string',maxLength:240,description:'Plain-language capability, such as "travel budget" or "preferred airline".'},
+    category:{type:'string',maxLength:240},
+    label:{type:'string',maxLength:240},
+    tags:{type:'array',items:{type:'string',maxLength:240},maxItems:16}
+  },
+  additionalProperties:false
+};
+
+const SEMANTIC_PRIVATE_PROGRAM_SCHEMA={
+  type:'object',
+  description:'A path-free private decision request. Use privateRef wherever a private field is needed; Hush resolves it locally.',
+  oneOf:[
+    {
+      type:'object',
+      properties:{kind:{const:'predicate'},privateRef:PRIVATE_REF_SCHEMA,op:{enum:['eq','neq','lt','lte','gt','gte','in','notIn']},value:{}},
+      required:['kind','privateRef','op','value'],additionalProperties:false
+    },
+    {
+      type:'object',
+      properties:{kind:{const:'bucket'},privateRef:PRIVATE_REF_SCHEMA,thresholds:{type:'array',items:{type:'number'},minItems:1,maxItems:63}},
+      required:['kind','privateRef','thresholds'],additionalProperties:false
+    },
+    {
+      type:'object',
+      properties:{
+        kind:{const:'choose'},
+        candidates:{type:'array',items:{type:'object'},minItems:1,maxItems:100},
+        constraints:{type:'array',items:{type:'object'}},
+        preferences:{type:'array',items:{type:'object'}}
+      },
+      required:['kind','candidates'],additionalProperties:false
+    }
+  ]
+};
+
 export const NATIVE_MCP_TOOLS=Object.freeze([
   {
     name:'hush_begin_private_task',
@@ -42,8 +81,18 @@ export const NATIVE_MCP_TOOLS=Object.freeze([
     annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false}
   },
   {
+    name:'hush_private_query',
+    description:'Preferred Hush private-computation tool. Describe the private capability semantically; Hush resolves the matching context locally and evaluates the bounded decision without exposing private paths or values.',
+    inputSchema:{
+      type:'object',
+      properties:{trajectoryId:{type:'string'},program:SEMANTIC_PRIVATE_PROGRAM_SCHEMA},
+      required:['trajectoryId','program'],additionalProperties:false
+    },
+    annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false}
+  },
+  {
     name:'hush_private_decision',
-    description:'Evaluate a bounded decision over private user context without returning the private values. Use the trajectory handle from hush_begin_private_task. The result may be denied when cumulative disclosure could enable reconstruction.',
+    description:'Low-level compatibility tool for trusted clients that already know local private paths. Prefer hush_private_query for agent-facing integrations. The result may be denied when cumulative disclosure could enable reconstruction.',
     inputSchema:{
       type:'object',
       properties:{trajectoryId:{type:'string'},program:PRIVATE_PROGRAM_SCHEMA},
@@ -89,6 +138,11 @@ export function callNativeMcpTool({name,args={},kernel,agent='unknown-agent',sin
       const sinkMaxBits=finiteBits(args.sinkMaxBits,maxBits);
       const trajectory=kernel.beginTrajectory({purpose:String(args.purpose??'agent task'),maxBits,sinkMaxBits,ttlMs:args.ttlMs});
       return toolResult({decision:'allow',trajectory});
+    }
+    if(tool==='hush_private_query'){
+      if(!args.trajectoryId||!args.program) throw new Error('trajectoryId and program are required');
+      const result=kernel.runSemantic({trajectoryId:String(args.trajectoryId),agent:String(agent),sink:String(sink),program:args.program});
+      return toolResult(result,{isError:result.decision!=='allow'});
     }
     if(tool==='hush_private_decision'){
       if(!args.trajectoryId||!args.program) throw new Error('trajectoryId and program are required');
