@@ -1,0 +1,36 @@
+name: research-v4-preflight
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/external-holdout-v4]
+    paths:
+      - 'research/EXTERNAL_HOLDOUT_PROTOCOL_V4.md'
+      - 'research/external/culturebank_holdout_v4.py'
+      - 'research/external/hush-grounded-batch.mjs'
+      - 'src/grounded-egress-guard.js'
+      - '.github/workflows/research-v4-preflight.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Static validation only
+        run: |
+          node --check src/grounded-egress-guard.js
+          node --check research/external/hush-grounded-batch.mjs
+          python -m py_compile research/external/culturebank_holdout_v4.py
+      - name: Confirm holdout is not accessed by preflight
+        run: |
+          test ! -e culturebank-subset.json
+          echo "Preflight does not fetch or inspect CultureBank."
