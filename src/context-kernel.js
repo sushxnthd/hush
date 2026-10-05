@@ -1,29 +1,10 @@
 import crypto from 'node:crypto';
-import {SealedContextStore} from './secure-context.js';
-import {PersistentReconstructionFirewall} from './reconstruction-firewall.js';
-import {PrivateDecisionRuntime} from './private-decision.js';
-import {compileSemanticProgram,resolvePrivateRef} from './context-compiler.js';
-import {normalizeConnectorSnapshot,connectorSummary} from './connectors.js';
-import {sanitizeContextValue,contextSanitizationModes} from './context-sanitizer.js';
-import {SharedMemoryBroker} from './memory-broker.js';
-import {ModelRouter} from './model-router.js';
-import {ConsentRegistry} from './consent.js';
+import {ContextKernel as BaseContextKernel} from './context-kernel-base.js';
+import {resolvePrivateRef} from './context-compiler.js';
+import {compilePrivateConstraint,normalizeConstraintContract,constraintContractSummary} from './private-constraint-compiler.js';
 
-const DEFAULT_RELEASE_TTL=5*60*1000;
-const MAX_RELEASE_TTL=15*60*1000;
-
-function stripSemanticPaths(result){
-  const out=structuredClone(result);
-  if(out?.reconstruction?.fields){
-    out.reconstruction.fields=out.reconstruction.fields.map(({field,...rest})=>rest);
-  }
-  if(out?.partition&&Object.hasOwn(out.partition,'field')) delete out.partition.field;
-  if(out?.joint?.fields){
-    out.joint.fieldCount=out.joint.fields.length;
-    delete out.joint.fields;
-  }
-  return out;
-}
+const DEFAULT_CONSTRAINT_TTL=5*60*1000;
+const MAX_CONSTRAINT_TTL=15*60*1000;
 
 function consentSummary(verdict){
   return {
@@ -34,17 +15,18 @@ function consentSummary(verdict){
   };
 }
 
-function safeReleaseMetadata(release){
+function safeConstraintReleaseMetadata(release){
   return {
     releaseId:release.id,
+    contractId:release.contractId,
     decision:release.deniedAt?'deny':release.approvedAt?'approved':'ask',
-    reason:release.deniedAt?'Context fallback was denied.':release.approvedAt?'Sanitized context fallback approved for one release.':'Sanitized context fallback requires explicit local approval.',
+    reason:release.deniedAt?'Compiled constraint release was denied.':release.approvedAt?'Compiled constraint approved for one release.':'Compiled constraint requires explicit local approval.',
     agent:release.agent,
     sink:release.sink,
     purpose:release.purpose,
     category:release.category,
-    mode:release.mode,
-    transformations:[...release.transformations],
+    valueType:release.valueType,
+    releaseKind:release.releaseKind,
     outputBytes:release.outputBytes,
     createdAt:release.createdAt,
     expiresAt:release.expiresAt,
@@ -52,237 +34,126 @@ function safeReleaseMetadata(release){
     deniedAt:release.deniedAt,
     consumedAt:release.consumedAt,
     consent:release.consent??null,
-    exactPrivateValuesIntended:false,
-    bestEffortTextSanitization:true
+    rawSourceIncluded:false,
+    rawPrivatePathIncluded:false,
+    derivedDisclosure:true
   };
 }
 
 /**
- * ContextKernel ties encrypted persistence to bounded private computation.
- * Plaintext is decrypted only inside the local process; callers receive metadata,
- * bounded decision results and receipts, never the stored private values.
+ * ContextKernel with Private Constraint Compilation.
+ *
+ * The inherited kernel remains byte-for-byte preserved in context-kernel-base.js.
+ * This compatibility layer adds a compute-before-disclose path for private facts
+ * whose useful task constraint is fused with unrelated sensitive prose.
  */
-export class ContextKernel {
-  constructor({dir,passphrase,now=()=>Date.now(),firewallOptions={}}={}){
-    this.now=now;
-    this.store=new SealedContextStore({dir,passphrase,now});
+export class ContextKernel extends BaseContextKernel{
+  constructor(options={}){
+    super(options);
+    this.pendingConstraintReleases=new Map();
+    this.constraintContracts=new Map();
     const state=this.store.getState();
-    this.firewall=new PersistentReconstructionFirewall({now,...firewallOptions});
-    this.firewall.restore(state.firewallEvents??[]);
-    this.runtime=new PrivateDecisionRuntime({now,firewall:this.firewall});
-    this.pathToId=new Map();
-    this.pendingContextReleases=new Map();
-    this.memoryBroker=new SharedMemoryBroker({kernel:this,now});
-    this.modelRouter=new ModelRouter();
-    for(const model of state.routerModels??[]) this.modelRouter.register(model);
-    this.consentRegistry=new ConsentRegistry({now,rules:state.consentRules??[]});
-
-    for(const record of this.store.records()){
-      if(record.kind!=='context' || !record.path) continue;
-      this.runtime.setPrivate(record.path,record.value);
-      if(record.domain) this.runtime.registerPrivateDomain(record.path,record.domain);
-      this.pathToId.set(record.path,record.id);
-    }
-    if(state.partitionState) this.runtime.partitionFirewall?.restore(state.partitionState);
-    if(state.jointChoiceState) this.runtime.jointChoiceFirewall?.restore(state.jointChoiceState);
-    if(Number.isInteger(state.profileRevision) && state.profileRevision>=0){
-      this.runtime.profileRevision=state.profileRevision;
+    for(const raw of state.constraintContracts??[]){
+      try{
+        const contract=normalizeConstraintContract(raw);
+        this.constraintContracts.set(contract.id,contract);
+      }catch{
+        // Old/corrupt experimental contracts fail closed rather than preventing
+        // the rest of the encrypted context store from opening.
+      }
     }
   }
 
   _persistState(){
+    super._persistState();
+    const state=this.store.getState();
     this.store.setState({
-      v:5,
-      profileRevision:this.runtime.profileRevision,
-      firewallEvents:this.firewall.snapshot(),
-      partitionState:this.runtime.partitionFirewall?.snapshot()??null,
-      jointChoiceState:this.runtime.jointChoiceFirewall?.snapshot()??null,
-      routerModels:this.modelRouter.list(),
-      consentRules:this.consentRegistry.snapshot()
+      ...state,
+      v:6,
+      constraintContracts:[...this.constraintContracts.values()].map(contract=>structuredClone(contract))
     });
   }
 
-  _invalidateContextReleases(path){
+  _invalidateConstraintReleases(path){
     const key=String(path||'');
-    for(const [id,release] of this.pendingContextReleases){
-      if(release.path===key&&!release.consumedAt) this.pendingContextReleases.delete(id);
+    if(!this.pendingConstraintReleases) return;
+    for(const [id,release] of this.pendingConstraintReleases){
+      if(release.path===key&&!release.consumedAt) this.pendingConstraintReleases.delete(id);
     }
   }
 
-  put(path,value,{label=null,category='general',tags=[],domain=undefined,source=undefined}={}){
-    const key=String(path||'');
-    if(!key) throw new Error('Private context path is required');
-    this._invalidateContextReleases(key);
-    const item=this.store.put({
-      id:this.pathToId.get(key)??null,
-      kind:'context',
-      path:key,
-      label:label??key,
-      category,
-      value,
-      tags,
-      domain,
-      source
-    });
-    this.pathToId.set(key,item.id);
-    const revision=this.runtime.setPrivate(key,value,{domain:item.domain??undefined}).revision;
-    this._persistState();
-    return {id:item.id,path:key,label:item.label,category:item.category,tags:item.tags,partitionProtected:Boolean(item.domain),revision};
+  put(path,value,options={}){
+    this._invalidateConstraintReleases(path);
+    return super.put(path,value,options);
   }
 
   remove(path){
-    const key=String(path||'');
-    const id=this.pathToId.get(key);
-    if(!id) return false;
-    this._invalidateContextReleases(key);
-    const partitionSnapshot=this.runtime.partitionFirewall?.snapshot()??null;
-    const jointChoiceSnapshot=this.runtime.jointChoiceFirewall?.snapshot()??null;
-    const ok=this.store.remove(id);
-    if(ok){
-      this.pathToId.delete(key);
-      const savedRevision=this.runtime.profileRevision+1;
-      this.runtime=new PrivateDecisionRuntime({now:this.now,firewall:this.firewall});
-      for(const record of this.store.records()){
-        if(record.kind==='context'&&record.path){
-          this.runtime.setPrivate(record.path,record.value);
-          if(record.domain) this.runtime.registerPrivateDomain(record.path,record.domain);
-          this.pathToId.set(record.path,record.id);
-        }
-      }
-      if(partitionSnapshot?.v===1){
-        this.runtime.partitionFirewall?.restore({...partitionSnapshot,fields:(partitionSnapshot.fields??[]).filter(field=>String(field.field)!==key)});
-      }
-      if(jointChoiceSnapshot?.v===1){
-        this.runtime.jointChoiceFirewall?.restore(jointChoiceSnapshot);
-        this.runtime.jointChoiceFirewall?.resetField(key);
-      }
-      this.runtime.profileRevision=savedRevision;
-      this._persistState();
-    }
-    return ok;
+    this._invalidateConstraintReleases(path);
+    return super.remove(path);
   }
 
-  list(){
-    return this.store.list().filter(record=>record.kind==='context').map(({kind,domain,source,...record})=>({...record,partitionProtected:Boolean(domain)}));
-  }
-
-  connectorStats(){
-    return connectorSummary(this.store.records().filter(record=>record.kind==='context'));
-  }
-
-  ingestConnectorSnapshot(snapshot){
-    const normalized=normalizeConnectorSnapshot(snapshot);
-    const previous=this.store.records().filter(record=>record.kind==='context'&&record.source?.provider===normalized.provider&&record.source?.collection===normalized.collection);
-    const incomingPaths=new Set(normalized.records.map(record=>record.path));
-    let created=0,updated=0,removed=0;
-
-    for(const record of normalized.records){
-      const existed=this.pathToId.has(record.path);
-      this.put(record.path,record.value,{label:record.label,category:record.category,tags:record.tags,domain:record.domain,source:record.source});
-      if(existed) updated+=1; else created+=1;
-    }
-
-    if(normalized.replace){
-      for(const record of previous){
-        if(!incomingPaths.has(record.path)&&this.remove(record.path)) removed+=1;
-      }
-    }
-
-    const row=this.connectorStats().find(item=>item.provider===normalized.provider&&item.collection===normalized.collection);
-    return {provider:normalized.provider,collection:normalized.collection,received:normalized.records.length,created,updated,removed,total:row?.items??0,replace:normalized.replace};
-  }
-
-  setConsentRule(rule={}){
-    const created=this.consentRegistry.set(rule);
+  registerConstraintContract(rawContract){
+    const contract=normalizeConstraintContract(rawContract);
+    this.constraintContracts.set(contract.id,contract);
     this._persistState();
-    return created;
+    return constraintContractSummary(contract);
   }
-  revokeConsentRule(id){
-    const revoked=this.consentRegistry.revoke(id);
-    if(revoked) this._persistState();
-    return revoked;
-  }
-  listConsentRules(options={}){ return this.consentRegistry.list(options); }
-  evaluateConsent(request={}){ return this.consentRegistry.evaluate(request,{consume:false}); }
 
-  proposeMemory(input={}){
-    const proposal=this.memoryBroker.propose(input);
-    const request={
-      capability:'memory.write',
-      agent:String(input.agent||'unknown-agent'),
-      sink:'hush-memory',
-      purpose:'shared memory',
-      category:String(input.category||'general'),
-      resource:String(input.label||'*')
-    };
-    const verdict=this.consentRegistry.evaluate(request,{consume:false});
-    if(verdict.decision==='deny'){
-      const denied=this.memoryBroker.deny(proposal.proposalId);
-      return {...denied,consent:consentSummary(verdict)};
+  removeConstraintContract(id){
+    const key=String(id||'');
+    const removed=this.constraintContracts.delete(key);
+    if(!removed) return false;
+    for(const [releaseId,release] of this.pendingConstraintReleases){
+      if(release.contractId===key&&!release.consumedAt) this.pendingConstraintReleases.delete(releaseId);
     }
-    if(verdict.decision==='allow'){
-      const approved=this.memoryBroker.approve(proposal.proposalId);
-      if(verdict.rule?.mode==='once') this.consentRegistry.evaluate(request,{consume:true});
-      this._persistState();
-      return {...approved,consent:consentSummary(verdict)};
-    }
-    return {...proposal,consent:consentSummary(verdict)};
-  }
-  memoryProposalQueue(options={}){ return this.memoryBroker.queue(options); }
-  approveMemoryProposal(id){ return this.memoryBroker.approve(id); }
-  denyMemoryProposal(id){ return this.memoryBroker.deny(id); }
-
-  registerModel(model){ const registered=this.modelRouter.register(model); this._persistState(); return registered; }
-  removeModel(id){ const removed=this.modelRouter.remove(id); if(removed) this._persistState(); return removed; }
-  listModels(){ return this.modelRouter.list(); }
-  routeTask(request={}){ return this.modelRouter.route(request); }
-
-  beginTrajectory(options={}){ return this.runtime.beginTrajectory(options); }
-  revokeTrajectory(id){ return this.runtime.revokeTrajectory(id); }
-
-  run(input){
-    const result=this.runtime.run(input);
-    if(result.decision==='allow') this._persistState();
-    return result;
+    this._persistState();
+    return true;
   }
 
-  runSemantic({program,task='',...input}={}){
-    const compiled=compileSemanticProgram(this.list(),program,{task});
-    return stripSemanticPaths(this.run({...input,program:compiled}));
+  listConstraintContracts(){
+    return [...this.constraintContracts.values()].map(constraintContractSummary).sort((a,b)=>a.id.localeCompare(b.id));
   }
 
-  prepareContextRelease({task='',privateRef={},mode='pseudonymous',agent='unknown-agent',sink='unknown-sink',purpose='unspecified',ttlMs=DEFAULT_RELEASE_TTL}={}){
+  prepareConstraintRelease({contractId,task='',agent='unknown-agent',sink='unknown-sink',purpose='unspecified',ttlMs=DEFAULT_CONSTRAINT_TTL}={}){
     const ttl=Number(ttlMs);
-    if(!Number.isFinite(ttl)||ttl<1000) throw new Error('Context release TTL must be finite and at least 1000 ms');
-    const path=resolvePrivateRef(this.list(),privateRef,{task:String(task??'')});
+    if(!Number.isFinite(ttl)||ttl<1000) throw new Error('Constraint release TTL must be finite and at least 1000 ms');
+    const contract=this.constraintContracts.get(String(contractId||''));
+    if(!contract) throw new Error('Constraint contract not found');
+
+    const path=resolvePrivateRef(this.list(),contract.privateRef,{task:String(task??'')});
     const recordId=this.pathToId.get(path);
     if(!recordId) throw new Error('Selected private context is unavailable');
     const record=this.store.get(recordId);
-    const prepared=sanitizeContextValue(record.value,{mode});
+    const compiled=compilePrivateConstraint(record.value,contract);
     const now=this.now();
     const request={
-      capability:'context.release',
+      capability:'context.compute',
       agent:String(agent||'unknown-agent'),
       sink:String(sink||'unknown-sink'),
       purpose:String(purpose||'unspecified'),
       category:String(record.category||'general'),
-      resource:String(record.label||'private context')
+      resource:contract.id
     };
     const verdict=this.consentRegistry.evaluate(request,{consume:false});
+    const serialized=JSON.stringify({statement:compiled.statement,value:compiled.value,valueType:compiled.valueType,releaseKind:compiled.releaseKind});
     const release={
-      id:`ctxrel_${crypto.randomBytes(24).toString('base64url')}`,
+      id:`pccrel_${crypto.randomBytes(24).toString('base64url')}`,
       path,
+      contractId:contract.id,
       agent:request.agent,
       sink:request.sink,
       purpose:request.purpose,
       category:request.category,
-      mode:prepared.mode,
-      sanitized:prepared.sanitized,
-      transformations:prepared.transformations,
-      outputBytes:prepared.outputBytes,
-      digest:prepared.digest,
+      statement:compiled.statement,
+      value:structuredClone(compiled.value),
+      valueType:compiled.valueType,
+      releaseKind:compiled.releaseKind,
+      contractDigest:compiled.contractDigest,
+      sourceDigest:compiled.sourceDigest,
+      outputDigest:crypto.createHash('sha256').update(serialized).digest('hex'),
+      outputBytes:Buffer.byteLength(serialized),
       createdAt:now,
-      expiresAt:now+Math.min(ttl,MAX_RELEASE_TTL),
+      expiresAt:now+Math.min(ttl,MAX_CONSTRAINT_TTL),
       approvedAt:verdict.decision==='allow'?now:null,
       deniedAt:verdict.decision==='deny'?now:null,
       consumedAt:null,
@@ -293,86 +164,87 @@ export class ContextKernel {
       release.consent={...release.consent,consumed:true};
       this._persistState();
     }
-    this.pendingContextReleases.set(release.id,release);
-    return safeReleaseMetadata(release);
+    this.pendingConstraintReleases.set(release.id,release);
+    return safeConstraintReleaseMetadata(release);
   }
 
-  _contextRelease(id){
-    const release=this.pendingContextReleases.get(String(id));
-    if(!release) throw new Error('Context release not found');
+  _constraintRelease(id){
+    const release=this.pendingConstraintReleases.get(String(id));
+    if(!release) throw new Error('Constraint release not found');
     if(this.now()>=release.expiresAt){
-      this.pendingContextReleases.delete(release.id);
-      throw new Error('Context release expired');
+      this.pendingConstraintReleases.delete(release.id);
+      throw new Error('Constraint release expired');
     }
     return release;
   }
 
-  contextReleaseQueue(){
+  constraintReleaseQueue(){
     const now=this.now();
-    for(const [id,release] of this.pendingContextReleases){
-      if(now>=release.expiresAt) this.pendingContextReleases.delete(id);
+    for(const [id,release] of this.pendingConstraintReleases){
+      if(now>=release.expiresAt) this.pendingConstraintReleases.delete(id);
     }
-    return [...this.pendingContextReleases.values()].map(safeReleaseMetadata).sort((a,b)=>b.createdAt-a.createdAt);
+    return [...this.pendingConstraintReleases.values()].map(safeConstraintReleaseMetadata).sort((a,b)=>b.createdAt-a.createdAt);
   }
 
-  approveContextRelease(id){
-    const release=this._contextRelease(id);
-    if(release.deniedAt) throw new Error('Context release was denied');
-    if(release.consumedAt) throw new Error('Context release already consumed');
+  approveConstraintRelease(id){
+    const release=this._constraintRelease(id);
+    if(release.deniedAt) throw new Error('Constraint release was denied');
+    if(release.consumedAt) throw new Error('Constraint release already consumed');
     if(!release.approvedAt) release.approvedAt=this.now();
-    return safeReleaseMetadata(release);
+    return safeConstraintReleaseMetadata(release);
   }
 
-  denyContextRelease(id){
-    const release=this._contextRelease(id);
-    if(release.consumedAt) throw new Error('Context release already consumed');
+  denyConstraintRelease(id){
+    const release=this._constraintRelease(id);
+    if(release.consumedAt) throw new Error('Constraint release already consumed');
     release.deniedAt=this.now();
-    return safeReleaseMetadata(release);
+    return safeConstraintReleaseMetadata(release);
   }
 
-  consumeContextRelease({releaseId,agent='unknown-agent',sink='unknown-sink'}={}){
-    const release=this._contextRelease(releaseId);
-    if(release.agent!==String(agent)||release.sink!==String(sink)) throw new Error('Context release is bound to another agent or sink');
-    if(release.deniedAt) throw new Error('Context release was denied');
-    if(!release.approvedAt) return {...safeReleaseMetadata(release),decision:'ask'};
-    if(release.consumedAt) throw new Error('Context release already consumed');
+  consumeConstraintRelease({releaseId,agent='unknown-agent',sink='unknown-sink'}={}){
+    const release=this._constraintRelease(releaseId);
+    if(release.agent!==String(agent)||release.sink!==String(sink)) throw new Error('Constraint release is bound to another agent or sink');
+    if(release.deniedAt) throw new Error('Constraint release was denied');
+    if(!release.approvedAt) return {...safeConstraintReleaseMetadata(release),decision:'ask'};
+    if(release.consumedAt) throw new Error('Constraint release already consumed');
     release.consumedAt=this.now();
     return {
       decision:'allow',
-      context:structuredClone(release.sanitized),
+      constraint:{
+        statement:release.statement,
+        value:structuredClone(release.value),
+        valueType:release.valueType,
+        releaseKind:release.releaseKind
+      },
       category:release.category,
-      mode:release.mode,
-      transformations:[...release.transformations],
-      exactPrivateValuesIntended:false,
-      bestEffortTextSanitization:true,
+      contractId:release.contractId,
+      rawSourceIncluded:false,
+      rawPrivatePathIncluded:false,
+      derivedDisclosure:true,
       receipt:{
-        v:1,at:release.consumedAt,releaseId:release.id,agent:release.agent,sink:release.sink,purpose:release.purpose,
-        sanitizedDigest:release.digest,outputBytes:release.outputBytes,oneShot:true,rawPrivatePathIncluded:false,consentRuleId:release.consent?.ruleId??null
+        v:1,
+        at:release.consumedAt,
+        releaseId:release.id,
+        contractId:release.contractId,
+        agent:release.agent,
+        sink:release.sink,
+        purpose:release.purpose,
+        outputDigest:release.outputDigest,
+        contractDigest:release.contractDigest,
+        outputBytes:release.outputBytes,
+        oneShot:true,
+        rawSourceIncluded:false,
+        rawPrivatePathIncluded:false,
+        consentRuleId:release.consent?.ruleId??null
       }
     };
   }
 
-  contextReleaseModes(){ return contextSanitizationModes(); }
-
-  exposure(){ return this.firewall.footprint(); }
-  partitionExposure(){ return this.runtime.partitionFootprint(); }
-  jointChoiceExposure(){ return this.runtime.jointChoiceFootprint(); }
-  exportCiphertextBundle(){ return this.store.exportCiphertextBundle(); }
-  ciphertextFingerprint(){ return this.store.ciphertextFingerprint(); }
-
   stats(){
     return {
-      contextItems:this.list().length,
-      connectors:this.connectorStats(),
-      pendingContextReleases:this.contextReleaseQueue().filter(release=>release.decision==='ask').length,
-      pendingMemoryProposals:this.memoryProposalQueue().filter(proposal=>proposal.decision==='ask').length,
-      registeredModels:this.modelRouter.list().length,
-      consentRules:this.consentRegistry.list({includeInactive:false}).length,
-      profileRevision:this.runtime.profileRevision,
-      exposureFields:this.exposure().length,
-      partitionFields:this.partitionExposure().length,
-      jointChoiceObservations:this.jointChoiceExposure().length,
-      ciphertextFingerprint:this.ciphertextFingerprint()
+      ...super.stats(),
+      registeredConstraintContracts:this.constraintContracts.size,
+      pendingConstraintReleases:this.constraintReleaseQueue().filter(release=>release.decision==='ask').length
     };
   }
 }
