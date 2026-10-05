@@ -28,13 +28,21 @@ motionStyle.id = 'hush-motion-system';
 motionStyle.textContent = `
   @view-transition { navigation: auto; }
 
-  .rail { view-transition-name: hush-rail; }
   .col { view-transition-name: hush-content; }
+  .nav-mark { view-transition-name: hush-nav-marker; }
 
   ::view-transition-old(root),
-  ::view-transition-new(root),
-  ::view-transition-old(hush-rail),
-  ::view-transition-new(hush-rail) {
+  ::view-transition-new(root) {
+    animation: none;
+  }
+
+  ::view-transition-group(hush-nav-marker) {
+    animation-duration: 360ms;
+    animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+  }
+
+  ::view-transition-old(hush-nav-marker),
+  ::view-transition-new(hush-nav-marker) {
     animation: none;
   }
 
@@ -71,11 +79,16 @@ motionStyle.textContent = `
     transition: background-color var(--dur-hover) var(--ease-hover);
   }
 
+  @media (max-width: 1000px) {
+    .nav-mark { view-transition-name: none; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(hush-nav-marker),
     ::view-transition-old(root),
     ::view-transition-new(root),
-    ::view-transition-old(hush-rail),
-    ::view-transition-new(hush-rail),
+    ::view-transition-old(hush-nav-marker),
+    ::view-transition-new(hush-nav-marker),
     ::view-transition-old(hush-content),
     ::view-transition-new(hush-content) {
       animation: none !important;
