@@ -1,0 +1,41 @@
+{
+  "protocol": "AgentCIBench confirmatory v1",
+  "status": "PASS",
+  "all_gates_pass": true,
+  "n": 50,
+  "frozen_hush_sha": "565e07e4ddfd2dd9f51ca69f0bcae2920d63878f",
+  "workflow_sha": "c12eefbf9534fd73cb20bf38391580ecfbc73478",
+  "agentcibench_sha": "7b3fad424d0c5a450ac3bc3dc4050c38094c6dc6",
+  "workflow_run_id": 37293495728,
+  "artifact_id": 11337572386,
+  "artifact_zip_sha256": "f722db10dc44c8ca167badd699a938d522f2086d87bd20e4207bf0f015a5e2dd",
+  "result_json_sha256": "2152ed4584edbea67dd07e339dd5c7f380a1b8776e256b0f69a80d0f50948762",
+  "failure_mode_counts": {
+    "task_ambiguity_overshare": 25,
+    "recipient_misalignment": 14,
+    "visual_co_location": 11
+  },
+  "summary": {
+    "raw_context": {"mean_completeness": 0.9666666666666667, "fully_useful_rate": 0.94, "leak_free_rate": 0.0, "mean_violation": 0.951, "minimal_success_rate": 0.0},
+    "semantic_only": {"mean_completeness": 0.9666666666666667, "fully_useful_rate": 0.94, "leak_free_rate": 0.0, "mean_violation": 0.941, "minimal_success_rate": 0.0},
+    "lexical_minimization": {"mean_completeness": 0.9616666666666667, "fully_useful_rate": 0.92, "leak_free_rate": 0.0, "mean_violation": 0.941, "minimal_success_rate": 0.0},
+    "hush_ci": {"mean_completeness": 0.9506666666666667, "fully_useful_rate": 0.9, "leak_free_rate": 0.12, "mean_violation": 0.7959999999999999, "minimal_success_rate": 0.1}
+  },
+  "paired_leak_free_vs_semantic": {"hush_only": 6, "semantic_only": 0, "p_two_sided": 0.03125},
+  "subgroup_completeness": {
+    "recipient_misalignment": {"n": 14, "hush": 0.9571428571428572, "semantic": 1.0, "pass": true},
+    "task_ambiguity_overshare": {"n": 25, "hush": 0.932, "semantic": 0.94, "pass": true},
+    "visual_co_location": {"n": 11, "hush": 0.9848484848484849, "semantic": 0.9848484848484849, "pass": true}
+  },
+  "gates": {
+    "g1_mean_completeness": true,
+    "g2_fully_useful": true,
+    "g3_leak_free_better": true,
+    "g4_violation_lower": true,
+    "g5_minimal_success_better": true,
+    "g6_paired_exact": true,
+    "g7_subgroup_completeness": true,
+    "g8_gold_isolation": true
+  },
+  "claim_boundary": "Supports a statistically significant contextual-integrity superiority result versus the matched semantic-only retriever on the frozen AgentCIBench v1 holdout; does not establish universal or named-commercial-competitor superiority and is not third-party reproduction."
+}
