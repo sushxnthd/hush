@@ -4,6 +4,7 @@ on:
     branches: [research/polar-p1-confirmatory]
     paths:
       - 'research/polar-p1/diagnose.mjs'
+      - 'research/polar-p1/inspect-policies.mjs'
       - '.github/workflows/polar-p1-development.yml'
   workflow_dispatch:
 permissions:
@@ -36,6 +37,8 @@ jobs:
           PY
       - name: Diagnose failed P1 confirmation as development data
         run: node research/polar-p1/diagnose.mjs /tmp/polar.json
+      - name: Inspect one development policy shape per domain
+        run: node research/polar-p1/inspect-policies.mjs /tmp/polar.json
       - uses: actions/upload-artifact@v4
         with:
           name: polar-p1-development-diagnostics
