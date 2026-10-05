@@ -1,8 +1,8 @@
 import {sanitizeContextValue} from './context-sanitizer.js';
 
 const WORD=/[\p{L}\p{N}][\p{L}\p{N}'’_-]*/gu;
-const DEFAULT_MIN_TOKENS=5;
-const DEFAULT_MIN_CHARS=18;
+const DEFAULT_MIN_TOKENS=7;
+const DEFAULT_MIN_CHARS=24;
 
 function norm(value){return String(value??'').normalize('NFKC').toLowerCase();}
 function collect(value,out=[],depth=0){
@@ -66,8 +66,8 @@ function redact(text,spans){
 
 /**
  * Deterministically removes copied spans from locally protected context before egress.
- * Defaults (5 contiguous tokens / 18 chars) were selected on the opened v2 development
- * corpus and are frozen before the v3 PrivacyLens holdout is evaluated.
+ * Defaults (7 contiguous tokens / 24 chars) were selected only on the opened
+ * PrivacyLens development subset and frozen by v3 Amendment 1 before holdout access.
  */
 export function guardOutboundValue(value,{protectedValues=[],mode='pseudonymous',minTokens=DEFAULT_MIN_TOKENS,minChars=DEFAULT_MIN_CHARS}={}){
   const sources=[...new Set((protectedValues??[]).flatMap(v=>collect(v)).filter(Boolean))];
