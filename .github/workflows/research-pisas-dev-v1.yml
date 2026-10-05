@@ -44,13 +44,13 @@ jobs:
           set +e
           root="$(cat pisas-dataset-root.txt)"
           rev="$(cat pisas-dataset-sha.txt)"
-          python research/external/pisas_context_dev_v2.py \
+          python research/external/pisas_context_dev_v3.py \
             --dataset-root "${root}" \
             --dataset-revision "${rev}" \
-            --output pisas-dev-v2.json | tee pisas-dev-v2.txt
+            --output pisas-dev-v3.json | tee pisas-dev-v3.txt
           code=${PIPESTATUS[0]}
-          echo "${code}" > pisas-dev-v2.exit
-          if [ -f pisas-dev-v2.json ]; then sha256sum pisas-dev-v2.json > pisas-dev-v2.sha256; fi
+          echo "${code}" > pisas-dev-v3.exit
+          if [ -f pisas-dev-v3.json ]; then sha256sum pisas-dev-v3.json > pisas-dev-v3.sha256; fi
           exit 0
       - name: Record runtime provenance
         if: always()
@@ -65,27 +65,27 @@ jobs:
           for p in ['torch','transformers','safetensors','numpy','huggingface_hub']:
               print(f'{p}={m.version(p)}')
           PY
-          } | tee pisas-dev-v2-runtime.txt
+          } | tee pisas-dev-v3-runtime.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hush-pisas-dev-v2-${{ github.sha }}
+          name: hush-pisas-dev-v3-${{ github.sha }}
           path: |
-            pisas-dev-v2.json
-            pisas-dev-v2.txt
-            pisas-dev-v2.sha256
-            pisas-dev-v2.exit
-            pisas-dev-v2-runtime.txt
+            pisas-dev-v3.json
+            pisas-dev-v3.txt
+            pisas-dev-v3.sha256
+            pisas-dev-v3.exit
+            pisas-dev-v3-runtime.txt
             pisas-dataset-sha.txt
           if-no-files-found: warn
       - name: Interpret development exit
         if: always()
         run: |
-          if [ ! -f pisas-dev-v2.exit ]; then
+          if [ ! -f pisas-dev-v3.exit ]; then
             echo 'Technical evaluator error: no exit record.' >&2
             exit 1
           fi
-          code="$(cat pisas-dev-v2.exit)"
+          code="$(cat pisas-dev-v3.exit)"
           if [ "${code}" = '1' ]; then
             echo 'Technical evaluator error.' >&2
             exit 1
