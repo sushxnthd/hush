@@ -10,7 +10,7 @@
 <link rel="preload" href="./assets/fonts/GeistMono-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="./assets/site.css?v=eaa64020">
-<link rel="stylesheet" href="./assets/home.css?v=aca0b91c">
+<link rel="stylesheet" href="./assets/home.css?v=09ba43d5">
 </head>
 <body class="home-page">
 <a class="skip-link" href="#content">Skip to content</a>
@@ -23,6 +23,7 @@
   <hr class="rail-rule">
   <nav class="nav nav-here" aria-label="Sections" data-toc><span class="nav-ruler" aria-hidden="true"></span><a href="#top" data-section="top">Overview</a><a href="#system" data-section="system">How it works</a><a href="#capabilities" data-section="capabilities">Capabilities</a><a href="#evidence" data-section="evidence">Evidence</a><a href="#surfaces" data-section="surfaces">Surfaces</a><a href="#research" data-section="research">Research</a></nav><span class="nav-mark" aria-hidden="true"></span>
 </aside>
+
 <main class="col" id="content" tabindex="-1">
   <div class="hero" id="top">
     <a class="note" href="https://github.com/sushxnthd/hush/pull/29" data-reveal="load" style="--d:40ms"><span class="note-live" aria-hidden="true"></span><span>Independent AgentLeak gate passed</span><span class="note-cta">See the evidence ↗</span></a>
@@ -44,7 +45,7 @@
       <div class="system-core"><span class="system-core-mark"><svg viewBox="0 0 256 256" aria-hidden="true"><g fill="currentColor"><path d="M78 34H178C183.523 34 188 38.477 188 44V84H68V44C68 38.477 72.477 34 78 34Z"/><path d="M30 84H68V160H30C24.477 160 20 155.523 20 150V94C20 88.477 24.477 84 30 84Z"/><path d="M188 84H226C231.523 84 236 88.477 236 94V150C236 155.523 231.523 160 226 160H188V84Z"/><path d="M68 160H112V200H68V160Z"/><path d="M152 160H196V201L152 232V160Z"/><rect x="91" y="110" width="22" height="24"/><rect x="143" y="110" width="22" height="24"/></g></svg></span><strong class="system-core-title">HUSH CONTEXT KERNEL</strong><span class="system-core-sub">select · compute · account · approve · broker</span></div>
       <div class="system-agent"><svg viewBox="0 0 48 48"><rect x="12" y="12" width="24" height="24" rx="5"/><path d="M18 22h12M18 27h8M24 12V7M20 7h8"/></svg><span>YOUR AI<br>ANY MODEL</span></div>
       <div class="system-result">BOUNDED ANSWER / APPROVED ACTION</div>
-      <svg class="system-wires" viewBox="0 0 640 424" preserveAspectRatio="none" aria-hidden="true"><path d="M142 110H178V156H211M142 186H174V180H211M142 262H174V240H211M142 338H178V266H211"/><path d="M429 174H490"/><path d="M429 250H458V342H490"/><path class="flow" d="M429 174H490M429 250H458V342H490"/><circle cx="490" cy="174" r="4"/><circle cx="490" cy="342" r="4"/></svg>
+      <svg class="system-wires" viewBox="0 0 640 424" preserveAspectRatio="none" aria-hidden="true"><path d="M144 113H180V158H211M144 183H176V180H211M144 253H176V240H211M144 323H180V266H211"/><path d="M429 176H490"/><path d="M429 250H458V342H490"/><path class="flow" d="M429 176H490M429 250H458V342H490"/><circle cx="490" cy="176" r="4"/><circle cx="490" cy="342" r="4"/></svg>
     </figure>
     <p class="system-caption">Raw values stay inside the Hush boundary. The interface to AI is intentionally smaller than the private state behind it.</p>
   </section>
@@ -59,13 +60,43 @@
   </section>
 
   <section class="home-section" id="evidence" data-reveal>
-    <div class="home-section-head"><span class="home-kicker">Evidence</span><div><h2 class="home-title">The claims are measured, not implied.</h2><p class="home-copy">Hush keeps the claim boundary explicit: controlled benchmarks where we have evidence, and no universal privacy language where we do not.</p><a class="home-link" href="./product/#production">Read the full evidence →</a></div></div>
-    <div class="evidence-grid">
-      <article class="e-card" data-reveal><span class="e-label">Independent AgentLeak / 50 paired traces</span><span class="e-big">0%</span><p class="e-copy">credential-canary leakage on the Hush path, with 100% task success.</p><div class="bar-pair"><div class="bar-row"><span>HUSH</span><span class="bar-track"><span class="bar-fill" style="--w:0%"></span></span><b>0%</b></div><div class="bar-row"><span>NAIVE</span><span class="bar-track"><span class="bar-fill" style="--w:100%"></span></span><b>100%</b></div></div><span class="e-foot"><span>RISK INDEX: 0.0</span><span>EXTERNAL DETECTOR</span></span></article>
-      <article class="e-card" data-reveal><span class="e-label">Connector-backed bounded compute</span><span class="e-big">160/160</span><p class="e-copy">correct decisions across Gmail, Calendar, Drive and GitHub with zero exact benchmark-secret or connector-path exposures.</p><div class="decision-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="e-foot"><span>UTILITY: 100%</span><span>PATH LEAK: 0%</span></span></article>
-      <article class="e-card" data-reveal><span class="e-label">Frozen AgentCIBench holdout</span><span class="e-big">8/8</span><p class="e-copy">preregistered scientific gates passed. Hush reached 12% leak-free versus 0% semantic-only while retaining 95.07% completeness.</p><div class="bar-pair"><div class="bar-row"><span>HUSH</span><span class="bar-track"><span class="bar-fill" style="--w:84%"></span></span><b>.796</b></div><div class="bar-row"><span>BASE</span><span class="bar-track"><span class="bar-fill" style="--w:100%"></span></span><b>.941</b></div></div><span class="e-foot"><span>LOWER = LESS VIOLATION</span><span>FROZEN HOLDOUT</span></span></article>
-      <article class="e-card" data-reveal><span class="e-label">Cross-agent cumulative privacy</span><span class="e-big">9th</span><p class="e-copy">novel disclosure denied after eight informative bits. The tested siloed comparator reconstructs the 16-bit secret; Hush leaves 256 candidates possible.</p><div class="bit-line" aria-hidden="true"><i class="bit on"></i><i class="bit on"></i><i class="bit on"></i><i class="bit on"></i><i class="bit on"></i><i class="bit on"></i><i class="bit on"></i><i class="bit on"></i><i class="bit stop"></i><i class="bit"></i><i class="bit"></i><i class="bit"></i><i class="bit"></i><i class="bit"></i><i class="bit"></i><i class="bit"></i></div><span class="e-foot"><span>SHARED PRIVACY BUDGET</span><span>256 CANDIDATES REMAIN</span></span></article>
+    <div class="home-section-head"><span class="home-kicker">Evidence</span><div><h2 class="home-title">Research output should look like research output.</h2><p class="home-copy">The current alpha has controlled evidence across bounded connector computation, secretless actions, cumulative disclosure accounting and an external contextual-integrity benchmark. The claim boundary stays explicit.</p><a class="home-link" href="./product/#production">Read the full evidence →</a></div></div>
+
+    <div class="benchmark-dashboard">
+      <div class="benchmark-stack">
+        <article class="metric-tile"><span class="panel-label">Independent AgentLeak · 50 paired traces</span><span class="metric-value">0%</span><p>credential-canary leakage on the Hush path with 100% task success.</p><span class="metric-foot">NAIVE COMPARATOR: 100% LEAKAGE</span></article>
+        <article class="metric-tile"><span class="panel-label">Connector-backed bounded compute</span><span class="metric-value">160/160</span><p>correct decisions across Gmail, Calendar, Drive and GitHub.</p><span class="metric-foot">EXACT SECRET EXPOSURE: 0 · PATH EXPOSURE: 0</span></article>
+        <article class="metric-tile"><span class="panel-label">Frozen AgentCIBench holdout</span><span class="metric-value">8/8</span><p>preregistered scientific gates passed while retaining 95.07% completeness.</p><span class="metric-foot">LEAK-FREE: 12% VS 0% BASELINE</span></article>
+      </div>
+
+      <article class="benchmark-hero">
+        <span class="panel-label">Independent benchmark · AgentCIBench</span>
+        <h3>Hush reduced mean protected-context violation while keeping <b>95.07% completeness.</b></h3>
+        <div class="benchmark-summary"><div><strong>12%</strong><span>leak-free · Hush</span></div><div><strong>0%</strong><span>leak-free · baseline</span></div></div>
+        <div class="benchmark-bars">
+          <span class="panel-label">Protected-context violation · lower is better</span>
+          <div class="benchmark-row"><span>HUSH</span><span class="benchmark-track"><span class="benchmark-fill" style="--w:84.6%"></span></span><b>.796</b></div>
+          <div class="benchmark-row baseline"><span>BASELINE</span><span class="benchmark-track"><span class="benchmark-fill" style="--w:100%"></span></span><b>.941</b></div>
+        </div>
+        <a class="panel-link" href="https://github.com/sushxnthd/hush/blob/main/research/AGENTCIBENCH_CONFIRMATORY_V1.md">Read the frozen record ↗</a>
+      </article>
     </div>
+
+    <article class="benchmark-wide">
+      <div class="benchmark-wide-head"><div><span class="panel-label">Cross-agent cumulative privacy</span><h3>The ninth novel disclosure is denied instead of letting separate agents reconstruct the user.</h3></div><p class="benchmark-wide-note">The tested siloed comparator reaches one candidate after 16 informative answers. Hush stops after eight and leaves 256 candidates possible.</p></div>
+      <svg class="disclosure-chart" viewBox="0 0 592 236" role="img" aria-label="Candidate private profiles remaining as novel disclosures accumulate. Hush stops after eight bits while the baseline continues to one candidate.">
+        <line class="grid" x1="52" y1="34" x2="534" y2="34"/><line class="grid" x1="52" y1="72" x2="534" y2="72"/><line class="grid" x1="52" y1="111" x2="534" y2="111"/><line class="grid" x1="52" y1="150" x2="534" y2="150"/><line class="grid" x1="52" y1="188" x2="534" y2="188"/>
+        <line class="axis" x1="52" y1="22" x2="52" y2="188"/><line class="axis" x1="52" y1="188" x2="534" y2="188"/>
+        <text class="chart-axis-label" x="10" y="37">65K</text><text class="chart-axis-label" x="14" y="75">4K</text><text class="chart-axis-label" x="16" y="114">256</text><text class="chart-axis-label" x="20" y="153">16</text><text class="chart-axis-label" x="25" y="191">1</text>
+        <text class="chart-axis-label" x="50" y="211">1</text><text class="chart-axis-label" x="140" y="211">4</text><text class="chart-axis-label" x="260" y="211">8</text><text class="chart-axis-label" x="380" y="211">12</text><text class="chart-axis-label" x="500" y="211">16</text>
+        <text class="chart-axis-label" x="213" y="230">NOVEL DISCLOSURES REQUESTED</text>
+        <path class="baseline-line" pathLength="1" d="M52 44 L82 53 L112 63 L142 72 L172 82 L202 92 L232 101 L262 111 L292 121 L322 130 L352 140 L382 150 L412 159 L442 169 L472 179 L502 188"/>
+        <path class="hush-line" pathLength="1" d="M52 44 L82 53 L112 63 L142 72 L172 82 L202 92 L232 101 L262 111 L292 111 L322 111 L352 111 L382 111 L412 111 L442 111 L472 111 L502 111"/>
+        <circle class="point-base" cx="502" cy="188" r="4"/><circle class="point-hush" cx="262" cy="111" r="4"/><circle class="point-hush" cx="292" cy="111" r="4"/>
+      </svg>
+      <div class="chart-callout">9TH NOVEL BIT → DENIED<br>256 candidates remain</div>
+      <div class="chart-legend"><span><i class="hush-key"></i>Hush shared budget</span><span><i></i>Siloed comparator</span></div>
+    </article>
   </section>
 
   <section class="home-section" id="surfaces" data-reveal>
@@ -78,8 +109,15 @@
   </section>
 
   <section class="home-section" id="research" data-reveal>
-    <div class="home-section-head"><span class="home-kicker">Latest research</span><div><h2 class="home-title">Better provenance can reduce oversharing without crushing utility.</h2><p class="home-copy">The current development line keeps source lineage local to the selector instead of attaching it to the model-facing value. It is the leading mechanism for Hush’s next fresh external validation.</p></div></div>
-    <div class="research-panel"><div class="research-copy"><span class="home-kicker">LINEAGE-AWARE / DEVELOPMENT ONLY</span><h3>0.7712 violation with 0.9701 completeness.</h3><p>Across 67 development scenarios, lineage-aware local representation reduced mean protected-context violation from 0.9226 to 0.7712 while keeping completeness close to the semantic-only baseline (0.9701 vs 0.9754). Paired leak-free outcomes were 7–0, p = 0.015625.</p><a class="home-link" href="https://github.com/sushxnthd/hush/blob/main/research/AGENTCIBENCH_CONTEXT_BOUNDARY_DEV_V1F.md">Read the development record →</a></div><div class="research-chart"><div class="metric-pair"><div class="metric-col"><span>HUSH / VIOLATION</span><span class="metric-bar" style="--h:77.12%"></span><b>0.7712</b></div><div class="metric-col semantic"><span>SEMANTIC / VIOLATION</span><span class="metric-bar" style="--h:92.26%"></span><b>0.9226</b></div></div><span class="research-note">DEVELOPMENT RESULT — requires a fresh untouched evaluation before any new confirmatory claim.</span></div></div>
+    <div class="home-section-head"><span class="home-kicker">Latest research</span><div><h2 class="home-title">Better provenance can reduce oversharing without crushing utility.</h2><p class="home-copy">The leading development mechanism keeps source lineage local to the selector instead of attaching it to the model-facing value. It is freeze-ready for a fresh untouched evaluation, not yet a new confirmatory claim.</p></div></div>
+    <div class="research-panel">
+      <div class="research-copy"><span class="panel-label">Lineage-aware · development only</span><h3>Lower violation, almost unchanged completeness.</h3><p>Across 67 development scenarios, lineage-aware local representation reduced mean protected-context violation from 0.9226 to 0.7712 while completeness moved from 0.9754 to 0.9701. Paired leak-free outcomes were 7–0 (two-sided exact p = 0.015625).</p><a class="home-link" href="https://github.com/sushxnthd/hush/blob/main/research/AGENTCIBENCH_CONTEXT_BOUNDARY_DEV_V1F.md">Read the development record →</a></div>
+      <div class="research-chart">
+        <div class="research-metric"><div class="research-metric-head"><span>PROTECTED-CONTEXT VIOLATION</span><span>LOWER IS BETTER</span></div><div class="research-bar-row"><span>HUSH</span><span class="research-track"><span class="research-fill" style="--w:77.12%"></span></span><b>.7712</b></div><div class="research-bar-row semantic"><span>SEMANTIC</span><span class="research-track"><span class="research-fill" style="--w:92.26%"></span></span><b>.9226</b></div></div>
+        <div class="research-metric"><div class="research-metric-head"><span>COMPLETENESS</span><span>HIGHER IS BETTER</span></div><div class="research-bar-row"><span>HUSH</span><span class="research-track"><span class="research-fill" style="--w:97.01%"></span></span><b>.9701</b></div><div class="research-bar-row semantic"><span>SEMANTIC</span><span class="research-track"><span class="research-fill" style="--w:97.54%"></span></span><b>.9754</b></div></div>
+        <span class="research-note">DEVELOPMENT RESULT — selected on development data; fresh external confirmation still required.</span>
+      </div>
+    </div>
   </section>
 
   <div class="home-cta"><aside class="cta" data-reveal><h2 class="cta-title">AI should query you, not copy you.</h2><p class="cta-text">Build against the user-owned boundary instead of another provider-side profile.</p><a class="btn btn-primary" href="https://github.com/sushxnthd/hush"><span class="btn-slot" aria-hidden="true"></span><span class="btn-rail" aria-hidden="true"><span class="btn-tile"><svg viewBox="0 0 30 24" fill="none" aria-hidden="true"><path d="m2 4.5 7 7-7 7m26-14-7 7 7 7M11 3l8 18" stroke="currentColor" stroke-width="2.5"/></svg></span></span><span class="btn-label">Build with Hush</span></a></aside></div>
@@ -88,4 +126,5 @@
 </main>
 </div>
 <script src="./assets/site.js?v=f7ad6466" defer></script>
-</body></html>
+</body>
+</html>
