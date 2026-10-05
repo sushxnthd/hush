@@ -90,13 +90,13 @@ function walk(value,{mode,alias,transformations,depth=0,key=''}){
 
   if(typeof value==='number'){
     if(mode==='strict'){ transformations.add('numeric-mask'); return '[number]'; }
-    if(mode==='coarse'){ transformations.add('numeric-coarsening'); return coarseNumber(value); }
-    return value;
+    transformations.add('numeric-coarsening');
+    return coarseNumber(value);
   }
 
   if(typeof value==='string'){
     const maybeDate=DATE_KEYS.test(String(key))?coarseDate(value):null;
-    if(maybeDate&&mode!=='pseudonymous'){
+    if(maybeDate){
       transformations.add('date-coarsening');
       return maybeDate;
     }
@@ -134,8 +134,8 @@ function walk(value,{mode,alias,transformations,depth=0,key=''}){
 
 /**
  * Produce a bounded sanitized representation for cases where a bounded decision is
- * insufficient. This is data minimization, not an information-theoretic guarantee:
- * every content-bearing fallback remains approval-gated by ContextKernel.
+ * insufficient. This is best-effort data minimization, not an information-theoretic
+ * guarantee: every content-bearing fallback remains approval-gated by ContextKernel.
  */
 export function sanitizeContextValue(value,{mode='pseudonymous'}={}){
   const selected=String(mode||'pseudonymous');
@@ -151,7 +151,8 @@ export function sanitizeContextValue(value,{mode='pseudonymous'}={}){
     outputBytes:Buffer.byteLength(serialized),
     digest:crypto.createHash('sha256').update(serialized).digest('hex'),
     requiresApproval:true,
-    exactPrivateValuesIntended:false
+    exactPrivateValuesIntended:false,
+    bestEffortTextSanitization:true
   };
 }
 
