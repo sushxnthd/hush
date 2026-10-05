@@ -1,6 +1,8 @@
 import {sanitizeContextValue} from './context-sanitizer.js';
 
 const WORD=/[\p{L}\p{N}][\p{L}\p{N}'’_-]*/gu;
+const DEFAULT_MIN_TOKENS=5;
+const DEFAULT_MIN_CHARS=18;
 
 function norm(value){return String(value??'').normalize('NFKC').toLowerCase();}
 function collect(value,out=[],depth=0){
@@ -34,7 +36,7 @@ function mergeSpans(spans=[]){
   }
   return merged;
 }
-function copiedSpans(output,source,{minTokens=4,minChars=18}={}){
+function copiedSpans(output,source,{minTokens=DEFAULT_MIN_TOKENS,minChars=DEFAULT_MIN_CHARS}={}){
   const a=words(output),b=words(source);
   const byToken=new Map();
   for(let j=0;j<b.length;j++){
@@ -62,8 +64,12 @@ function redact(text,spans){
   return {text:out,matches:merged.length};
 }
 
-/** Deterministically removes copied spans from locally protected context before egress. */
-export function guardOutboundValue(value,{protectedValues=[],mode='pseudonymous',minTokens=4,minChars=18}={}){
+/**
+ * Deterministically removes copied spans from locally protected context before egress.
+ * Defaults (5 contiguous tokens / 18 chars) were selected on the opened v2 development
+ * corpus and are frozen before the v3 PrivacyLens holdout is evaluated.
+ */
+export function guardOutboundValue(value,{protectedValues=[],mode='pseudonymous',minTokens=DEFAULT_MIN_TOKENS,minChars=DEFAULT_MIN_CHARS}={}){
   const sources=[...new Set((protectedValues??[]).flatMap(v=>collect(v)).filter(Boolean))];
   let matches=0;
   const walk=(item,depth=0)=>{
