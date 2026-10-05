@@ -24,6 +24,16 @@ function words(text){
   for(const match of String(text??'').matchAll(WORD)) out.push({v:norm(match[0]),start:match.index,end:match.index+match[0].length});
   return out;
 }
+function mergeSpans(spans=[]){
+  const sorted=[...spans].filter(s=>s.end>s.start).sort((a,b)=>a.start-b.start||b.end-a.end);
+  const merged=[];
+  for(const span of sorted){
+    const last=merged.at(-1);
+    if(!last||span.start>last.end) merged.push({...span});
+    else last.end=Math.max(last.end,span.end);
+  }
+  return merged;
+}
 function copiedSpans(output,source,{minTokens=4,minChars=18}={}){
   const a=words(output),b=words(source);
   const byToken=new Map();
@@ -41,21 +51,15 @@ function copiedSpans(output,source,{minTokens=4,minChars=18}={}){
       }
     }
   }
-  spans.sort((x,y)=>x.start-y.start||y.end-x.end);
-  const merged=[];
-  for(const span of spans){
-    const last=merged.at(-1);
-    if(!last||span.start>last.end) merged.push({...span});
-    else last.end=Math.max(last.end,span.end);
-  }
-  return merged;
+  return mergeSpans(spans);
 }
 function redact(text,spans){
-  if(!spans.length)return {text,matches:0};
+  const merged=mergeSpans(spans);
+  if(!merged.length)return {text,matches:0};
   let out='',cursor=0;
-  for(const span of spans){out+=text.slice(cursor,span.start)+'[HUSH:PRIVATE]';cursor=span.end;}
+  for(const span of merged){out+=text.slice(cursor,span.start)+'[HUSH:PRIVATE]';cursor=span.end;}
   out+=text.slice(cursor);
-  return {text:out,matches:spans.length};
+  return {text:out,matches:merged.length};
 }
 
 /** Deterministically removes copied spans from locally protected context before egress. */
@@ -67,7 +71,7 @@ export function guardOutboundValue(value,{protectedValues=[],mode='pseudonymous'
     if(typeof item==='string'){
       const spans=[];
       for(const source of sources)spans.push(...copiedSpans(item,source,{minTokens,minChars}));
-      const result=redact(item,spans.sort((a,b)=>a.start-b.start));
+      const result=redact(item,spans);
       matches+=result.matches;
       return result.text;
     }
