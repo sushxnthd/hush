@@ -3,6 +3,19 @@ import {PersistentReconstructionFirewall} from './reconstruction-firewall.js';
 import {PrivateDecisionRuntime} from './private-decision.js';
 import {compileSemanticProgram} from './context-compiler.js';
 
+function stripSemanticPaths(result){
+  const out=structuredClone(result);
+  if(out?.reconstruction?.fields){
+    out.reconstruction.fields=out.reconstruction.fields.map(({field,...rest})=>rest);
+  }
+  if(out?.partition&&Object.hasOwn(out.partition,'field')) delete out.partition.field;
+  if(out?.joint?.fields){
+    out.joint.fieldCount=out.joint.fields.length;
+    delete out.joint.fields;
+  }
+  return out;
+}
+
 /**
  * ContextKernel ties encrypted persistence to bounded private computation.
  * Plaintext is decrypted only inside the local process; callers receive metadata,
@@ -110,7 +123,7 @@ export class ContextKernel {
    */
   runSemantic({program,...input}={}){
     const compiled=compileSemanticProgram(this.list(),program);
-    return this.run({...input,program:compiled});
+    return stripSemanticPaths(this.run({...input,program:compiled}));
   }
 
   exposure(){ return this.firewall.footprint(); }
