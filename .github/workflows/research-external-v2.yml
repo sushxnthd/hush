@@ -1,0 +1,57 @@
+name: research-external-v2
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/external-falsification-v2]
+    paths:
+      - 'research/EXTERNAL_FALSIFICATION_PROTOCOL_V2.md'
+      - 'research/external/**'
+      - 'src/context-sanitizer.js'
+      - '.github/workflows/research-external-v2.yml'
+  pull_request:
+    paths:
+      - 'research/EXTERNAL_FALSIFICATION_PROTOCOL_V2.md'
+      - 'research/external/**'
+      - 'src/context-sanitizer.js'
+      - '.github/workflows/research-external-v2.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  external-falsification:
+    runs-on: ubuntu-latest
+    env:
+      AGENTLEAK_COMMIT: d5267c79c8a4333a2a149ffed2ec62f1864932e5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned external benchmark
+        run: python -m pip install --disable-pip-version-check "git+https://github.com/yagobski/agentleak.git@${AGENTLEAK_COMMIT}"
+      - name: Run preregistered external falsification
+        run: |
+          python research/external/agentleak_v2.py --output external-v2.json | tee external-v2.txt
+          sha256sum external-v2.json | tee external-v2.sha256
+      - name: Record runtime metadata
+        run: |
+          {
+            echo "hush_sha=${GITHUB_SHA}"
+            echo "agentleak_sha=${AGENTLEAK_COMMIT}"
+            echo "node=$(node --version)"
+            echo "python=$(python --version 2>&1)"
+          } | tee external-v2-runtime.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hush-external-v2-${{ github.sha }}
+          path: |
+            external-v2.json
+            external-v2.txt
+            external-v2.sha256
+            external-v2-runtime.txt
+          if-no-files-found: error
