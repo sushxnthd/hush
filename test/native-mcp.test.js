@@ -14,12 +14,13 @@ function kernel(){
   return k;
 }
 
-test('native MCP surface exposes bounded-computation tools only',()=>{
+test('native MCP surface exposes bounded computation plus approval-gated memory proposals',()=>{
   assert.deepEqual(NATIVE_MCP_TOOLS.map(x=>x.name),[
-    'hush_begin_private_task','hush_private_query','hush_private_decision','hush_revoke_private_task'
+    'hush_begin_private_task','hush_private_query','hush_private_decision','hush_propose_memory','hush_revoke_private_task'
   ]);
   assert.equal(isNativeMcpTool('hush_private_query'),true);
   assert.equal(isNativeMcpTool('hush_private_decision'),true);
+  assert.equal(isNativeMcpTool('hush_propose_memory'),true);
   assert.equal(isNativeMcpTool('get_raw_context'),false);
   assert.equal(NATIVE_MCP_TOOLS.some(x=>/raw|secret|password/i.test(x.name)),false);
   const semantic=NATIVE_MCP_TOOLS.find(x=>x.name==='hush_private_query');
@@ -75,6 +76,21 @@ test('MCP client can omit privateRef when task and clause roles identify context
   assert.equal(wire.includes('travel.preferredAirline'),false);
   assert.equal(wire.includes('1500'),false);
   assert.equal(wire.includes('ANA'),false);
+});
+
+test('MCP memory proposal does not echo or commit the proposed value before local approval',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-native-memory-'));
+  const k=new ContextKernel({dir,passphrase:'native memory proposal passphrase'});
+  const out=callNativeMcpTool({
+    name:'hush_propose_memory',
+    args:{label:'Preferred seat',category:'travel',tags:['seat','preference'],value:'aisle'},
+    kernel:k,agent:'assistant-a',sink:'mcp:test'
+  });
+  assert.equal(out.structuredContent.decision,'ask');
+  assert.equal(out.structuredContent.valueIncluded,false);
+  assert.equal(k.list().length,0);
+  assert.equal(JSON.stringify(out).includes('aisle'),false);
+  assert.equal(k.memoryProposalQueue({includeValues:true})[0].value,'aisle');
 });
 
 test('low-level compatibility tool still performs bounded private decisions',()=>{
