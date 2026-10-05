@@ -2,6 +2,7 @@ const DEFAULT_BASE_URL='http://127.0.0.1:8787';
 const LOOPBACK_HOSTS=new Set(['127.0.0.1','localhost','[::1]','::1']);
 const MAX_TEXT_BYTES=256*1024;
 
+function byteLength(value){ return new TextEncoder().encode(String(value??'')).byteLength; }
 function cleanBaseUrl(value,{allowRemote=false}={}){
   const url=new URL(String(value||DEFAULT_BASE_URL));
   if(!['http:','https:'].includes(url.protocol)) throw new Error('Hush client endpoint must use http or https');
@@ -54,7 +55,7 @@ export class HushClient {
       }
       const response=await this.fetchImpl(pathUrl(this.baseUrl,path),options);
       const raw=await response.text();
-      if(Buffer.byteLength(raw)>MAX_TEXT_BYTES) throw new HushClientError('Hush response exceeded the client safety limit',{status:response.status});
+      if(byteLength(raw)>MAX_TEXT_BYTES) throw new HushClientError('Hush response exceeded the client safety limit',{status:response.status});
       let payload={};
       if(raw){
         try{ payload=JSON.parse(raw); }
@@ -84,7 +85,7 @@ export class HushClient {
 
   redact(text){
     const value=String(text??'');
-    if(Buffer.byteLength(value)>MAX_TEXT_BYTES) throw new HushClientError('Text is too large to redact in one request');
+    if(byteLength(value)>MAX_TEXT_BYTES) throw new HushClientError('Text is too large to redact in one request');
     return this.request('/api/redact',{method:'POST',body:{text:value}});
   }
 
