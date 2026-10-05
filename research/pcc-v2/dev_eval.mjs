@@ -1,0 +1,134 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import {EXPECTED_DATA_SHA256,scoreTranscript,exactTwoSidedSignP,wilson,norm} from '../polar-p1/evaluate.mjs';
+
+const input=process.argv[2]||'/tmp/polar.json';
+const bytes=fs.readFileSync(input);
+const sha=crypto.createHash('sha256').update(bytes).digest('hex');
+if(sha!==EXPECTED_DATA_SHA256) throw new Error(`dataset hash mismatch ${sha}`);
+const all=JSON.parse(bytes.toString('utf8'));
+const records=all.filter(r=>Number(r?.metadata?.privacy_level)===1&&String(r?.metadata?.privacy_type)==='explicit_field_constraints');
+
+const ALIASES={
+  exact_dob:['exact date of birth','date of birth','birth date'],
+  email:['email','email address'], customer_email:['customer email','email','email address'],
+  phone:['phone','phone number'], phone_number:['phone number','phone'],
+  current_employer:['current employer','employer name','employer'], employer:['employer'],
+  university_name:['university name','university'],
+  exact_monthly_income:['exact monthly income','monthly income'], monthly_income_band:['monthly income band','income band'], income_band:['income band'],
+  exact_gpa:['exact gpa','gpa'],
+  home_address:['home address','address'], hotel_address:['hotel address'], ip_address:['ip address','ip addresses'],
+  payment_method_last4:['last four digits of my payment method','last four digits','payment method details','payment method'],
+  internal_agent_notes:['internal agent notes','internal notes'], private_legal_notes:['private legal notes','private notes'], landlord_private_notes:['private landlord notes','landlord notes'],
+  reported_problem:['reported problem','problem i reported','problem i am experiencing','problem'],
+  customer_sentiment:['customer sentiment','overall sentiment','sentiment'],
+  issue_category:['issue category','category of the issue','category'], product_area:['product area'], troubleshooting_steps:['troubleshooting steps'],
+  task_relevant_fact:['task relevant fact','relevant fact'],
+  applicant_name:['applicant name'], client_name:['client name','client s name'], traveler_name:['traveler name'], employee_name:['employee name'], policyholder_name:['policyholder name'], beneficiary_name:['beneficiary name'], companion_name:['companion name','names of my companions'], opposing_party_name:['opposing party name','opposing party s name'],
+  degree_program:['degree program'], academic_standing:['academic standing'], research_interests:['research interests'], relevant_courses:['relevant courses'], failed_courses:['failed courses'], mental_health_accommodation:['mental health accommodation','mental health accommodations'],
+  current_role:['current role'], target_role:['target role'], years_experience:['years of experience','years experience'], skills:['skills'],
+  symptom:['symptom','symptoms'], duration:['duration','how long'], preferred_time:['preferred appointment time','preferred time'], medical_history:['medical history'], hospital_id:['hospital id'],
+  employment_status:['employment status'], credit_score_band:['credit score band','credit score'], loan_purpose:['loan purpose'], debt_to_income_band:['debt to income band','debt-to-income band'], recent_transactions:['recent transactions','transactions'], tax_id:['tax id'], account_number:['account number'],
+  policy_type:['policy type','type of policy'], claim_type:['claim type'], coverage_band:['coverage band','coverage'], claim_status:['claim status'], policy_number:['policy number'], claim_number:['claim number'], medical_details:['medical details'], risk_notes:['risk notes'],
+  case_type:['case type','type of case'], jurisdiction:['jurisdiction'], desired_action:['desired action','action i am looking to take'], desired_outcome:['desired outcome'], urgency_level:['urgency level'], settlement_limit:['settlement limit'], case_number:['case number'],
+  incident_type:['incident type','type of incident'], affected_system_type:['affected system type','type of system','kind of system affected'], observed_behavior:['observed behavior','behavior was observed'], severity_hint:['severity hint','hint about the severity'], recommended_action:['recommended action','recommended actions'], device_id:['device id'], internal_hostname:['internal hostname'], access_token:['access token'], security_question_answer:['security question answer','security question answers'], internal_ticket_id:['internal ticket id'],
+  application_type:['application type','type of application'], household_type:['household type'], prior_eviction_history:['prior eviction history','eviction history'], late_payment_history:['late payment history'],
+  travel_purpose:['travel purpose'], destination:['destination'], budget_band:['budget range','budget band'], mobility_needs:['mobility needs'], travel_date_window:['date window','travel date window','general date window'], exact_itinerary:['exact itinerary','itinerary'], passport_number:['passport number'], loyalty_number:['loyalty number'],
+  name:['name'],
+  age:['age'], location:['location','country','city'], employer_type:['employer type','employer industry','industry or type']
+};
+
+function human(key){return String(key).replace(/_/g,' ');}
+function phrases(key){
+  const base=[human(key),...(ALIASES[key]||[])];
+  return [...new Set(base.map(norm).filter(x=>x.length>=2))].sort((a,b)=>b.length-a.length);
+}
+function splitClauses(policy){
+  return String(policy??'')
+    .replace(/\bhowever\b/gi,'. however ')
+    .replace(/\bbut\b/gi,'. but ')
+    .replace(/\badditionally\b/gi,'. additionally ')
+    .split(/[.;\n]+/).map(x=>norm(x)).filter(Boolean);
+}
+const NEG=[/do not (?:disclose|share|mention)/,/don t (?:disclose|share|mention)/,/never (?:share|disclose|mention)/,/keep .* (?:private|confidential)/,/off limits/,/should not be disclosed/,/not (?:their|the) identit/,/without revealing/,/nothing more specific/,/avoid specifics/,/completely (?:private|confidential)/];
+const POS=[/can share/,/may share/,/can disclose/,/may disclose/,/feel free to share/,/can discuss/,/may discuss/,/can mention/,/may mention/,/can be shared/,/can be discussed/,/can be disclosed/,/can only share/,/only share/,/only provide/,/only refer/,/can refer/,/you can refer/,/may provide/,/provide a high level summary/,/at a high level/];
+function polarity(clause){
+  const neg=NEG.some(r=>r.test(clause));
+  const pos=POS.some(r=>r.test(clause));
+  return {neg,pos};
+}
+function mentions(clause,key){return phrases(key).some(p=>clause.includes(p));}
+function policyEvidence(policy,key){
+  const clauses=splitClauses(policy), evidence=[];
+  for(const c of clauses){if(mentions(c,key)) evidence.push({clause:c,...polarity(c)});}
+  return evidence;
+}
+function scalarRows(obj,source){
+  const out=[];
+  if(!obj||typeof obj!=='object') return out;
+  for(const [key,v] of Object.entries(obj)){
+    if(Array.isArray(v)) for(const x of v) if(['string','number','boolean'].includes(typeof x)) out.push({key,value:x,source});
+    else if(v&&typeof v==='object') for(const [sub,x] of Object.entries(v)) if(['string','number','boolean'].includes(typeof x)) out.push({key:`${key}_${sub}`,value:x,source});
+    else if(['string','number','boolean'].includes(typeof v)) out.push({key,value:v,source});
+  }
+  return out;
+}
+function derivedAllowed(policy,key){
+  const ev=policyEvidence(policy,key);
+  if(!ev.length) return false;
+  const abstractCue=/\b(?:broad|bucket|band|category|summary|high level|country|city|industry|type|network range|anonymous|general|overview)\b/;
+  return ev.some(e=>e.pos&&abstractCue.test(e.clause)&&!e.neg) || ev.some(e=>e.pos&&abstractCue.test(e.clause));
+}
+function directAllowed(policy,key){
+  const ev=policyEvidence(policy,key);
+  if(!ev.length) return false;
+  const pos=ev.some(e=>e.pos), neg=ev.some(e=>e.neg);
+  if(pos&&!neg) return true;
+  if(pos&&neg){
+    // Exact allow phrase wins only when it is more specific than the negative concept.
+    const hp=norm(human(key));
+    return ev.some(e=>e.pos&&e.clause.includes(hp)&&!e.neg);
+  }
+  return false;
+}
+function candidateRows(record){
+  const s=record?.source_document_inputs??{};
+  return [
+    ...scalarRows(s.private_fields_embedded,'raw'),
+    ...scalarRows(s.task_relevant_fields,'direct'),
+    ...scalarRows(s.safe_abstractions_available,'derived')
+  ];
+}
+function release(record){
+  const policy=record?.generated_texts?.privacy_policy_text??'';
+  const rows=candidateRows(record), chosen=[];
+  const seen=new Set();
+  for(const row of rows){
+    const allowed=row.source==='derived'?derivedAllowed(policy,row.key):directAllowed(policy,row.key);
+    if(!allowed) continue;
+    const sig=norm(String(row.value)); if(!sig||seen.has(sig)) continue;
+    seen.add(sig); chosen.push(`${human(row.key)}: ${String(row.value)}.`);
+  }
+  return {text:chosen.join('\n'),released:chosen.length,rows:rows.length};
+}
+function mean(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:0;}
+function summary(scores){
+  const protectedTargets=scores.reduce((s,x)=>s+x.protectedCount,0),protectedRevealed=scores.reduce((s,x)=>s+x.protectedRevealed,0),leak=scores.filter(x=>x.leakFree).length,min=scores.filter(x=>x.minimalSuccess).length;
+  return {n:scores.length,privacy:mean(scores.map(x=>x.privacy)),utility:mean(scores.map(x=>x.utility)),overall:mean(scores.map(x=>x.overall)),protectedTargets,protectedRevealed,leakFreeRate:leak/scores.length,leakFreeWilson95:wilson(leak,scores.length),minimalSuccessRate:min/scores.length,minimalSuccessWilson95:wilson(min,scores.length)};
+}
+const scores=[],missKeys=new Map(),leakKeys=new Map();
+for(const r of records){
+  const rel=release(r), sc=scoreTranscript(rel.text,r.scoring_targets); scores.push(sc);
+  const rows=candidateRows(r), policy=r.generated_texts.privacy_policy_text??'';
+  for(const t of r.scoring_targets?.allowed_values??[]){if(!sc.allowedRevealed){} if(!rel.text||!String(rel.text).toLowerCase().includes(String(t).toLowerCase())){
+    for(const row of rows) if(String(row.value).toLowerCase().includes(String(t).toLowerCase())||String(t).toLowerCase().includes(String(row.value).toLowerCase())) missKeys.set(row.key,(missKeys.get(row.key)||0)+1);
+  }}
+  for(const t of r.scoring_targets?.do_not_disclose_values??[]){if(rel.text&&String(rel.text).toLowerCase().includes(String(t).toLowerCase())){
+    for(const row of rows) if(String(row.value).toLowerCase().includes(String(t).toLowerCase())||String(t).toLowerCase().includes(String(row.value).toLowerCase())) leakKeys.set(row.key,(leakKeys.get(row.key)||0)+1);
+  }}
+}
+const pcc=summary(scores);
+const report={datasetSha256:sha,p1Cases:records.length,pcc,topMissKeys:[...missKeys].sort((a,b)=>b[1]-a[1]).slice(0,30),topLeakKeys:[...leakKeys].sort((a,b)=>b[1]-a[1]).slice(0,30)};
+console.log(JSON.stringify(report,null,2));
+fs.mkdirSync('research/pcc-v2/out',{recursive:true});
+fs.writeFileSync('research/pcc-v2/out/dev-eval.json',JSON.stringify(report,null,2)+'\n');
