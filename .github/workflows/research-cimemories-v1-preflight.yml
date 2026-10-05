@@ -1,0 +1,31 @@
+name: research-cimemories-v1-preflight
+
+on:
+  push:
+    branches: [research/cimemories-confirmatory-v1]
+    paths:
+      - 'research/CIMEMORIES_CONFIRMATORY_V1.md'
+      - 'research/external/cimemories_confirmatory_v1.py'
+      - '.github/workflows/research-cimemories-v1-preflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile frozen evaluator
+        run: python -m py_compile research/external/cimemories_confirmatory_v1.py
+      - name: Run synthetic evaluator self-test
+        run: python research/external/cimemories_confirmatory_v1.py --self-test
+      - name: Confirm preflight does not access the confirmatory payload
+        run: |
+          test ! -e test.csv
+          ! grep -R "resolve/cd96d5756e35b3549b5ec6ecbd316fc0349c8669/test.csv" .github/workflows/research-cimemories-v1-preflight.yml
+          echo 'preflight is dataset-blind'
