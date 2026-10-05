@@ -2,6 +2,7 @@ import {SealedContextStore} from './secure-context.js';
 import {PersistentReconstructionFirewall} from './reconstruction-firewall.js';
 import {PrivateDecisionRuntime} from './private-decision.js';
 import {compileSemanticProgram} from './context-compiler.js';
+import {normalizeConnectorSnapshot,connectorSummary} from './connectors.js';
 
 function stripSemanticPaths(result){
   const out=structuredClone(result);
@@ -54,7 +55,7 @@ export class ContextKernel {
     });
   }
 
-  put(path,value,{label=null,category='general',tags=[],domain=undefined}={}){
+  put(path,value,{label=null,category='general',tags=[],domain=undefined,source=undefined}={}){
     const key=String(path||'');
     if(!key) throw new Error('Private context path is required');
     const item=this.store.put({
@@ -65,7 +66,8 @@ export class ContextKernel {
       category,
       value,
       tags,
-      domain
+      domain,
+      source
     });
     this.pathToId.set(key,item.id);
     const revision=this.runtime.setPrivate(key,value,{domain:item.domain??undefined}).revision;
@@ -105,7 +107,39 @@ export class ContextKernel {
   }
 
   list(){
-    return this.store.list().filter(record=>record.kind==='context').map(({kind,domain,...record})=>({...record,partitionProtected:Boolean(domain)}));
+    return this.store.list().filter(record=>record.kind==='context').map(({kind,domain,source,...record})=>({...record,partitionProtected:Boolean(domain)}));
+  }
+
+  connectorStats(){
+    return connectorSummary(this.store.records().filter(record=>record.kind==='context'));
+  }
+
+  /**
+   * Import a provider snapshot into the encrypted Context Kernel. Stable source ids
+   * are hashed into private paths; raw ids and provider payloads remain encrypted.
+   * A replace import removes records from the same provider/collection that are no
+   * longer present in the new snapshot.
+   */
+  ingestConnectorSnapshot(snapshot){
+    const normalized=normalizeConnectorSnapshot(snapshot);
+    const previous=this.store.records().filter(record=>record.kind==='context'&&record.source?.provider===normalized.provider&&record.source?.collection===normalized.collection);
+    const incomingPaths=new Set(normalized.records.map(record=>record.path));
+    let created=0,updated=0,removed=0;
+
+    for(const record of normalized.records){
+      const existed=this.pathToId.has(record.path);
+      this.put(record.path,record.value,{label:record.label,category:record.category,tags:record.tags,domain:record.domain,source:record.source});
+      if(existed) updated+=1; else created+=1;
+    }
+
+    if(normalized.replace){
+      for(const record of previous){
+        if(!incomingPaths.has(record.path)&&this.remove(record.path)) removed+=1;
+      }
+    }
+
+    const row=this.connectorStats().find(item=>item.provider===normalized.provider&&item.collection===normalized.collection);
+    return {provider:normalized.provider,collection:normalized.collection,received:normalized.records.length,created,updated,removed,total:row?.items??0,replace:normalized.replace};
   }
 
   beginTrajectory(options={}){ return this.runtime.beginTrajectory(options); }
@@ -135,6 +169,7 @@ export class ContextKernel {
   stats(){
     return {
       contextItems:this.list().length,
+      connectors:this.connectorStats(),
       profileRevision:this.runtime.profileRevision,
       exposureFields:this.exposure().length,
       partitionFields:this.partitionExposure().length,
