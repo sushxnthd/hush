@@ -31,18 +31,35 @@ function score(text,t){
 }
 const mean=a=>a.reduce((x,y)=>x+y,0)/(a.length||1);
 function summarize(xs){return {n:xs.length,utility:mean(xs.map(x=>x.utility)),privacy:mean(xs.map(x=>x.privacy)),overall:mean(xs.map(x=>x.overall)),protectedRevealed:xs.reduce((a,x)=>a+x.protectedRevealed,0),protectedTargets:xs.reduce((a,x)=>a+x.protectedCount,0),leakFreeRate:xs.filter(x=>x.leakFree).length/xs.length,minimalSuccessRate:xs.filter(x=>x.minimal).length/xs.length};}
+const inc=(o,k,n=1)=>o[k]=(o[k]||0)+n;
+const top=(o,n=80)=>Object.entries(o).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,n);
 
 const file=process.argv[2]||'/tmp/polar.json',bytes=fs.readFileSync(file),sha=crypto.createHash('sha256').update(bytes).digest('hex');if(sha!==EXPECTED)throw Error(`dataset hash mismatch ${sha}`);
 const records=JSON.parse(bytes).filter(r=>Number(r?.metadata?.privacy_level)===1&&String(r?.metadata?.privacy_type)==='explicit_field_constraints');
-const out=[];const reasons={},field={};
+const out=[];const reasons={},field={},missField={},missNoCandidate={},leakField={},missReason={};
 for(const r of records){
-  const atoms=candidates(r),policyText=String(r.generated_texts?.privacy_policy_text??'');
+  const atoms=candidates(r),policyText=String(r.generated_texts?.privacy_policy_text??''),domain=String(r.domain??r.metadata?.domain??'');
   const dcc=compileDisclosureClosure({policyText,atoms});
-  for(const b of dcc.blocked){reasons[b.reason]=(reasons[b.reason]||0)+1;field[b.key]??={allow:0,block:0};field[b.key].block++;}
+  const releasedIds=new Set(dcc.released.map(x=>x.id));
+  const blockedById=new Map(dcc.blocked.map(x=>[x.id,x]));
+  for(const b of dcc.blocked){inc(reasons,b.reason);field[b.key]??={allow:0,block:0};field[b.key].block++;}
   for(const x of dcc.released){field[x.key]??={allow:0,block:0};field[x.key].allow++;}
-  out.push({domain:String(r.domain??r.metadata?.domain??''),attack:String(r.metadata?.attack_type??''),score:score(dcc.text,r.scoring_targets),released:dcc.released.length,blocked:dcc.blocked.length});
+
+  for(const target of r.scoring_targets?.allowed_values??[]){
+    if(reveals(dcc.text,target))continue;
+    const matches=atoms.filter(a=>reveals(String(a.value),target)||reveals(target,String(a.value)));
+    if(!matches.length){inc(missNoCandidate,domain);continue;}
+    const keys=new Set(matches.map(x=>x.key));for(const k of keys)inc(missField,k);
+    for(const a of matches){const b=blockedById.get(a.id);if(b)inc(missReason,b.reason);else if(releasedIds.has(a.id))inc(missReason,'released_but_scorer_miss');}
+  }
+  for(const target of r.scoring_targets?.do_not_disclose_values??[]){
+    if(!reveals(dcc.text,target))continue;
+    const leaking=dcc.released.filter(x=>reveals(x.statement,target));
+    for(const x of leaking)inc(leakField,x.key);
+  }
+  out.push({domain,attack:String(r.metadata?.attack_type??''),score:score(dcc.text,r.scoring_targets),released:dcc.released.length,blocked:dcc.blocked.length});
 }
 const by=(key)=>Object.fromEntries([...new Set(out.map(x=>x[key]))].sort().map(v=>[v,summarize(out.filter(x=>x[key]===v).map(x=>x.score))]));
-const report={study:'DCC development on previously opened POLAR P1',datasetSha256:sha,aggregate:summarize(out.map(x=>x.score)),blockReasons:reasons,domains:by('domain'),attacks:by('attack'),topFieldDecisions:Object.entries(field).sort((a,b)=>(b[1].allow+b[1].block)-(a[1].allow+a[1].block)).slice(0,80)};
+const report={study:'DCC development on previously opened POLAR P1',datasetSha256:sha,aggregate:summarize(out.map(x=>x.score)),blockReasons:reasons,allowedMissDiagnostics:{topCandidateFields:top(missField),noCandidateByDomain:missNoCandidate,blockedReasonCounts:missReason},protectedLeakDiagnostics:{releasedFieldCounts:leakField},domains:by('domain'),attacks:by('attack'),topFieldDecisions:Object.entries(field).sort((a,b)=>(b[1].allow+b[1].block)-(a[1].allow+a[1].block)).slice(0,80)};
 console.log(JSON.stringify(report,null,2));
 fs.mkdirSync('research/dcc/out',{recursive:true});fs.writeFileSync('research/dcc/out/polar-development.json',JSON.stringify(report,null,2)+'\n');
