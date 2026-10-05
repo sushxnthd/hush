@@ -1,0 +1,80 @@
+name: research-grounded-dev
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/external-holdout-v4]
+    paths:
+      - 'src/grounded-egress-guard.js'
+      - 'research/external/grounded_guard_dev.py'
+      - 'research/external/hush-grounded-batch.mjs'
+      - '.github/workflows/research-grounded-dev.yml'
+  pull_request:
+    paths:
+      - 'src/grounded-egress-guard.js'
+      - 'research/external/grounded_guard_dev.py'
+      - 'research/external/hush-grounded-batch.mjs'
+      - '.github/workflows/research-grounded-dev.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  grounded-development:
+    runs-on: ubuntu-latest
+    env:
+      AGENTLEAK_COMMIT: d5267c79c8a4333a2a149ffed2ec62f1864932e5
+      PRIVACYLENS_COMMIT: 9c2ee07b080dc54ed4924af11d9751e81753c94d
+      PRIVACYLENS_MAIN_BLOB_SHA: 7992bddb2638bb1fa595c4bf8fb4c82783209e6f
+      CONFIDE_BLOB_SHA: fd6f0a3c45f2979f17d848355621c2ebd1f8ccc7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned AgentLeak comparator and scorer
+        run: python -m pip install --disable-pip-version-check "git+https://github.com/yagobski/agentleak.git@${AGENTLEAK_COMMIT}"
+      - name: Fetch immutable development datasets
+        run: |
+          curl -fsSL "https://raw.githubusercontent.com/SALT-NLP/PrivacyLens/${PRIVACYLENS_COMMIT}/data/main_data.json" -o privacylens-main-data.json
+          curl -fsSL "https://raw.githubusercontent.com/SALT-NLP/PrivacyLens/${PRIVACYLENS_COMMIT}/data/extensibility/confide_subset.json" -o confide-subset.json
+          main_blob="$(git hash-object privacylens-main-data.json)"
+          confide_blob="$(git hash-object confide-subset.json)"
+          echo "PrivacyLens main blob: ${main_blob}"
+          echo "ConfAIde blob: ${confide_blob}"
+          test "${main_blob}" = "${PRIVACYLENS_MAIN_BLOB_SHA}"
+          test "${confide_blob}" = "${CONFIDE_BLOB_SHA}"
+          sha256sum privacylens-main-data.json | tee privacylens-main-data.sha256
+          sha256sum confide-subset.json | tee confide-subset.sha256
+      - name: Run source-grounded development sweep
+        run: |
+          python research/external/grounded_guard_dev.py \
+            --main privacylens-main-data.json \
+            --confide confide-subset.json \
+            --output grounded-dev.json | tee grounded-dev.txt
+          sha256sum grounded-dev.json | tee grounded-dev.sha256
+      - name: Record runtime and immutable pins
+        run: |
+          {
+            echo "hush_sha=${GITHUB_SHA}"
+            echo "agentleak_sha=${AGENTLEAK_COMMIT}"
+            echo "privacylens_sha=${PRIVACYLENS_COMMIT}"
+            echo "privacylens_main_blob_sha=${PRIVACYLENS_MAIN_BLOB_SHA}"
+            echo "confide_blob_sha=${CONFIDE_BLOB_SHA}"
+            echo "node=$(node --version)"
+            echo "python=$(python --version 2>&1)"
+          } | tee grounded-dev-runtime.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hush-grounded-dev-${{ github.sha }}
+          path: |
+            grounded-dev.json
+            grounded-dev.txt
+            grounded-dev.sha256
+            grounded-dev-runtime.txt
+            privacylens-main-data.sha256
+            confide-subset.sha256
+          if-no-files-found: error
