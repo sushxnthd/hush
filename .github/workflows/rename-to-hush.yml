@@ -28,10 +28,13 @@ jobs:
           import subprocess
           from pathlib import Path
 
+          helper = ".github/workflows/rename-to-hush.yml"
           files = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\0")
           changed = []
 
           for name in filter(None, files):
+              if name == helper:
+                  continue
               path = Path(name)
               try:
                   text = path.read_text(encoding="utf-8")
@@ -71,6 +74,7 @@ jobs:
           import subprocess
           from pathlib import Path
 
+          helper = ".github/workflows/rename-to-hush.yml"
           allowed = (
               "github.com/sushxnthd/supakeep",
               "sushxnthd.github.io/supakeep",
@@ -78,6 +82,8 @@ jobs:
           bad = []
           files = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\0")
           for name in filter(None, files):
+              if name == helper:
+                  continue
               path = Path(name)
               if not path.exists():
                   continue
