@@ -79,6 +79,8 @@ jobs:
           files = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\0")
           for name in filter(None, files):
               path = Path(name)
+              if not path.exists():
+                  continue
               try:
                   text = path.read_text(encoding="utf-8")
               except (UnicodeDecodeError, IsADirectoryError):
