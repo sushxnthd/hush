@@ -7,12 +7,14 @@ on:
     paths:
       - 'src/grounded-egress-guard.js'
       - 'research/external/grounded_guard_dev.py'
+      - 'research/external/grounded_guard_surgical_dev.py'
       - 'research/external/hush-grounded-batch.mjs'
       - '.github/workflows/research-grounded-dev.yml'
   pull_request:
     paths:
       - 'src/grounded-egress-guard.js'
       - 'research/external/grounded_guard_dev.py'
+      - 'research/external/grounded_guard_surgical_dev.py'
       - 'research/external/hush-grounded-batch.mjs'
       - '.github/workflows/research-grounded-dev.yml'
 
@@ -49,9 +51,9 @@ jobs:
           test "${confide_blob}" = "${CONFIDE_BLOB_SHA}"
           sha256sum privacylens-main-data.json | tee privacylens-main-data.sha256
           sha256sum confide-subset.json | tee confide-subset.sha256
-      - name: Run source-grounded development sweep
+      - name: Run surgical source-grounded development sweep
         run: |
-          python research/external/grounded_guard_dev.py \
+          python research/external/grounded_guard_surgical_dev.py \
             --main privacylens-main-data.json \
             --confide confide-subset.json \
             --output grounded-dev.json | tee grounded-dev.txt
