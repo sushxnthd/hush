@@ -1,4 +1,4 @@
-name: research-agentleak-context-boundary-v1b
+name: research-agentleak-context-boundary-v1c
 
 on:
   push:
@@ -26,16 +26,16 @@ jobs:
           git clone --filter=blob:none https://github.com/Privatris/AgentLeak.git agentleak
           git -C agentleak checkout --detach "${AGENTLEAK_SHA}"
           test "$(git -C agentleak rev-parse HEAD)" = "${AGENTLEAK_SHA}"
-      - name: Run v1b development partition only
+      - name: Run v1c development partition only
         run: |
           set +e
-          python research/external/agentleak_context_boundary_v1b.py \
+          python research/external/agentleak_context_boundary_v1c.py \
             --dataset agentleak/agentleak_data/datasets/scenarios_full_1000.jsonl \
             --partition dev \
-            --output agentleak-context-boundary-v1b-dev.json | tee agentleak-context-boundary-v1b-dev.txt
+            --output agentleak-context-boundary-v1c-dev.json | tee agentleak-context-boundary-v1c-dev.txt
           code=${PIPESTATUS[0]}
-          echo "${code}" > agentleak-context-boundary-v1b-dev.exit
-          sha256sum agentleak-context-boundary-v1b-dev.json > agentleak-context-boundary-v1b-dev.sha256
+          echo "${code}" > agentleak-context-boundary-v1c-dev.exit
+          sha256sum agentleak-context-boundary-v1c-dev.json > agentleak-context-boundary-v1c-dev.sha256
           exit 0
       - name: Record provenance
         if: always()
@@ -44,30 +44,30 @@ jobs:
             echo "hush_sha=$(git rev-parse HEAD)"
             echo "agentleak_sha=$(git -C agentleak rev-parse HEAD)"
             echo "python=$(python --version 2>&1)"
-          } | tee agentleak-context-boundary-v1b-runtime.txt
+          } | tee agentleak-context-boundary-v1c-runtime.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hush-agentleak-context-boundary-v1b-${{ github.sha }}
+          name: hush-agentleak-context-boundary-v1c-${{ github.sha }}
           path: |
-            agentleak-context-boundary-v1b-dev.json
-            agentleak-context-boundary-v1b-dev.txt
-            agentleak-context-boundary-v1b-dev.exit
-            agentleak-context-boundary-v1b-dev.sha256
-            agentleak-context-boundary-v1b-runtime.txt
+            agentleak-context-boundary-v1c-dev.json
+            agentleak-context-boundary-v1c-dev.txt
+            agentleak-context-boundary-v1c-dev.exit
+            agentleak-context-boundary-v1c-dev.sha256
+            agentleak-context-boundary-v1c-runtime.txt
           if-no-files-found: warn
-      - name: Interpret v1b development result
+      - name: Interpret v1c development result
         if: always()
         run: |
-          test -f agentleak-context-boundary-v1b-dev.exit || { echo 'No evaluator exit record' >&2; exit 1; }
-          code="$(cat agentleak-context-boundary-v1b-dev.exit)"
+          test -f agentleak-context-boundary-v1c-dev.exit || { echo 'No evaluator exit record' >&2; exit 1; }
+          code="$(cat agentleak-context-boundary-v1c-dev.exit)"
           if [ "${code}" = '1' ]; then
             echo 'Technical evaluator error.' >&2
             exit 1
           elif [ "${code}" = '2' ]; then
-            echo 'No v1b configuration met the pre-registered freeze-readiness gates. Result preserved.'
+            echo 'No v1c configuration met the pre-registered freeze-readiness gates. Result preserved.'
           elif [ "${code}" = '0' ]; then
-            echo 'At least one v1b configuration met freeze-readiness gates. Holdout remains unscored.'
+            echo 'At least one v1c configuration met freeze-readiness gates. Holdout remains unscored.'
           else
             echo "Unexpected evaluator exit ${code}." >&2
             exit 1
