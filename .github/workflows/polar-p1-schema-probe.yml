@@ -1,0 +1,20 @@
+name: polar-p1-schema-probe
+on:
+  push:
+    branches: [research/polar-p1-confirmatory]
+    paths:
+      - 'research/polar-p1/schema_probe.py'
+      - '.github/workflows/polar-p1-schema-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Probe schema without printing instance contents or gold targets
+        run: python research/polar-p1/schema_probe.py
