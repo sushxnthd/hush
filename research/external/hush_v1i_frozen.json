@@ -1,0 +1,37 @@
+{
+  "protocol": "Hush v1i scope-lattice frozen mechanism",
+  "frozen_after_development": true,
+  "development_evaluator_sha256": "211e25b3e8a45ce276ea4e5ed20a4cc65adfb8eb38098a32753767663acdb051",
+  "development_run": 37338548997,
+  "development_artifact": 11357566392,
+  "selected_config_id": "c32_p30_o35_d70_b20",
+  "selected_config": {
+    "core_spans": 32,
+    "privacy_trigger": 0.30,
+    "direct_override": 0.35,
+    "evidence_delta": 0.70,
+    "scope_bonus": 0.20,
+    "risk_penalty": 0.55,
+    "risk_gate": 0.60,
+    "max_spans": 32
+  },
+  "development_snapshot": {
+    "mean_completeness": 0.943,
+    "fully_useful_rate": 0.881,
+    "leak_free_rate": 0.104,
+    "minimal_success_rate": 0.104,
+    "mean_violation": 0.727,
+    "recipient_misalignment_completeness": 0.980,
+    "recipient_misalignment_semantic_completeness": 0.980,
+    "paired_hush_only_leak_free": 7,
+    "paired_semantic_only_leak_free": 0,
+    "paired_two_sided_p": 0.01562,
+    "freeze_ready_configurations": 16
+  },
+  "spent_benchmarks": [
+    "UKPLab/emnlp2026-agentcibench:data/generated_merged@7b3fad424d0c5a450ac3bc3dc4050c38094c6dc6",
+    "UKPLab/emnlp2026-agentcibench:data/eval_set_e2e_50@7b3fad424d0c5a450ac3bc3dc4050c38094c6dc6"
+  ],
+  "fresh_validation_rule": "Do not adapt parameters or logic using any future external evaluation result. Validate this exact mechanism on a distinct benchmark before making a stronger generalization claim.",
+  "claim_boundary": "Development evidence only for v1i. It is not a near-zero-leakage result, not independent replication, and not evidence of universal or named-commercial superiority."
+}
