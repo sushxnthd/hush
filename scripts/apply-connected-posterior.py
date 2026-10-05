@@ -1,6 +1,6 @@
 from pathlib import Path
 
-# Extend the symbolic analyzer so the *current* protected output may be a
+# Extend the symbolic analyzer so the current protected output may be a
 # predicate or bucket while prior cross-field observations remain choose calls.
 p=Path('src/symbolic-choice-counter.js')
 s=p.read_text()
@@ -27,7 +27,7 @@ function classifyPredicate(program,box,fields,evaluateProgram){
 
   if(op==='in'||op==='notIn'){
     if(!Array.isArray(raw)) return {known:false};
-    const values=[...new Set(raw.filter(value=>Number.isSafeInteger(value)&&value>=lo&&value<=hi))];
+    const values=[...new Set(raw.map(Number).filter(value=>Number.isSafeInteger(value)&&value>=lo&&value<=hi))];
     const covered=values.length;
     const width=hi-lo+1;
     if(covered===0) return {known:true,result:op==='notIn'};
@@ -84,21 +84,87 @@ s=s.replace("const classification=classifyChoice(program,box,ordered,evaluatePro
 s=s.replace("const classification=classifyChoice(observation.program,box,ordered,evaluateProgram);","const classification=classifyProgram(observation.program,box,ordered,evaluateProgram);",1)
 p.write_text(s)
 
-# Run the connected joint posterior assessment for every protected PDP output,
-# not only choose. Predicate/bucket effects continue to live in the partition
-# firewall; we therefore do not persist them again in the choose-observation log.
-p=Path('src/private-decision.js')
+# Expose a conservative overlap check so single-field predicate/bucket calls keep
+# their existing partition-only accounting unless a prior choose release actually
+# links that field into a connected posterior.
+p=Path('src/joint-choice-firewall.js')
 s=p.read_text()
-old="if(compiled.kind==='choose' && privatePaths.length>=1 && this.jointChoiceFirewall) {\n      const protectedCount=privatePaths.filter(path=>this.partitionFirewall?.hasField(path)).length;\n      const allProtected=protectedCount===privatePaths.length;\n      if(protectedCount>0 && !allProtected){"
-new="if(privatePaths.length>=1 && this.jointChoiceFirewall) {\n      const protectedCount=privatePaths.filter(path=>this.partitionFirewall?.hasField(path)).length;\n      const allProtected=protectedCount===privatePaths.length;\n      if(compiled.kind==='choose' && protectedCount>0 && !allProtected){"
+old="""  resetField(field){
+    const key=String(field||'');
+    const before=this.observations.length;
+    this.observations=this.observations.filter(observation=>!observation.fields.includes(key));
+    return before!==this.observations.length;
+  }
+
+  evaluate({fields,getFieldState,program,result,evaluateProgram}={}){"""
+new="""  resetField(field){
+    const key=String(field||'');
+    const before=this.observations.length;
+    this.observations=this.observations.filter(observation=>!observation.fields.includes(key));
+    return before!==this.observations.length;
+  }
+
+  hasObservationFor(fields=[]){
+    const requested=uniqueFields(fields);
+    return requested.length>0&&this.observations.some(observation=>intersects(requested,observation.fields));
+  }
+
+  evaluate({fields,getFieldState,program,result,evaluateProgram}={}){"""
 assert old in s
 s=s.replace(old,new,1)
-old="      if(allProtected){\n        const compiledCache=new Map();"
-new="      if(allProtected && protectedCount>0){\n        const compiledCache=new Map();"
+p.write_text(s)
+
+# Run connected joint-posterior assessment for choose programs as before, and for
+# predicate/bucket outputs only when they overlap a prior choose observation.
+# This closes mixed-channel composition without changing standalone partition
+# accounting semantics. Predicate/bucket effects remain persisted by the partition
+# firewall, so only choose observations are appended to the joint observation log.
+p=Path('src/private-decision.js')
+s=p.read_text()
+old="""    if(compiled.kind==='choose' && privatePaths.length>=1 && this.jointChoiceFirewall) {
+      const protectedCount=privatePaths.filter(path=>this.partitionFirewall?.hasField(path)).length;
+      const allProtected=protectedCount===privatePaths.length;
+      if(protectedCount>0 && !allProtected){"""
+new="""    const shouldComposeJoint=compiled.kind==='choose'||Boolean(this.jointChoiceFirewall?.hasObservationFor?.(privatePaths));
+    if(shouldComposeJoint && privatePaths.length>=1 && this.jointChoiceFirewall) {
+      const protectedCount=privatePaths.filter(path=>this.partitionFirewall?.hasField(path)).length;
+      const allProtected=protectedCount===privatePaths.length;
+      if(compiled.kind==='choose' && protectedCount>0 && !allProtected){"""
+assert old in s
+s=s.replace(old,new,1)
+old="""      if(allProtected){
+        const compiledCache=new Map();"""
+new="""      if(allProtected && protectedCount>0){
+        const compiledCache=new Map();"""
 assert old in s
 s=s.replace(old,new,1)
 old="if(jointAssessment?.decision==='allow') this.jointChoiceFirewall.commit(jointAssessment);"
 new="if(compiled.kind==='choose' && jointAssessment?.decision==='allow') this.jointChoiceFirewall.commit(jointAssessment);"
+assert old in s
+s=s.replace(old,new,1)
+p.write_text(s)
+
+# Turn the existing falsification into a regression test for the successor guard.
+p=Path('test/mixed-channel-composition.test.js')
+s=p.read_text()
+s=s.replace(
+  "test('v0.9 specialized guards permit a default-policy mixed choose-then-predicate transcript above the connected knowledge limit',()=>{",
+  "test('connected posterior blocks a mixed choose-then-predicate transcript above the knowledge limit',()=>{",
+  1
+)
+old="""  // This deliberately captures the v0.9 composition gap. The successor connected
+  // posterior guard must change this outcome to DENY before releasing `true`.
+  assert.equal(final.decision,'allow');
+  assert.equal(final.result,true);
+  assert.equal(final.partition?.totalKnowledgeBits,1);"""
+new="""  // The predicate is harmless in isolation, but conditioned on both prior choices
+  // it collapses the connected posterior from two states to one (8 -> 9 bits).
+  assert.equal(final.decision,'deny');
+  assert.equal(final.capacity.accounting,'realized-joint-choice');
+  assert.equal(final.joint?.beforeCandidates,2);
+  assert.equal(final.joint?.afterCandidates,1);
+  assert.equal(final.joint?.totalKnowledgeBits,9);
+  assert.equal(Object.hasOwn(final,'result'),false);"""
 assert old in s
 s=s.replace(old,new,1)
 p.write_text(s)
