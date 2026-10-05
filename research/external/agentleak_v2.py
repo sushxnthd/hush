@@ -35,6 +35,7 @@ DISCLOSURE_CHANNELS = {
     "log",
     "generated_file",
 }
+SOURCE_CHANNELS_FOR_POSTHOC_GUARD = {"tool_response"}
 
 
 def stable_text(value: Any) -> str:
@@ -98,6 +99,43 @@ def run_hush_batch(records: list[dict[str, Any]], mode: str, repo_root: Path) ->
     )
     if proc.returncode != 0:
         raise RuntimeError(f"Hush sanitizer bridge failed ({mode}): {proc.stderr.strip()}")
+    payload = json.loads(proc.stdout)
+    return {str(row["id"]): row["sanitized"] for row in payload.get("results", [])}
+
+
+def run_hush_guard_batch(records: list[dict[str, Any]], repo_root: Path) -> dict[str, Any]:
+    """Post-hoc development arm: guard egress against copied local source context.
+
+    This arm is intentionally excluded from the frozen v2 gates. It was created
+    only after v2 falsified Hush strict on the preservation endpoint. The v2
+    corpus is therefore a development set for this mechanism, not confirmatory
+    evidence.
+    """
+    items: list[dict[str, Any]] = []
+    for sidx, record in enumerate(records):
+        trace = record["trace"]
+        protected_values = [
+            event.content for event in trace.events
+            if event.channel_value in SOURCE_CHANNELS_FOR_POSTHOC_GUARD
+        ]
+        for eidx, event in enumerate(trace.events):
+            if event.channel_value in DISCLOSURE_CHANNELS:
+                items.append({
+                    "id": f"{sidx}:{eidx}",
+                    "content": event.content,
+                    "protectedValues": protected_values,
+                })
+
+    helper = repo_root / "research" / "external" / "hush-guard-batch.mjs"
+    proc = subprocess.run(
+        ["node", str(helper)],
+        input=json.dumps({"mode": "pseudonymous", "items": items}, ensure_ascii=False),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"Hush copied-context guard bridge failed: {proc.stderr.strip()}")
     payload = json.loads(proc.stdout)
     return {str(row["id"]): row["sanitized"] for row in payload.get("results", [])}
 
@@ -207,6 +245,7 @@ def main() -> int:
 
     hush_pseudonymous = run_hush_batch(records, "pseudonymous", repo_root)
     hush_strict = run_hush_batch(records, "strict", repo_root)
+    hush_guarded_posthoc = run_hush_guard_batch(records, repo_root)
     agentleak_sanitizer = Sanitizer(style="placeholder")
     runner = AgentLeakRunner()
 
@@ -222,6 +261,7 @@ def main() -> int:
             "agentleak_sanitizer": transform_agentleak(original, agentleak_sanitizer),
             "hush_pseudonymous": transform_hush(original, sidx, hush_pseudonymous),
             "hush_strict": transform_hush(original, sidx, hush_strict),
+            "hush_guarded_posthoc": transform_hush(original, sidx, hush_guarded_posthoc),
         }
         for arm, trace in arms.items():
             report = analyze(runner, trace, meta)
@@ -235,10 +275,12 @@ def main() -> int:
                 "preservation": 1.0 if arm == "baseline" else preservation(original, trace),
             })
 
-    summaries = {arm: summarize(rows, arm) for arm in (
-        "baseline", "agentleak_sanitizer", "hush_pseudonymous", "hush_strict"
-    )}
+    arms_to_summarize = (
+        "baseline", "agentleak_sanitizer", "hush_pseudonymous", "hush_strict", "hush_guarded_posthoc"
+    )
+    summaries = {arm: summarize(rows, arm) for arm in arms_to_summarize}
     strict_vs_agentleak = pairwise(rows, "hush_strict", "agentleak_sanitizer")
+    posthoc_vs_agentleak = pairwise(rows, "hush_guarded_posthoc", "agentleak_sanitizer")
 
     baseline_leak_rate = 1.0 - summaries["baseline"]["leak_free_rate"]
     agent = summaries["agentleak_sanitizer"]
@@ -278,12 +320,24 @@ def main() -> int:
         "summaries": summaries,
         "paired": {
             "hush_strict_vs_agentleak_sanitizer": strict_vs_agentleak,
+            "hush_guarded_posthoc_vs_agentleak_sanitizer": posthoc_vs_agentleak,
         },
         "gates": gates,
         "external_privacy_superiority_gate": "PASS" if all_passed else "FAIL",
+        "posthoc_development_arm": {
+            "name": "hush_guarded_posthoc",
+            "confirmatory": False,
+            "included_in_v2_gates": False,
+            "reason": (
+                "This mechanism was designed after observing the frozen v2 preservation failure. "
+                "Its v2-corpus result is development evidence only and requires a new preregistered holdout before a superiority claim."
+            ),
+            "vs_agentleak_sanitizer": posthoc_vs_agentleak,
+        },
         "claim_boundary": (
-            "A PASS applies only to privacy containment versus the AgentLeak placeholder sanitizer on the pinned external traces. "
-            "Content preservation is a proxy, not end-to-end task success; this is not a Charlie, OCELOT or strongest-AgentDojo-defense claim and is not independent reproduction."
+            "The frozen v2 PASS/FAIL applies only to the preregistered baseline, AgentLeak sanitizer, Hush pseudonymous and Hush strict arms. "
+            "The copied-context guard is post-hoc development evidence. Content preservation is a proxy, not end-to-end task success; "
+            "this is not a Charlie, OCELOT or strongest-AgentDojo-defense claim and is not independent reproduction."
         ),
         "scenario_rows": rows,
     }
@@ -302,8 +356,9 @@ def main() -> int:
         print("Hush External Falsification Protocol v2")
         print(f"corpus={len(records)}  baseline leak coverage={baseline_leak_rate:.3%}")
         for arm, summary in summaries.items():
+            label = f"{arm}*" if arm == "hush_guarded_posthoc" else arm
             print(
-                f"{arm:22s} leak-free={summary['leak_free_rate']:.3%} "
+                f"{label:23s} leak-free={summary['leak_free_rate']:.3%} "
                 f"privacy={summary['mean_privacy_score']:.2f} preservation={summary['mean_preservation']:.3f}"
             )
         print(
@@ -311,9 +366,15 @@ def main() -> int:
             f"wins={strict_vs_agentleak['wins']} losses={strict_vs_agentleak['losses']} "
             f"ties={strict_vs_agentleak['ties']} p={strict_vs_agentleak['two_sided_exact_sign_p']:.6g}"
         )
+        print(
+            "post-hoc guarded vs AgentLeak: "
+            f"wins={posthoc_vs_agentleak['wins']} losses={posthoc_vs_agentleak['losses']} "
+            f"ties={posthoc_vs_agentleak['ties']} p={posthoc_vs_agentleak['two_sided_exact_sign_p']:.6g}"
+        )
         for gate, passed in gates.items():
             print(f"{'PASS' if passed else 'FAIL'} {gate}")
         print(f"EXTERNAL PRIVACY SUPERIORITY GATE: {'PASS' if all_passed else 'FAIL'}")
+        print("* post-hoc development arm; excluded from frozen v2 gates")
 
     return 0
 
