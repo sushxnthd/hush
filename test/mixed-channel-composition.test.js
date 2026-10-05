@@ -41,7 +41,7 @@ function bridgeHelperRareProgram(){
   };
 }
 
-test('v0.9 specialized guards permit a default-policy mixed choose-then-predicate transcript above the connected knowledge limit',()=>{
+test('connected posterior blocks a mixed choose-then-predicate transcript above the knowledge limit',()=>{
   const runtime=new PrivateDecisionRuntime();
   for(let i=0;i<FIXED;i++) runtime.setPrivate(`secret.fixed${i}`,1,{domain:{type:'integer',min:0,max:1}});
   runtime.setPrivate(BRIDGE,1,{domain:{type:'integer',min:0,max:1}});
@@ -89,9 +89,12 @@ test('v0.9 specialized guards permit a default-policy mixed choose-then-predicat
     program:{kind:'predicate',private:TARGET,op:'eq',value:1}
   });
 
-  // This deliberately captures the v0.9 composition gap. The successor connected
-  // posterior guard must change this outcome to DENY before releasing `true`.
-  assert.equal(final.decision,'allow');
-  assert.equal(final.result,true);
-  assert.equal(final.partition?.totalKnowledgeBits,1);
+  // The predicate is harmless in isolation, but conditioned on both prior choices
+  // it collapses the connected posterior from two states to one (8 -> 9 bits).
+  assert.equal(final.decision,'deny');
+  assert.equal(final.capacity.accounting,'realized-joint-choice');
+  assert.equal(final.joint?.beforeCandidates,2);
+  assert.equal(final.joint?.afterCandidates,1);
+  assert.equal(final.joint?.totalKnowledgeBits,9);
+  assert.equal(Object.hasOwn(final,'result'),false);
 });

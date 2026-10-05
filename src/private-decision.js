@@ -289,13 +289,14 @@ export class PrivateDecisionRuntime {
       }
     }
 
-    if(compiled.kind==='choose' && privatePaths.length>=1 && this.jointChoiceFirewall) {
+    const shouldComposeJoint=compiled.kind==='choose'||Boolean(this.jointChoiceFirewall?.hasObservationFor?.(privatePaths));
+    if(shouldComposeJoint && privatePaths.length>=1 && this.jointChoiceFirewall) {
       const protectedCount=privatePaths.filter(path=>this.partitionFirewall?.hasField(path)).length;
       const allProtected=protectedCount===privatePaths.length;
-      if(protectedCount>0 && !allProtected){
+      if(compiled.kind==='choose' && protectedCount>0 && !allProtected){
         return {decision:'deny',reason:'Protected private fields cannot be mixed with undeclared fields in an analyzable choice.',capacity:{marginalBits:0,nominalBits:Number(nominalBits.toFixed(6)),spentBits:Number(t.spentBits.toFixed(6)),maxBits:t.maxBits,sinkSpentBits:Number((t.sinkSpent.get(sinkKey)??0).toFixed(6)),sinkMaxBits:t.sinkMaxBits,cardinality:compiled.cardinality,repeat,accounting:'fail-closed-mixed-domain'}};
       }
-      if(allProtected){
+      if(allProtected && protectedCount>0){
         const compiledCache=new Map();
         const evaluateProgram=(probe,assignment)=>{
           const key=sha256(canonicalize(probe));
@@ -368,7 +369,7 @@ export class PrivateDecisionRuntime {
       resultHash
     })??null;
     if(partitionAssessment?.decision==='allow') this.partitionFirewall.commit(partitionAssessment);
-    if(jointAssessment?.decision==='allow') this.jointChoiceFirewall.commit(jointAssessment);
+    if(compiled.kind==='choose' && jointAssessment?.decision==='allow') this.jointChoiceFirewall.commit(jointAssessment);
 
     return {
       decision:'allow',
