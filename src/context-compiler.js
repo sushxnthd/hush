@@ -1,6 +1,8 @@
 const MAX_QUERY_LENGTH=240;
 const MAX_TASK_LENGTH=1000;
 const MAX_TAGS=16;
+const MAX_PRIVATE_FIELD_LENGTH=160;
+const MAX_PRIVATE_FIELD_DEPTH=6;
 const STOPWORDS=new Set(['a','an','and','are','as','at','be','by','can','do','for','from','i','in','is','it','me','my','of','on','or','that','the','this','to','with']);
 const SYNONYMS=Object.freeze({
   price:['cost','budget','spend','amount'],cost:['price','budget','spend','amount'],budget:['price','cost','spend','amount'],
@@ -10,6 +12,7 @@ const SYNONYMS=Object.freeze({
   email:['contact','mail'],phone:['contact','telephone'],contact:['email','phone','person'],
   repo:['repository','github'],repository:['repo','github']
 });
+const FORBIDDEN_PRIVATE_FIELD_PARTS=new Set(['__proto__','prototype','constructor']);
 
 export class ContextSelectionError extends Error {
   constructor(message,{code='context_selection_failed',candidateCount=undefined}={}){
@@ -47,6 +50,16 @@ function normalizeRef(ref,{fallbackQuery='',task=''}={}){
   if(query.length>MAX_QUERY_LENGTH||category.length>MAX_QUERY_LENGTH||label.length>MAX_QUERY_LENGTH||tags.some(tag=>tag.length>MAX_QUERY_LENGTH)) throw new ContextSelectionError('privateRef selector text is too long.',{code:'invalid_private_ref'});
   if(!query&&!category&&!label&&!tags.length&&!text(task)) throw new ContextSelectionError('privateRef requires a selector or task context.',{code:'invalid_private_ref'});
   return {query,category,label,tags};
+}
+
+function normalizePrivateField(value){
+  const field=text(value);
+  if(!field) return '';
+  if(field.length>MAX_PRIVATE_FIELD_LENGTH) throw new ContextSelectionError('privateField is too long.',{code:'invalid_private_field'});
+  const parts=field.split('.');
+  if(parts.length>MAX_PRIVATE_FIELD_DEPTH) throw new ContextSelectionError(`privateField supports at most ${MAX_PRIVATE_FIELD_DEPTH} nested segments.`,{code:'invalid_private_field'});
+  if(parts.some(part=>!part||FORBIDDEN_PRIVATE_FIELD_PARTS.has(part)||!/^[A-Za-z0-9_-]+$/.test(part))) throw new ContextSelectionError('privateField contains an unsafe path segment.',{code:'invalid_private_field'});
+  return parts.join('.');
 }
 
 function recordMetadata(record){
@@ -145,8 +158,10 @@ function compilePrivateSlot(records,node,{task='',fallbackQuery=''}={}){
   if(!node||typeof node!=='object'||Array.isArray(node)) throw new ContextSelectionError('Private program clause must be an object.',{code:'invalid_program'});
   if(Object.hasOwn(node,'private')) throw new ContextSelectionError('Semantic private programs must use privateRef or task inference rather than a raw private path.',{code:'raw_path_forbidden'});
   const privateRef=Object.hasOwn(node,'privateRef')?node.privateRef:{};
-  const {privateRef:_,...rest}=node;
-  return {...structuredClone(rest),private:resolvePrivateRef(records,privateRef,{task,fallbackQuery})};
+  const privateField=normalizePrivateField(node.privateField);
+  const {privateRef:_,privateField:__,...rest}=node;
+  const root=resolvePrivateRef(records,privateRef,{task,fallbackQuery});
+  return {...structuredClone(rest),private:privateField?`${root}.${privateField}`:root};
 }
 
 function compilePreference(records,node,{task=''}={}){
@@ -154,7 +169,7 @@ function compilePreference(records,node,{task=''}={}){
   if(Object.hasOwn(node,'private')) throw new ContextSelectionError('Semantic private programs must use privateRef or task inference rather than a raw private path.',{code:'raw_path_forbidden'});
   const kind=text(node.kind);
   if(kind==='lowerPublic'||kind==='higherPublic'){
-    if(Object.hasOwn(node,'privateRef')) throw new ContextSelectionError('Public-only preferences must not include privateRef.',{code:'invalid_program'});
+    if(Object.hasOwn(node,'privateRef')||Object.hasOwn(node,'privateField')) throw new ContextSelectionError('Public-only preferences must not include privateRef or privateField.',{code:'invalid_program'});
     return structuredClone(node);
   }
   return compilePrivateSlot(records,node,{task,fallbackQuery:roleHint(node)});
@@ -162,9 +177,10 @@ function compilePreference(records,node,{task=''}={}){
 
 /**
  * Compile a path-free semantic Private Decision Program into the existing bounded
- * PDP language. v2 can use task context to infer a private field when privateRef is
- * omitted, and can derive choose-clause role hints from candidate fields. Compiled
- * paths remain inside ContextKernel.
+ * PDP language. v2 can use task context to infer a private record when privateRef
+ * is omitted. `privateField` optionally binds a safe nested field inside that
+ * selected record, enabling bounded computation over structured connector objects
+ * without exposing either the connector path or the underlying value.
  */
 export function compileSemanticProgram(records,program,{task=''}={}){
   if(!program||typeof program!=='object'||Array.isArray(program)) throw new ContextSelectionError('Semantic private program must be an object.',{code:'invalid_program'});
@@ -176,7 +192,7 @@ export function compileSemanticProgram(records,program,{task=''}={}){
   if(kind==='predicate'||kind==='bucket') return compilePrivateSlot(records,program,{task:taskText});
 
   if(kind==='choose'){
-    if(Object.hasOwn(program,'privateRef')) throw new ContextSelectionError('Choose programs attach privateRef to constraints and private preferences.',{code:'invalid_program'});
+    if(Object.hasOwn(program,'privateRef')||Object.hasOwn(program,'privateField')) throw new ContextSelectionError('Choose programs attach privateRef/privateField to constraints and private preferences.',{code:'invalid_program'});
     const constraints=Array.isArray(program.constraints)?program.constraints.map(clause=>compilePrivateSlot(records,clause,{task:taskText,fallbackQuery:roleHint(clause)})):[];
     const preferences=Array.isArray(program.preferences)?program.preferences.map(clause=>compilePreference(records,clause,{task:taskText})):[];
     return {
