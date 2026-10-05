@@ -6,6 +6,7 @@ import {compileSemanticProgram,resolvePrivateRef} from './context-compiler.js';
 import {normalizeConnectorSnapshot,connectorSummary} from './connectors.js';
 import {sanitizeContextValue,contextSanitizationModes} from './context-sanitizer.js';
 import {SharedMemoryBroker} from './memory-broker.js';
+import {ModelRouter} from './model-router.js';
 
 const DEFAULT_RELEASE_TTL=5*60*1000;
 const MAX_RELEASE_TTL=15*60*1000;
@@ -61,6 +62,8 @@ export class ContextKernel {
     this.pathToId=new Map();
     this.pendingContextReleases=new Map();
     this.memoryBroker=new SharedMemoryBroker({kernel:this,now});
+    this.modelRouter=new ModelRouter();
+    for(const model of state.routerModels??[]) this.modelRouter.register(model);
 
     for(const record of this.store.records()){
       if(record.kind!=='context' || !record.path) continue;
@@ -77,11 +80,12 @@ export class ContextKernel {
 
   _persistState(){
     this.store.setState({
-      v:3,
+      v:4,
       profileRevision:this.runtime.profileRevision,
       firewallEvents:this.firewall.snapshot(),
       partitionState:this.runtime.partitionFirewall?.snapshot()??null,
-      jointChoiceState:this.runtime.jointChoiceFirewall?.snapshot()??null
+      jointChoiceState:this.runtime.jointChoiceFirewall?.snapshot()??null,
+      routerModels:this.modelRouter.list()
     });
   }
 
@@ -185,6 +189,11 @@ export class ContextKernel {
   memoryProposalQueue(options={}){ return this.memoryBroker.queue(options); }
   approveMemoryProposal(id){ return this.memoryBroker.approve(id); }
   denyMemoryProposal(id){ return this.memoryBroker.deny(id); }
+
+  registerModel(model){ const registered=this.modelRouter.register(model); this._persistState(); return registered; }
+  removeModel(id){ const removed=this.modelRouter.remove(id); if(removed) this._persistState(); return removed; }
+  listModels(){ return this.modelRouter.list(); }
+  routeTask(request={}){ return this.modelRouter.route(request); }
 
   beginTrajectory(options={}){ return this.runtime.beginTrajectory(options); }
   revokeTrajectory(id){ return this.runtime.revokeTrajectory(id); }
@@ -310,6 +319,7 @@ export class ContextKernel {
       connectors:this.connectorStats(),
       pendingContextReleases:this.contextReleaseQueue().filter(release=>release.decision==='ask').length,
       pendingMemoryProposals:this.memoryProposalQueue().filter(proposal=>proposal.decision==='ask').length,
+      registeredModels:this.modelRouter.list().length,
       profileRevision:this.runtime.profileRevision,
       exposureFields:this.exposure().length,
       partitionFields:this.partitionExposure().length,
