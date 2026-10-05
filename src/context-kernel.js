@@ -7,6 +7,7 @@ import {normalizeConnectorSnapshot,connectorSummary} from './connectors.js';
 import {sanitizeContextValue,contextSanitizationModes} from './context-sanitizer.js';
 import {SharedMemoryBroker} from './memory-broker.js';
 import {ModelRouter} from './model-router.js';
+import {ConsentRegistry} from './consent.js';
 
 const DEFAULT_RELEASE_TTL=5*60*1000;
 const MAX_RELEASE_TTL=15*60*1000;
@@ -22,6 +23,15 @@ function stripSemanticPaths(result){
     delete out.joint.fields;
   }
   return out;
+}
+
+function consentSummary(verdict){
+  return {
+    decision:verdict.decision,
+    ruleId:verdict.rule?.id??null,
+    mode:verdict.rule?.mode??null,
+    reason:verdict.reason
+  };
 }
 
 function safeReleaseMetadata(release){
@@ -41,6 +51,7 @@ function safeReleaseMetadata(release){
     approvedAt:release.approvedAt,
     deniedAt:release.deniedAt,
     consumedAt:release.consumedAt,
+    consent:release.consent??null,
     exactPrivateValuesIntended:false,
     bestEffortTextSanitization:true
   };
@@ -64,6 +75,7 @@ export class ContextKernel {
     this.memoryBroker=new SharedMemoryBroker({kernel:this,now});
     this.modelRouter=new ModelRouter();
     for(const model of state.routerModels??[]) this.modelRouter.register(model);
+    this.consentRegistry=new ConsentRegistry({now,rules:state.consentRules??[]});
 
     for(const record of this.store.records()){
       if(record.kind!=='context' || !record.path) continue;
@@ -80,12 +92,13 @@ export class ContextKernel {
 
   _persistState(){
     this.store.setState({
-      v:4,
+      v:5,
       profileRevision:this.runtime.profileRevision,
       firewallEvents:this.firewall.snapshot(),
       partitionState:this.runtime.partitionFirewall?.snapshot()??null,
       jointChoiceState:this.runtime.jointChoiceFirewall?.snapshot()??null,
-      routerModels:this.modelRouter.list()
+      routerModels:this.modelRouter.list(),
+      consentRules:this.consentRegistry.snapshot()
     });
   }
 
@@ -157,12 +170,6 @@ export class ContextKernel {
     return connectorSummary(this.store.records().filter(record=>record.kind==='context'));
   }
 
-  /**
-   * Import a provider snapshot into the encrypted Context Kernel. Stable source ids
-   * are hashed into private paths; raw ids and provider payloads remain encrypted.
-   * A replace import removes records from the same provider/collection that are no
-   * longer present in the new snapshot.
-   */
   ingestConnectorSnapshot(snapshot){
     const normalized=normalizeConnectorSnapshot(snapshot);
     const previous=this.store.records().filter(record=>record.kind==='context'&&record.source?.provider===normalized.provider&&record.source?.collection===normalized.collection);
@@ -185,7 +192,42 @@ export class ContextKernel {
     return {provider:normalized.provider,collection:normalized.collection,received:normalized.records.length,created,updated,removed,total:row?.items??0,replace:normalized.replace};
   }
 
-  proposeMemory(input={}){ return this.memoryBroker.propose(input); }
+  setConsentRule(rule={}){
+    const created=this.consentRegistry.set(rule);
+    this._persistState();
+    return created;
+  }
+  revokeConsentRule(id){
+    const revoked=this.consentRegistry.revoke(id);
+    if(revoked) this._persistState();
+    return revoked;
+  }
+  listConsentRules(options={}){ return this.consentRegistry.list(options); }
+  evaluateConsent(request={}){ return this.consentRegistry.evaluate(request,{consume:false}); }
+
+  proposeMemory(input={}){
+    const proposal=this.memoryBroker.propose(input);
+    const request={
+      capability:'memory.write',
+      agent:String(input.agent||'unknown-agent'),
+      sink:'hush-memory',
+      purpose:'shared memory',
+      category:String(input.category||'general'),
+      resource:String(input.label||'*')
+    };
+    const verdict=this.consentRegistry.evaluate(request,{consume:false});
+    if(verdict.decision==='deny'){
+      const denied=this.memoryBroker.deny(proposal.proposalId);
+      return {...denied,consent:consentSummary(verdict)};
+    }
+    if(verdict.decision==='allow'){
+      const approved=this.memoryBroker.approve(proposal.proposalId);
+      if(verdict.rule?.mode==='once') this.consentRegistry.evaluate(request,{consume:true});
+      this._persistState();
+      return {...approved,consent:consentSummary(verdict)};
+    }
+    return {...proposal,consent:consentSummary(verdict)};
+  }
   memoryProposalQueue(options={}){ return this.memoryBroker.queue(options); }
   approveMemoryProposal(id){ return this.memoryBroker.approve(id); }
   denyMemoryProposal(id){ return this.memoryBroker.deny(id); }
@@ -204,21 +246,11 @@ export class ContextKernel {
     return result;
   }
 
-  /**
-   * Compile a path-free semantic request entirely inside the trusted local process.
-   * Raw private paths are never accepted from, or returned to, the calling agent.
-   * Task text is used only as local context-selection evidence.
-   */
   runSemantic({program,task='',...input}={}){
     const compiled=compileSemanticProgram(this.list(),program,{task});
     return stripSemanticPaths(this.run({...input,program:compiled}));
   }
 
-  /**
-   * Prepare a sanitized content fallback without releasing the content. Unlike the
-   * bounded PDP path, free-form context cannot currently receive an exact leakage
-   * bound, so Hush always requires an explicit local approval before one-shot use.
-   */
   prepareContextRelease({task='',privateRef={},mode='pseudonymous',agent='unknown-agent',sink='unknown-sink',purpose='unspecified',ttlMs=DEFAULT_RELEASE_TTL}={}){
     const ttl=Number(ttlMs);
     if(!Number.isFinite(ttl)||ttl<1000) throw new Error('Context release TTL must be finite and at least 1000 ms');
@@ -228,13 +260,22 @@ export class ContextKernel {
     const record=this.store.get(recordId);
     const prepared=sanitizeContextValue(record.value,{mode});
     const now=this.now();
-    const release={
-      id:`ctxrel_${crypto.randomBytes(24).toString('base64url')}`,
-      path,
+    const request={
+      capability:'context.release',
       agent:String(agent||'unknown-agent'),
       sink:String(sink||'unknown-sink'),
       purpose:String(purpose||'unspecified'),
       category:String(record.category||'general'),
+      resource:String(record.label||'private context')
+    };
+    const verdict=this.consentRegistry.evaluate(request,{consume:false});
+    const release={
+      id:`ctxrel_${crypto.randomBytes(24).toString('base64url')}`,
+      path,
+      agent:request.agent,
+      sink:request.sink,
+      purpose:request.purpose,
+      category:request.category,
       mode:prepared.mode,
       sanitized:prepared.sanitized,
       transformations:prepared.transformations,
@@ -242,10 +283,16 @@ export class ContextKernel {
       digest:prepared.digest,
       createdAt:now,
       expiresAt:now+Math.min(ttl,MAX_RELEASE_TTL),
-      approvedAt:null,
-      deniedAt:null,
-      consumedAt:null
+      approvedAt:verdict.decision==='allow'?now:null,
+      deniedAt:verdict.decision==='deny'?now:null,
+      consumedAt:null,
+      consent:consentSummary(verdict)
     };
+    if(verdict.decision==='allow'&&verdict.rule?.mode==='once'){
+      this.consentRegistry.evaluate(request,{consume:true});
+      release.consent={...release.consent,consumed:true};
+      this._persistState();
+    }
     this.pendingContextReleases.set(release.id,release);
     return safeReleaseMetadata(release);
   }
@@ -300,7 +347,7 @@ export class ContextKernel {
       bestEffortTextSanitization:true,
       receipt:{
         v:1,at:release.consumedAt,releaseId:release.id,agent:release.agent,sink:release.sink,purpose:release.purpose,
-        sanitizedDigest:release.digest,outputBytes:release.outputBytes,oneShot:true,rawPrivatePathIncluded:false
+        sanitizedDigest:release.digest,outputBytes:release.outputBytes,oneShot:true,rawPrivatePathIncluded:false,consentRuleId:release.consent?.ruleId??null
       }
     };
   }
@@ -320,6 +367,7 @@ export class ContextKernel {
       pendingContextReleases:this.contextReleaseQueue().filter(release=>release.decision==='ask').length,
       pendingMemoryProposals:this.memoryProposalQueue().filter(proposal=>proposal.decision==='ask').length,
       registeredModels:this.modelRouter.list().length,
+      consentRules:this.consentRegistry.list({includeInactive:false}).length,
       profileRevision:this.runtime.profileRevision,
       exposureFields:this.exposure().length,
       partitionFields:this.partitionExposure().length,
