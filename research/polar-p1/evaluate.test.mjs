@@ -30,6 +30,17 @@ test('blinding excludes scoring targets from generator input',()=>{
   assert.equal(JSON.stringify(b).includes('do_not_disclose_values'),false);
 });
 
+test('blinding permits legitimate target_role but rejects exact target gold-like key',()=>{
+  const allowed=fixture();
+  allowed.generated_texts.source_document_text+=' Target role analyst.';
+  allowed.source_document_inputs.task_relevant_fields.target_role='analyst';
+  assert.doesNotThrow(()=>blindRecord(allowed));
+
+  const blocked=fixture();
+  blocked.source_document_inputs.task_relevant_fields.target='gold-like-value';
+  assert.throws(()=>blindRecord(blocked),/Gold-like field reached generator: target/);
+});
+
 test('candidate pool requires values to occur in rendered source',()=>{
   const r=fixture();
   r.source_document_inputs.task_relevant_fields.hidden_not_rendered='oracle-only-value';
