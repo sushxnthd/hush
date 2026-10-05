@@ -8,12 +8,14 @@ on:
       - 'research/EXTERNAL_FALSIFICATION_PROTOCOL_V2.md'
       - 'research/external/**'
       - 'src/context-sanitizer.js'
+      - 'src/egress-guard.js'
       - '.github/workflows/research-external-v2.yml'
   pull_request:
     paths:
       - 'research/EXTERNAL_FALSIFICATION_PROTOCOL_V2.md'
       - 'research/external/**'
       - 'src/context-sanitizer.js'
+      - 'src/egress-guard.js'
       - '.github/workflows/research-external-v2.yml'
 
 permissions:
