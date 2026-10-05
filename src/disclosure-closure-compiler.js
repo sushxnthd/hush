@@ -1,7 +1,9 @@
 const CONTRAST=/\b(?:however|but|whereas|although|even though|nevertheless|nonetheless)\b/gi;
 const ALLOW_RE=/\b(?:can|may|feel free to)\s+(?:share|disclose|discuss|mention|provide|refer)|\b(?:can|may)\s+be\s+(?:shared|disclosed|mentioned)|\bis\s+disclosable\b/i;
 const DENY_RE=/\b(?:do not|don't|never|must not|should never)\s+(?:share|disclose|mention|provide|reveal)|\bkeep\b[^.!?;]{0,180}\b(?:private|confidential)\b|\b(?:off[- ]limits|completely private|completely confidential|confidential|private)\b/i;
-const LIMITED_RE=/\b(?:only|broad|general|high[- ]level|summary|band|bucket|category|range|country|city|anonymous|anonym(?:ous|ized)|industry|type)\b/i;
+// Restriction syntax, not vocabulary. A positive list may legitimately contain
+// fields named "band", "type", or "range" without restricting every sibling.
+const LIMITED_RE=/\b(?:only\s+(?:share|provide|mention|disclose|refer)|only\s+the\b|broad(?:ly)?|high[- ]level|summary\b|anonym(?:ous|ized))\b/i;
 const ABSTRACT_KEY_RE=/(?:^|_)(?:band|bucket|category|range|window|summary|country|city|industry|type|role)(?:_|$)/i;
 const IDENTITY_PREFIXES=new Set(['customer','client','applicant','traveler','employee','policyholder','student','beneficiary','companion','landlord','opposing','party']);
 const STOP=new Set(['my','the','a','an','of','to','for','and','or','their','your','our','is','are','be','in','on','at','with','about']);
