@@ -105,6 +105,22 @@ export const NATIVE_MCP_TOOLS=Object.freeze([
     annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false}
   },
   {
+    name:'hush_propose_memory',
+    description:'Propose a fact or preference for the user-controlled shared Hush memory. This does not write memory immediately: the proposal is held for explicit local approval, and its private value is not echoed back in the tool response.',
+    inputSchema:{
+      type:'object',
+      properties:{
+        label:{type:'string',minLength:1,maxLength:240},
+        category:{type:'string',maxLength:120,default:'general'},
+        tags:{type:'array',items:{type:'string',maxLength:120},maxItems:16},
+        value:{},
+        ttlMs:{type:'integer',minimum:1000,maximum:86400000}
+      },
+      required:['label','value'],additionalProperties:false
+    },
+    annotations:{readOnlyHint:false,destructiveHint:false,openWorldHint:false}
+  },
+  {
     name:'hush_revoke_private_task',
     description:'Revoke a private-computation trajectory so it cannot be used again.',
     inputSchema:{type:'object',properties:{trajectoryId:{type:'string'}},required:['trajectoryId'],additionalProperties:false},
@@ -129,9 +145,9 @@ function finiteBits(value,fallback){
 }
 
 /**
- * Execute only Hush-native MCP tools. Private values never appear in these
- * responses; the decision runtime returns bounded outputs plus capacity receipts.
- * Agent identity is audit metadata only and is never used as the security boundary.
+ * Execute only Hush-native MCP tools. Private values never appear in bounded-query
+ * responses. Memory proposals are write suggestions only and cannot mutate the
+ * canonical Context Kernel until a local approval occurs.
  */
 export function callNativeMcpTool({name,args={},kernel,agent='unknown-agent',sink='mcp-client'}={}){
   if(!kernel) return toolResult({decision:'deny',reason:'Private context is locked on this device.'},{isError:true});
@@ -152,6 +168,11 @@ export function callNativeMcpTool({name,args={},kernel,agent='unknown-agent',sin
       if(!args.trajectoryId||!args.program) throw new Error('trajectoryId and program are required');
       const result=kernel.run({trajectoryId:String(args.trajectoryId),agent:String(agent),sink:String(sink),program:args.program});
       return toolResult(result,{isError:result.decision!=='allow'});
+    }
+    if(tool==='hush_propose_memory'){
+      if(!args.label||!Object.hasOwn(args,'value')) throw new Error('label and value are required');
+      const proposal=kernel.proposeMemory({agent:String(agent),label:args.label,category:args.category??'general',tags:args.tags??[],value:args.value,ttlMs:args.ttlMs});
+      return toolResult(proposal,{isError:false});
     }
     if(tool==='hush_revoke_private_task'){
       if(!args.trajectoryId) throw new Error('trajectoryId is required');
