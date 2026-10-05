@@ -1,0 +1,61 @@
+name: research-agentcibench-dev-v1
+
+on:
+  push:
+    branches:
+      - research/agentcibench-dev-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  development:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned CPU model runtime
+        run: |
+          python -m pip install --disable-pip-version-check --index-url https://download.pytorch.org/whl/cpu 'torch==2.5.1'
+          python -m pip install --disable-pip-version-check 'transformers==4.46.3' 'safetensors==0.4.5' 'numpy==2.1.3'
+      - name: Fetch pinned independent AgentCIBench
+        run: |
+          git clone --filter=blob:none https://github.com/UKPLab/emnlp2026-agentcibench.git agentcibench
+          git -C agentcibench checkout --detach 7b3fad424d0c5a450ac3bc3dc4050c38094c6dc6
+          test "$(git -C agentcibench rev-parse HEAD)" = '7b3fad424d0c5a450ac3bc3dc4050c38094c6dc6'
+      - name: Run development-only context-boundary sweep
+        env:
+          TOKENIZERS_PARALLELISM: 'false'
+        run: |
+          python research/external/agentcibench_context_dev_v1.py \
+            --dev-dir agentcibench/data/generated_merged \
+            --holdout-dir agentcibench/data/eval_set_e2e_50 \
+            --output agentcibench-dev-v1.json | tee agentcibench-dev-v1.txt
+      - name: Record provenance
+        if: always()
+        run: |
+          {
+            echo "hush_sha=${GITHUB_SHA}"
+            echo "agentcibench_sha=$(git -C agentcibench rev-parse HEAD)"
+            echo "python=$(python --version 2>&1)"
+            python - <<'PY'
+          import importlib.metadata as m
+          for p in ['torch','transformers','safetensors','numpy']:
+              print(f'{p}={m.version(p)}')
+          PY
+          } | tee agentcibench-dev-v1-runtime.txt
+          if [ -f agentcibench-dev-v1.json ]; then sha256sum agentcibench-dev-v1.json > agentcibench-dev-v1.sha256; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agentcibench-dev-v1-${{ github.sha }}
+          path: |
+            agentcibench-dev-v1.json
+            agentcibench-dev-v1.txt
+            agentcibench-dev-v1-runtime.txt
+            agentcibench-dev-v1.sha256
+          if-no-files-found: warn
