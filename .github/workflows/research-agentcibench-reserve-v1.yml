@@ -1,0 +1,58 @@
+name: research-agentcibench-reserve-v1
+
+on:
+  push:
+    branches:
+      - research/agentcibench-scope-lattice-v1i
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AGENTCIBENCH_SHA: 7b3fad424d0c5a450ac3bc3dc4050c38094c6dc6
+
+jobs:
+  reserve-manifest:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch pinned AgentCIBench revision
+        run: |
+          git clone --filter=blob:none https://github.com/UKPLab/emnlp2026-agentcibench.git agentcibench
+          git -C agentcibench checkout --detach "${AGENTCIBENCH_SHA}"
+      - name: Materialize frozen reserve split without evaluating it
+        run: |
+          set +e
+          python research/external/agentcibench_reserve_split_v1.py \
+            --dev-dir agentcibench/data/generated_merged \
+            --spent-holdout-dir agentcibench/data/eval_set_e2e_50 \
+            --output agentcibench-reserve-v1.json | tee agentcibench-reserve-v1.txt
+          code=${PIPESTATUS[0]}
+          echo "$code" > agentcibench-reserve-v1.exit
+          sha256sum agentcibench-reserve-v1.json > agentcibench-reserve-v1.sha256 || true
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hush-agentcibench-reserve-v1-${{ github.sha }}
+          path: |
+            agentcibench-reserve-v1.json
+            agentcibench-reserve-v1.txt
+            agentcibench-reserve-v1.exit
+            agentcibench-reserve-v1.sha256
+          if-no-files-found: error
+      - name: Interpret reserve availability
+        run: |
+          code="$(cat agentcibench-reserve-v1.exit)"
+          if [ "$code" = '0' ]; then
+            echo 'Fresh reserve is large enough for a secondary frozen test.'
+          elif [ "$code" = '2' ]; then
+            echo 'Fresh reserve is too small; do not use it for a strong confirmatory claim.'
+          else
+            echo 'Reserve split construction failed.' >&2
+            exit 1
+          fi
