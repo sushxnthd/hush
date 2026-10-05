@@ -5,7 +5,84 @@ const mobile = matchMedia('(max-width: 1000px)');
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
 const revealNodes = [...document.querySelectorAll('[data-reveal]')];
 
+const INTERNAL_NAV_KEY = 'hush:internal-navigation-target';
+const normalizePath = value => {
+  const url = value instanceof URL ? value : new URL(value, location.href);
+  let path = url.pathname.replace(/index\.html$/, '');
+  if (!path.endsWith('/')) path += '/';
+  return `${path}${url.search}`;
+};
+
+let internalArrival = false;
+try {
+  const target = sessionStorage.getItem(INTERNAL_NAV_KEY);
+  internalArrival = target === normalizePath(location.href);
+  if (target) sessionStorage.removeItem(INTERNAL_NAV_KEY);
+} catch {}
+
 root.classList.add('enhanced');
+if (internalArrival) root.classList.add('internal-arrival');
+
+const motionStyle = document.createElement('style');
+motionStyle.id = 'hush-motion-system';
+motionStyle.textContent = `
+  @view-transition { navigation: auto; }
+
+  .rail { view-transition-name: hush-rail; }
+  .col { view-transition-name: hush-content; }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-old(hush-rail),
+  ::view-transition-new(hush-rail) {
+    animation: none;
+  }
+
+  ::view-transition-old(hush-content) {
+    animation: hush-content-out 140ms cubic-bezier(.4, 0, 1, 1) both;
+  }
+
+  ::view-transition-new(hush-content) {
+    animation: hush-content-in 220ms cubic-bezier(.22, 1, .36, 1) both;
+  }
+
+  @keyframes hush-content-out {
+    to { opacity: 0; }
+  }
+
+  @keyframes hush-content-in {
+    from { opacity: 0; }
+  }
+
+  /* The sidebar is persistent chrome; it should never run the page-load reveal. */
+  html.motion-ready .rail[data-reveal] {
+    opacity: 1;
+    translate: 0;
+    transition: none;
+  }
+
+  /* Keep all page-level reveal movement consistent. */
+  html.motion-ready .figure[data-reveal] {
+    translate: 0 10px;
+  }
+
+  /* The scroll ruler should track scrolling directly instead of lagging behind it. */
+  .nav-here a::before {
+    transition: background-color var(--dur-hover) var(--ease-hover);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root),
+    ::view-transition-old(hush-rail),
+    ::view-transition-new(hush-rail),
+    ::view-transition-old(hush-content),
+    ::view-transition-new(hush-content) {
+      animation: none !important;
+    }
+  }
+`;
+document.head.append(motionStyle);
 
 const hushLogoMarkup = `
   <svg viewBox="0 0 256 256" aria-hidden="true">
@@ -39,17 +116,21 @@ menu?.addEventListener('click', () => {
   menu.setAttribute('aria-expanded', String(open));
   menu.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
 });
+
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && menu?.getAttribute('aria-expanded') === 'true') {
     closeMenu({ restoreFocus: true });
   }
 });
+
 document.addEventListener('click', event => {
   if (mobile.matches && !rail?.contains(event.target)) closeMenu();
 });
+
 rail?.querySelectorAll('.nav-doors a').forEach(link => {
   link.addEventListener('click', () => closeMenu());
 });
+
 mobile.addEventListener('change', () => {
   closeMenu();
   layoutRuler();
@@ -58,8 +139,24 @@ mobile.addEventListener('change', () => {
 });
 
 let observer;
-if (!motion.matches && 'IntersectionObserver' in window) {
+const loadRevealNodes = revealNodes.filter(node => node.dataset.reveal === 'load');
+const scrollRevealNodes = revealNodes.filter(node => node.dataset.reveal !== 'load');
+
+function revealImmediately(nodes) {
+  nodes.forEach(node => node.classList.add('is-visible'));
+}
+
+function setupReveals() {
+  observer?.disconnect();
+
+  if (motion.matches || !('IntersectionObserver' in window)) {
+    root.classList.remove('motion-ready');
+    revealImmediately(revealNodes);
+    return;
+  }
+
   root.classList.add('motion-ready');
+
   observer = new IntersectionObserver(entries => {
     for (const entry of entries) {
       if (!entry.isIntersecting) continue;
@@ -67,18 +164,28 @@ if (!motion.matches && 'IntersectionObserver' in window) {
       observer.unobserve(entry.target);
     }
   }, { threshold: .08, rootMargin: '0px 0px -32px 0px' });
-  revealNodes.filter(node => node.dataset.reveal !== 'load').forEach(node => observer.observe(node));
-  requestAnimationFrame(() => {
-    revealNodes.filter(node => node.dataset.reveal === 'load').forEach(node => node.classList.add('is-visible'));
-  });
-} else {
-  revealNodes.forEach(node => node.classList.add('is-visible'));
+
+  scrollRevealNodes.forEach(node => observer.observe(node));
+
+  /* A cross-page View Transition already supplies the entrance motion. Running
+     the hero's stagger again creates a second, inconsistent animation. */
+  if (internalArrival) {
+    revealImmediately(loadRevealNodes);
+  } else {
+    requestAnimationFrame(() => revealImmediately(loadRevealNodes));
+  }
 }
+
+setupReveals();
+
 motion.addEventListener('change', () => {
-  if (!motion.matches) return;
-  observer?.disconnect();
-  root.classList.remove('motion-ready');
-  revealNodes.forEach(node => node.classList.add('is-visible'));
+  if (motion.matches) {
+    observer?.disconnect();
+    root.classList.remove('motion-ready');
+    revealImmediately(revealNodes);
+  } else {
+    setupReveals();
+  }
 });
 
 const sectionNav = document.querySelector('[data-toc]');
@@ -113,39 +220,54 @@ function placeSiteMark() {
 
 let ticking = false;
 function syncSections() {
-  if (!sections.length) { ticking = false; return; }
+  if (!sections.length) {
+    ticking = false;
+    return;
+  }
+
   const trigger = innerHeight * .4;
   let active = 0;
   const positions = sections.map(section => section.getBoundingClientRect().top);
-  positions.forEach((top, index) => { if (top <= trigger) active = index; });
+  positions.forEach((top, index) => {
+    if (top <= trigger) active = index;
+  });
+
   const atEnd = scrollY > 0 && scrollY + innerHeight >= root.scrollHeight - 2;
   if (atEnd) active = sections.length - 1;
+
   links.forEach((link, index) => {
     if (index === active) link.setAttribute('aria-current', 'location');
     else link.removeAttribute('aria-current');
   });
+
   const next = positions[active + 1];
-  const progress = atEnd || next == null ? 0
+  const progress = atEnd || next == null
+    ? 0
     : Math.min(1, Math.max(0, (trigger - positions[active]) / Math.max(next - positions[active], 1)));
+
   sectionNav?.style.setProperty('--y', String((active + progress) * 5));
   ticking = false;
 }
+
 function scheduleSync() {
   if (ticking) return;
   ticking = true;
   requestAnimationFrame(syncSections);
 }
+
 addEventListener('scroll', scheduleSync, { passive: true });
 addEventListener('resize', () => {
   layoutRuler();
   placeSiteMark();
   scheduleSync();
 }, { passive: true });
+
 document.fonts?.ready.then(() => {
   layoutRuler();
   placeSiteMark();
   scheduleSync();
 });
+
 layoutRuler();
 placeSiteMark();
 syncSections();
@@ -155,6 +277,7 @@ copyButton?.addEventListener('click', async () => {
   const prompt = document.querySelector('#setup-prompt');
   const status = document.querySelector('.copy-status');
   if (!prompt || !status) return;
+
   copyButton.disabled = true;
   try {
     await navigator.clipboard.writeText(prompt.textContent.trim());
@@ -171,39 +294,61 @@ copyButton?.addEventListener('click', async () => {
   }
 });
 
-// Use the browser's native cross-document View Transitions when supported.
-// This keeps navigation robust and accessible while avoiding a hard visual flash.
-const transitionStyle = document.createElement('style');
-transitionStyle.textContent = `
-  @view-transition { navigation: auto; }
-  .rail { view-transition-name: hush-rail; }
-  .col { view-transition-name: hush-content; }
-  ::view-transition-old(hush-rail),
-  ::view-transition-new(hush-rail) { animation: none; }
-  ::view-transition-old(hush-content) { animation: hush-out 120ms ease both; }
-  ::view-transition-new(hush-content) { animation: hush-in 180ms cubic-bezier(.16,1,.3,1) both; }
-  @keyframes hush-out { to { opacity: 0; transform: translateY(5px); } }
-  @keyframes hush-in { from { opacity: 0; transform: translateY(-5px); } }
-  @media (prefers-reduced-motion: reduce) {
-    ::view-transition-old(hush-content), ::view-transition-new(hush-content) { animation: none; }
-  }
-`;
-document.head.append(transitionStyle);
+function internalPageUrl(link) {
+  if (!link?.href || link.hasAttribute('download')) return null;
+  if (link.target && link.target !== '_self') return null;
 
-// Warm the next internal page without hijacking normal browser navigation.
+  let url;
+  try {
+    url = new URL(link.href, location.href);
+  } catch {
+    return null;
+  }
+
+  if (url.origin !== location.origin) return null;
+
+  const currentRoot = location.pathname.includes('/hush/') ? '/hush/' : '/';
+  if (!url.pathname.startsWith(currentRoot)) return null;
+  if (/\.[a-z0-9]{2,8}$/i.test(url.pathname) && !url.pathname.endsWith('.html')) return null;
+
+  return url;
+}
+
+/* Mark only genuine cross-page Hush navigation. This lets the next document
+   avoid replaying its page-load stagger on top of the View Transition. */
+document.addEventListener('click', event => {
+  if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  const link = event.target.closest('a[href]');
+  const url = internalPageUrl(link);
+  if (!url || normalizePath(url) === normalizePath(location.href)) return;
+
+  try {
+    sessionStorage.setItem(INTERNAL_NAV_KEY, normalizePath(url));
+  } catch {}
+}, { capture: true });
+
+/* Prefetch any internal Hush page, not just the main nav, so CTA/footer routes
+   get the same transition quality. */
 const prefetched = new Set();
 function prefetchInternal(link) {
-  if (!link?.href) return;
-  let url;
-  try { url = new URL(link.href, location.href); } catch { return; }
-  if (url.origin !== location.origin || url.href === location.href || prefetched.has(url.href)) return;
-  prefetched.add(url.href);
+  const url = internalPageUrl(link);
+  if (!url || normalizePath(url) === normalizePath(location.href)) return;
+
+  url.hash = '';
+  const href = url.href;
+  if (prefetched.has(href)) return;
+  prefetched.add(href);
+
   const hint = document.createElement('link');
   hint.rel = 'prefetch';
-  hint.href = url.href;
+  hint.href = href;
   document.head.append(hint);
 }
-document.querySelectorAll('.nav-doors a').forEach(link => {
-  link.addEventListener('pointerenter', () => prefetchInternal(link), { passive: true });
-  link.addEventListener('focus', () => prefetchInternal(link), { passive: true });
+
+document.addEventListener('pointerover', event => {
+  prefetchInternal(event.target.closest('a[href]'));
+}, { passive: true });
+
+document.addEventListener('focusin', event => {
+  prefetchInternal(event.target.closest?.('a[href]'));
 });
