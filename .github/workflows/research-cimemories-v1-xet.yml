@@ -1,0 +1,106 @@
+name: research-cimemories-v1-xet
+
+on:
+  push:
+    branches: [research/cimemories-confirmatory-v1]
+    paths:
+      - '.github/workflows/research-cimemories-v1-xet.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  confirmatory-frozen-code:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      FROZEN_HUSH_SHA: e67ea204ee408d9b59d6752261647e6042d1cdd0
+      CIMEMORIES_REVISION: cd96d5756e35b3549b5ec6ecbd316fc0349c8669
+      CIMEMORIES_SHA256: 88384ab2bb6a153396243b0ecfeb924f70ee6f5a57bd8209726dfc74da5eeea5
+      HF_HUB_ENABLE_HF_TRANSFER: '0'
+      TOKENIZERS_PARALLELISM: 'false'
+    steps:
+      - name: Checkout the already-frozen Hush candidate
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.FROZEN_HUSH_SHA }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install frozen model runtime and Xet-aware dataset transport
+        run: |
+          python -m pip install --disable-pip-version-check --index-url https://download.pytorch.org/whl/cpu 'torch==2.5.1'
+          python -m pip install --disable-pip-version-check 'transformers==4.46.3' 'safetensors==0.4.5' 'numpy==2.1.3' 'huggingface_hub[hf_xet]==0.35.3'
+      - name: Fetch the exact immutable CIMemories object with Xet transport
+        run: |
+          python - <<'PY'
+          from huggingface_hub import hf_hub_download
+          import shutil
+          p = hf_hub_download(
+              repo_id='facebook/CIMemories',
+              repo_type='dataset',
+              filename='test.csv',
+              revision='cd96d5756e35b3549b5ec6ecbd316fc0349c8669',
+          )
+          shutil.copyfile(p, 'cimemories-test.csv')
+          print(p)
+          PY
+          actual="$(sha256sum cimemories-test.csv | awk '{print $1}')"
+          echo "CIMemories sha256=${actual}"
+          test "${actual}" = "${CIMEMORIES_SHA256}"
+          stat --printf='bytes=%s\n' cimemories-test.csv
+          sha256sum cimemories-test.csv > cimemories-test.sha256
+      - name: Run the exact frozen confirmatory evaluator once
+        id: evaluator
+        continue-on-error: true
+        run: |
+          set +e
+          python research/external/cimemories_confirmatory_v1.py \
+            --csv cimemories-test.csv \
+            --output cimemories-v1.json | tee cimemories-v1.txt
+          code=${PIPESTATUS[0]}
+          echo "exit_code=${code}" >> "$GITHUB_OUTPUT"
+          if [ -f cimemories-v1.json ]; then sha256sum cimemories-v1.json > cimemories-v1.sha256; fi
+          exit "${code}"
+      - name: Record frozen provenance
+        if: always()
+        run: |
+          {
+            echo "workflow_sha=${GITHUB_SHA}"
+            echo "frozen_hush_sha=${FROZEN_HUSH_SHA}"
+            echo "cimemories_revision=${CIMEMORIES_REVISION}"
+            echo "cimemories_sha256=${CIMEMORIES_SHA256}"
+            echo "python=$(python --version 2>&1)"
+            python - <<'PY'
+          import importlib.metadata as m
+          for package in ['torch','transformers','safetensors','numpy','huggingface_hub','hf_xet']:
+              try: print(f'{package}={m.version(package)}')
+              except Exception: pass
+          PY
+            echo "evaluator_exit=${{ steps.evaluator.outputs.exit_code }}"
+          } | tee cimemories-v1-runtime.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hush-cimemories-v1-frozen-${{ env.FROZEN_HUSH_SHA }}
+          path: |
+            cimemories-v1.json
+            cimemories-v1.txt
+            cimemories-v1.sha256
+            cimemories-v1-runtime.txt
+            cimemories-test.sha256
+          if-no-files-found: warn
+      - name: Fail only on technical evaluator error
+        if: always()
+        run: |
+          code='${{ steps.evaluator.outputs.exit_code }}'
+          if [ -z "${code}" ] || [ "${code}" = '1' ]; then
+            echo 'Technical evaluator error.' >&2
+            exit 1
+          fi
+          if [ "${code}" = '2' ]; then
+            echo 'Scientific superiority gate failed; result preserved without retuning.'
+          else
+            echo 'Scientific superiority gate passed.'
+          fi
