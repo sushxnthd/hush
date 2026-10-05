@@ -1,0 +1,116 @@
+name: research-pisas-frozen-v1i
+
+on:
+  push:
+    branches:
+      - research/pisas-frozen-v1i
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TOKENIZERS_PARALLELISM: 'false'
+  PISAS_CODE_SHA: 52611d0cb6eac6e13a80c5716fd9cfd02e0ee155
+
+jobs:
+  frozen-evaluation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify preregistration before benchmark access
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('research/external/pisas_v1i_preregistration.json').read_text())
+          assert p['frozen_before_pisas_result'] is True
+          assert p['frozen_task']=='special_event_permit_readiness'
+          assert p['hush_config_id']=='c32_p30_o35_d70_b20'
+          assert p['pisas_code_revision']=='52611d0cb6eac6e13a80c5716fd9cfd02e0ee155'
+          PY
+      - name: Syntax-check frozen adapter
+        run: |
+          python -m py_compile \
+            research/external/pisas_frozen_v1i.py \
+            research/external/agentcibench_context_dev_v1i.py
+      - name: Install pinned local ranking runtime
+        run: |
+          python -m pip install --disable-pip-version-check --index-url https://download.pytorch.org/whl/cpu 'torch==2.5.1'
+          python -m pip install --disable-pip-version-check \
+            'transformers==4.46.3' 'safetensors==0.4.5' 'numpy==2.1.3' 'huggingface_hub==0.36.2'
+      - name: Resolve and freeze public PiSAs dataset revision
+        run: |
+          python - <<'PY' | tee pisas-dataset-sha.txt
+          from huggingface_hub import HfApi
+          info=HfApi().dataset_info('ServiceNow/PiSAs')
+          if not info.sha:
+              raise SystemExit('PiSAs dataset returned no revision SHA')
+          print(info.sha)
+          PY
+      - name: Download exactly the resolved PiSAs dataset revision
+        run: |
+          python - <<'PY' | tee pisas-dataset-root.txt
+          from huggingface_hub import snapshot_download
+          sha=open('pisas-dataset-sha.txt',encoding='utf-8').read().strip().splitlines()[-1]
+          root=snapshot_download('ServiceNow/PiSAs', repo_type='dataset', revision=sha)
+          print(root)
+          PY
+      - name: Run frozen zero-API PiSAs evaluation
+        run: |
+          set +e
+          DATASET_SHA="$(tail -n 1 pisas-dataset-sha.txt)"
+          DATASET_ROOT="$(tail -n 1 pisas-dataset-root.txt)"
+          python research/external/pisas_frozen_v1i.py \
+            --dataset-root "$DATASET_ROOT" \
+            --dataset-sha "$DATASET_SHA" \
+            --output pisas-v1i-result.json | tee pisas-v1i-result.txt
+          code=${PIPESTATUS[0]}
+          echo "$code" > pisas-v1i-result.exit
+          sha256sum pisas-v1i-result.json > pisas-v1i-result.sha256 || true
+          exit 0
+      - name: Record reproducibility provenance
+        if: always()
+        run: |
+          {
+            echo "hush_sha=$(git rev-parse HEAD)"
+            echo "pisas_code_sha=${PISAS_CODE_SHA}"
+            echo "pisas_dataset_sha=$(tail -n 1 pisas-dataset-sha.txt 2>/dev/null || true)"
+            echo "prereg_sha256=$(sha256sum research/external/pisas_v1i_preregistration.json | awk '{print $1}')"
+            echo "adapter_sha256=$(sha256sum research/external/pisas_frozen_v1i.py | awk '{print $1}')"
+            echo "v1i_sha256=$(sha256sum research/external/agentcibench_context_dev_v1i.py | awk '{print $1}')"
+            echo "python=$(python --version 2>&1)"
+          } | tee pisas-v1i-runtime.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hush-pisas-frozen-v1i-${{ github.sha }}
+          path: |
+            pisas-v1i-result.json
+            pisas-v1i-result.txt
+            pisas-v1i-result.exit
+            pisas-v1i-result.sha256
+            pisas-v1i-runtime.txt
+            pisas-dataset-sha.txt
+            research/external/pisas_v1i_preregistration.json
+          if-no-files-found: warn
+      - name: Interpret frozen result
+        if: always()
+        run: |
+          test -f pisas-v1i-result.exit || { echo 'No evaluator exit record' >&2; exit 1; }
+          code="$(cat pisas-v1i-result.exit)"
+          if [ "$code" = '0' ]; then
+            echo 'All preregistered fresh PiSAs gates passed.'
+          elif [ "$code" = '2' ]; then
+            echo 'Fresh PiSAs run completed but failed one or more preregistered scientific gates.'
+          elif [ "$code" = '1' ]; then
+            echo 'Technical/integrity evaluator error.' >&2
+            exit 1
+          else
+            echo "Unexpected evaluator exit $code" >&2
+            exit 1
+          fi
