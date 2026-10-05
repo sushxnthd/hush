@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Hush Companion",
+  "version": "0.9.0",
+  "description": "Approve AI actions and redact sensitive text through your local Hush trust layer.",
+  "action": {
+    "default_title": "Hush",
+    "default_popup": "popup.html"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "http://127.0.0.1:8787/*",
+    "http://localhost:8787/*"
+  ]
+}
