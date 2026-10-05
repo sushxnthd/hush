@@ -84,7 +84,7 @@ const checks=[
       const kernel=freshKernel();
       kernel.registerModel({id:'local-small',provider:'local',locality:'local',trustLevel:'trusted',capabilities:['reasoning'],quality:0.62,latencyMs:300});
       kernel.registerModel({id:'remote-strong',provider:'remote-a',locality:'remote',trustLevel:'standard',capabilities:['reasoning'],quality:0.95,latencyMs:650});
-      kernel.registerModel({id:'remote-limited',provider:'remote-b',locality:'remote',trustLevel:'limited',capabilities:['reasoning'],quality:0.99,latencyMs:500});
+      kernel.registerModel({id:'remote-limited',provider:'remote-b',locality:'remote',trustLevel:'limited',capabilities:['reasoning'],quality:0.88,latencyMs:500});
       const bounded=kernel.routeTask({task:'Reason over a bounded private decision',requiredCapabilities:['reasoning'],privateContext:'bounded',privacyPreference:'balanced'});
       const strict=kernel.routeTask({task:'Use sanitized personal context',requiredCapabilities:['reasoning'],privateContext:'sanitized',privacyPreference:'strict'});
       assert(bounded.decision==='allow'&&bounded.model.id==='remote-strong','bounded routing did not select the strongest eligible model');
