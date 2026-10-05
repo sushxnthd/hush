@@ -1,0 +1,78 @@
+name: research-external-v4
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/external-holdout-v4]
+    paths:
+      - 'research/EXTERNAL_HOLDOUT_PROTOCOL_V4.md'
+      - 'research/external/culturebank_holdout_v4.py'
+      - 'research/external/hush-grounded-batch.mjs'
+      - 'src/grounded-egress-guard.js'
+      - 'src/context-sanitizer.js'
+      - '.github/workflows/research-external-v4.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  culturebank-holdout:
+    runs-on: ubuntu-latest
+    env:
+      AGENTLEAK_COMMIT: d5267c79c8a4333a2a149ffed2ec62f1864932e5
+      PRIVACYLENS_COMMIT: 9c2ee07b080dc54ed4924af11d9751e81753c94d
+      CULTUREBANK_BLOB_SHA: b45572faa35d431f6421cc2303380a0e4527b02b
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned AgentLeak comparator and scorer
+        run: python -m pip install --disable-pip-version-check "git+https://github.com/yagobski/agentleak.git@${AGENTLEAK_COMMIT}"
+      - name: Fetch immutable untouched CultureBank holdout
+        run: |
+          curl -fsSL "https://raw.githubusercontent.com/SALT-NLP/PrivacyLens/${PRIVACYLENS_COMMIT}/data/extensibility/culturebank_subset.json" -o culturebank-subset.json
+          actual_blob="$(git hash-object culturebank-subset.json)"
+          echo "CultureBank git blob: ${actual_blob}"
+          test "${actual_blob}" = "${CULTUREBANK_BLOB_SHA}"
+          sha256sum culturebank-subset.json | tee culturebank-subset.sha256
+      - name: Run frozen preregistered v4 holdout once
+        id: evaluate
+        continue-on-error: true
+        run: |
+          python research/external/culturebank_holdout_v4.py \
+            --raw culturebank-subset.json \
+            --output external-v4.json | tee external-v4.txt
+          code=${PIPESTATUS[0]}
+          if [ -f external-v4.json ]; then sha256sum external-v4.json | tee external-v4.sha256; fi
+          echo "exit_code=${code}" >> "$GITHUB_OUTPUT"
+          exit "${code}"
+      - name: Record runtime and immutable pins
+        if: always()
+        run: |
+          {
+            echo "hush_sha=${GITHUB_SHA}"
+            echo "agentleak_sha=${AGENTLEAK_COMMIT}"
+            echo "privacylens_sha=${PRIVACYLENS_COMMIT}"
+            echo "culturebank_blob_sha=${CULTUREBANK_BLOB_SHA}"
+            echo "node=$(node --version)"
+            echo "python=$(python --version 2>&1)"
+            echo "evaluator_exit=${{ steps.evaluate.outputs.exit_code }}"
+          } | tee external-v4-runtime.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hush-external-v4-${{ github.sha }}
+          path: |
+            external-v4.json
+            external-v4.txt
+            external-v4.sha256
+            culturebank-subset.sha256
+            external-v4-runtime.txt
+          if-no-files-found: warn
+      - name: Fail workflow on evaluator abort/error
+        if: steps.evaluate.outcome != 'success'
+        run: exit 1
