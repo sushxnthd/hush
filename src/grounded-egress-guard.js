@@ -75,11 +75,15 @@ function sourceProfiles(protectedValues){
 }
 function bestGrounding(text,profiles){
   const out=profile(text);
-  if(!out.tokens.length)return {coverage:0,overlap:0,jaccard:0,weightedCoverage:0};
-  let best={coverage:0,overlap:0,jaccard:0,weightedCoverage:0};
+  if(!out.tokens.length)return {coverage:0,overlap:0,jaccard:0,weightedCoverage:0,matched:new Set()};
+  let best={coverage:0,overlap:0,jaccard:0,weightedCoverage:0,matched:new Set()};
   for(const src of profiles){
     let overlap=0,weighted=0;
-    for(const token of out.tokens)if(src.set.has(token)){overlap++;weighted+=tokenWeight(token);}
+    const matched=new Set();
+    for(const token of out.tokens){
+      if(!src.set.has(token))continue;
+      overlap++;weighted+=tokenWeight(token);matched.add(token);
+    }
     if(!overlap)continue;
     const coverage=overlap/out.tokens.length;
     const union=new Set([...out.tokens,...src.tokens]).size;
@@ -87,7 +91,7 @@ function bestGrounding(text,profiles){
     const weightedCoverage=weighted/Math.max(1,out.weight);
     const score=weightedCoverage+0.25*coverage+0.1*jaccard;
     const bestScore=best.weightedCoverage+0.25*best.coverage+0.1*best.jaccard;
-    if(score>bestScore)best={coverage,overlap,jaccard,weightedCoverage};
+    if(score>bestScore)best={coverage,overlap,jaccard,weightedCoverage,matched};
   }
   return best;
 }
@@ -96,48 +100,83 @@ function shouldBlock(score,{minOverlapTokens,minCoverage,minWeightedCoverage,min
   if(score.coverage>=minCoverage&&score.weightedCoverage>=minWeightedCoverage)return true;
   return score.weightedCoverage>=Math.min(0.95,minWeightedCoverage+0.15)&&score.jaccard>=minJaccard;
 }
-function guardString(text,profiles,options){
-  const spans=[];let maxScore={coverage:0,overlap:0,jaccard:0,weightedCoverage:0};
-  for(const seg of segments(text)){
-    if(seg.text.length<options.minChars)continue;
-    const score=bestGrounding(seg.text,profiles);
-    if(score.weightedCoverage>maxScore.weightedCoverage)maxScore=score;
-    if(shouldBlock(score,options))spans.push({start:seg.start,end:seg.end});
+function informationScore(token){
+  let score=tokenWeight(token.v);
+  if(/^\d/.test(token.raw))score+=0.75;
+  if(/^\p{Lu}/u.test(token.raw))score+=0.35;
+  if(token.v.length>=10)score+=0.25;
+  return score;
+}
+function surgicalSpans(segment,matched,{maskFraction,minMaskTokens,maxMaskTokens}){
+  const candidates=contentTokens(segment).filter(token=>matched.has(token.v));
+  if(!candidates.length)return [];
+  const stems=[...new Set(candidates.map(token=>token.v))];
+  const representative=new Map();
+  for(const token of candidates){
+    const prior=representative.get(token.v);
+    if(!prior||informationScore(token)>informationScore(prior))representative.set(token.v,token);
   }
-  if(!spans.length)return {text,matches:0,maxScore};
-  spans.sort((a,b)=>a.start-b.start||a.end-b.end);
+  const ranked=[...representative.values()].sort((a,b)=>informationScore(b)-informationScore(a)||b.raw.length-a.raw.length||a.start-b.start);
+  const wanted=Math.min(maxMaskTokens,Math.max(minMaskTokens,Math.ceil(stems.length*maskFraction)));
+  const selected=new Set(ranked.slice(0,wanted).map(token=>token.v));
+  return candidates.filter(token=>selected.has(token.v)).map(token=>({start:token.start,end:token.end}));
+}
+function mergeSpans(spans){
+  const sorted=spans.slice().sort((a,b)=>a.start-b.start||a.end-b.end);
   const merged=[];
-  for(const span of spans){
+  for(const span of sorted){
     const last=merged.at(-1);
     if(!last||span.start>last.end)merged.push({...span});
     else last.end=Math.max(last.end,span.end);
   }
+  return merged;
+}
+function redactSpans(text,spans,label='[HUSH:PRIVATE]'){
+  if(!spans.length)return text;
   let out='',cursor=0;
-  for(const span of merged){out+=text.slice(cursor,span.start)+'[HUSH:PRIVATE CONTEXT]';cursor=span.end;}
-  out+=text.slice(cursor);
-  return {text:out,matches:merged.length,maxScore};
+  for(const span of mergeSpans(spans)){out+=text.slice(cursor,span.start)+label;cursor=span.end;}
+  return out+text.slice(cursor);
+}
+function guardString(text,profiles,options){
+  const spans=[];let matches=0,maxScore={coverage:0,overlap:0,jaccard:0,weightedCoverage:0,matched:new Set()};
+  for(const seg of segments(text)){
+    if(seg.text.length<options.minChars)continue;
+    const score=bestGrounding(seg.text,profiles);
+    if(score.weightedCoverage>maxScore.weightedCoverage)maxScore=score;
+    if(!shouldBlock(score,options))continue;
+    matches++;
+    if(options.redactionStrategy==='clause'){
+      spans.push({start:seg.start,end:seg.end});
+      continue;
+    }
+    for(const span of surgicalSpans(seg.text,score.matched,options))spans.push({start:seg.start+span.start,end:seg.start+span.end});
+  }
+  return {text:redactSpans(text,spans,options.redactionStrategy==='clause'?'[HUSH:PRIVATE CONTEXT]':'[HUSH:PRIVATE]'),matches,maxScore};
 }
 
 /**
  * Source-grounded local egress defense.
  *
- * It does not try to decide whether arbitrary text is sensitive. Instead it
- * asks a narrower question Hush can answer locally: is an outbound clause
- * substantially grounded in protected context that entered through trusted
- * local source channels? High-overlap clauses are removed before the normal
- * pseudonymizing sanitizer runs. This catches paraphrased/context-derived facts
- * that exact-copy matching misses while leaving unrelated output untouched.
+ * A clause is considered for redaction only when it is substantially grounded
+ * in protected context that has already entered the local agent. The default
+ * "surgical" strategy then masks a small, high-information subset of the
+ * source-grounded content words instead of deleting the whole clause. This
+ * preserves unrelated task content and sentence structure while removing the
+ * identifying or predicate-bearing evidence that made the clause private.
  */
 export function guardGroundedOutboundValue(value,{
   protectedValues=[],mode='pseudonymous',minOverlapTokens=4,minCoverage=0.62,
-  minWeightedCoverage=0.66,minJaccard=0.18,minChars=20
+  minWeightedCoverage=0.66,minJaccard=0.18,minChars=20,
+  redactionStrategy='surgical',maskFraction=0.4,minMaskTokens=2,maxMaskTokens=6
 }={}){
+  if(!['surgical','clause'].includes(redactionStrategy))throw new Error(`Unsupported grounded redaction strategy: ${redactionStrategy}`);
+  if(!Number.isFinite(maskFraction)||maskFraction<=0||maskFraction>1)throw new Error('maskFraction must be in (0, 1]');
   const profiles=sourceProfiles(protectedValues);
   let matches=0,maxWeightedCoverage=0;
   const walk=(item,depth=0)=>{
     if(depth>8)return '[HUSH:TRUNCATED]';
     if(typeof item==='string'){
-      const result=guardString(item,profiles,{minOverlapTokens,minCoverage,minWeightedCoverage,minJaccard,minChars});
+      const result=guardString(item,profiles,{minOverlapTokens,minCoverage,minWeightedCoverage,minJaccard,minChars,redactionStrategy,maskFraction,minMaskTokens,maxMaskTokens});
       matches+=result.matches;maxWeightedCoverage=Math.max(maxWeightedCoverage,result.maxScore.weightedCoverage);
       return result.text;
     }
@@ -149,5 +188,5 @@ export function guardGroundedOutboundValue(value,{
   };
   const guarded=walk(structuredClone(value));
   const sanitized=sanitizeContextValue(guarded,{mode});
-  return {...sanitized,groundedMatches:matches,protectedProfileCount:profiles.length,maxGroundedWeightedCoverage:maxWeightedCoverage,groundedContextGuard:true};
+  return {...sanitized,groundedMatches:matches,protectedProfileCount:profiles.length,maxGroundedWeightedCoverage:maxWeightedCoverage,groundedContextGuard:true,groundedRedactionStrategy:redactionStrategy};
 }
