@@ -1,4 +1,4 @@
-name: research-agentcibench-dev-v1e
+name: research-agentcibench-dev-v1f
 
 on:
   push:
@@ -14,7 +14,7 @@ env:
   TOKENIZERS_PARALLELISM: 'false'
 
 jobs:
-  development-sweep:
+  development-ablation:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -31,17 +31,16 @@ jobs:
           git clone --filter=blob:none https://github.com/UKPLab/emnlp2026-agentcibench.git agentcibench
           git -C agentcibench checkout --detach "${AGENTCIBENCH_SHA}"
           test "$(git -C agentcibench rev-parse HEAD)" = "${AGENTCIBENCH_SHA}"
-      - name: Run development-only recipient-purpose boundary sweep
-        id: evaluator
+      - name: Run v1f development ablation
         run: |
           set +e
-          python research/external/agentcibench_context_dev_v1e.py \
+          python research/external/agentcibench_context_dev_v1f.py \
             --dev-dir agentcibench/data/generated_merged \
             --holdout-dir agentcibench/data/eval_set_e2e_50 \
-            --output agentcibench-dev-v1e.json | tee agentcibench-dev-v1e.txt
+            --output agentcibench-dev-v1f.json | tee agentcibench-dev-v1f.txt
           code=${PIPESTATUS[0]}
-          echo "${code}" > agentcibench-dev-v1e.exit
-          if [ -f agentcibench-dev-v1e.json ]; then sha256sum agentcibench-dev-v1e.json > agentcibench-dev-v1e.sha256; fi
+          echo "${code}" > agentcibench-dev-v1f.exit
+          if [ -f agentcibench-dev-v1f.json ]; then sha256sum agentcibench-dev-v1f.json > agentcibench-dev-v1f.sha256; fi
           exit 0
       - name: Record provenance
         if: always()
@@ -55,30 +54,30 @@ jobs:
           for p in ['torch','transformers','safetensors','numpy']:
               print(f'{p}={m.version(p)}')
           PY
-          } | tee agentcibench-dev-v1e-runtime.txt
+          } | tee agentcibench-dev-v1f-runtime.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hush-agentcibench-dev-v1e-${{ github.sha }}
+          name: hush-agentcibench-dev-v1f-${{ github.sha }}
           path: |
-            agentcibench-dev-v1e.json
-            agentcibench-dev-v1e.txt
-            agentcibench-dev-v1e.sha256
-            agentcibench-dev-v1e.exit
-            agentcibench-dev-v1e-runtime.txt
+            agentcibench-dev-v1f.json
+            agentcibench-dev-v1f.txt
+            agentcibench-dev-v1f.sha256
+            agentcibench-dev-v1f.exit
+            agentcibench-dev-v1f-runtime.txt
           if-no-files-found: warn
-      - name: Interpret development sweep
+      - name: Interpret v1f ablation
         if: always()
         run: |
-          test -f agentcibench-dev-v1e.exit || { echo 'No evaluator exit record' >&2; exit 1; }
-          code="$(cat agentcibench-dev-v1e.exit)"
+          test -f agentcibench-dev-v1f.exit || { echo 'No evaluator exit record' >&2; exit 1; }
+          code="$(cat agentcibench-dev-v1f.exit)"
           if [ "${code}" = '1' ]; then
             echo 'Technical evaluator error.' >&2
             exit 1
           elif [ "${code}" = '2' ]; then
-            echo 'No v1e configuration met the pre-existing freeze-readiness gates. Result preserved for falsification.'
+            echo 'No v1f ablation met freeze-readiness gates. Result preserved.'
           elif [ "${code}" = '0' ]; then
-            echo 'At least one v1e configuration met the pre-existing freeze-readiness gates on development data.'
+            echo 'A v1f mechanism met the pre-existing freeze-readiness gates on development data.'
           else
             echo "Unexpected evaluator exit ${code}." >&2
             exit 1
