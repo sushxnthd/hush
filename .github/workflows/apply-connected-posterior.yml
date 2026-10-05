@@ -21,11 +21,12 @@ jobs:
         run: |
           python3 scripts/apply-connected-posterior.py
           node --check src/symbolic-choice-counter.js
+          node --check src/joint-choice-firewall.js
           node --check src/private-decision.js
           npm test
           npm run bench
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/symbolic-choice-counter.js src/private-decision.js
+          git add src/symbolic-choice-counter.js src/joint-choice-firewall.js src/private-decision.js test/mixed-channel-composition.test.js
           git commit -m "Compose protected outputs through connected posterior"
           git push
