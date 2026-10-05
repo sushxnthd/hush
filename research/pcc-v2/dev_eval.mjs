@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
-import {EXPECTED_DATA_SHA256,scoreTranscript,exactTwoSidedSignP,wilson,norm} from '../polar-p1/evaluate.mjs';
+import {EXPECTED_DATA_SHA256,scoreTranscript,exactTwoSidedSignP,wilson,norm,reveals} from '../polar-p1/evaluate.mjs';
 
 const input=process.argv[2]||'/tmp/polar.json';
 const bytes=fs.readFileSync(input);
@@ -67,9 +67,17 @@ function scalarRows(obj,source){
   const out=[];
   if(!obj||typeof obj!=='object') return out;
   for(const [key,v] of Object.entries(obj)){
-    if(Array.isArray(v)) for(const x of v) if(['string','number','boolean'].includes(typeof x)) out.push({key,value:x,source});
-    else if(v&&typeof v==='object') for(const [sub,x] of Object.entries(v)) if(['string','number','boolean'].includes(typeof x)) out.push({key:`${key}_${sub}`,value:x,source});
-    else if(['string','number','boolean'].includes(typeof v)) out.push({key,value:v,source});
+    if(Array.isArray(v)){
+      for(const x of v){
+        if(['string','number','boolean'].includes(typeof x)) out.push({key,value:x,source});
+      }
+    }else if(v&&typeof v==='object'){
+      for(const [sub,x] of Object.entries(v)){
+        if(['string','number','boolean'].includes(typeof x)) out.push({key:`${key}_${sub}`,value:x,source});
+      }
+    }else if(['string','number','boolean'].includes(typeof v)){
+      out.push({key,value:v,source});
+    }
   }
   return out;
 }
@@ -77,7 +85,7 @@ function derivedAllowed(policy,key){
   const ev=policyEvidence(policy,key);
   if(!ev.length) return false;
   const abstractCue=/\b(?:broad|bucket|band|category|summary|high level|country|city|industry|type|network range|anonymous|general|overview)\b/;
-  return ev.some(e=>e.pos&&abstractCue.test(e.clause)&&!e.neg) || ev.some(e=>e.pos&&abstractCue.test(e.clause));
+  return ev.some(e=>e.pos&&abstractCue.test(e.clause));
 }
 function directAllowed(policy,key){
   const ev=policyEvidence(policy,key);
@@ -85,7 +93,6 @@ function directAllowed(policy,key){
   const pos=ev.some(e=>e.pos), neg=ev.some(e=>e.neg);
   if(pos&&!neg) return true;
   if(pos&&neg){
-    // Exact allow phrase wins only when it is more specific than the negative concept.
     const hp=norm(human(key));
     return ev.some(e=>e.pos&&e.clause.includes(hp)&&!e.neg);
   }
@@ -99,36 +106,49 @@ function candidateRows(record){
     ...scalarRows(s.safe_abstractions_available,'derived')
   ];
 }
+function rowAllowed(policy,row){return row.source==='derived'?derivedAllowed(policy,row.key):directAllowed(policy,row.key);}
 function release(record){
   const policy=record?.generated_texts?.privacy_policy_text??'';
   const rows=candidateRows(record), chosen=[];
   const seen=new Set();
   for(const row of rows){
-    const allowed=row.source==='derived'?derivedAllowed(policy,row.key):directAllowed(policy,row.key);
-    if(!allowed) continue;
+    if(!rowAllowed(policy,row)) continue;
     const sig=norm(String(row.value)); if(!sig||seen.has(sig)) continue;
-    seen.add(sig); chosen.push(`${human(row.key)}: ${String(row.value)}.`);
+    seen.add(sig); chosen.push({row,text:`${human(row.key)}: ${String(row.value)}.`});
   }
-  return {text:chosen.join('\n'),released:chosen.length,rows:rows.length};
+  return {text:chosen.map(x=>x.text).join('\n'),chosen,rows};
 }
 function mean(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:0;}
 function summary(scores){
   const protectedTargets=scores.reduce((s,x)=>s+x.protectedCount,0),protectedRevealed=scores.reduce((s,x)=>s+x.protectedRevealed,0),leak=scores.filter(x=>x.leakFree).length,min=scores.filter(x=>x.minimalSuccess).length;
   return {n:scores.length,privacy:mean(scores.map(x=>x.privacy)),utility:mean(scores.map(x=>x.utility)),overall:mean(scores.map(x=>x.overall)),protectedTargets,protectedRevealed,leakFreeRate:leak/scores.length,leakFreeWilson95:wilson(leak,scores.length),minimalSuccessRate:min/scores.length,minimalSuccessWilson95:wilson(min,scores.length)};
 }
-const scores=[],missKeys=new Map(),leakKeys=new Map();
+const scores=[],coverage={allowedTargets:0,noCandidate:0,directCandidate:0,rawCandidate:0,derivedCandidate:0,matchedButDenied:0,released:0},missKeys=new Map(),leakKeys=new Map(),decisionCounts=new Map(),missExamples=[];
+const inc=(m,k,n=1)=>m.set(k,(m.get(k)||0)+n);
 for(const r of records){
   const rel=release(r), sc=scoreTranscript(rel.text,r.scoring_targets); scores.push(sc);
-  const rows=candidateRows(r), policy=r.generated_texts.privacy_policy_text??'';
-  for(const t of r.scoring_targets?.allowed_values??[]){if(!sc.allowedRevealed){} if(!rel.text||!String(rel.text).toLowerCase().includes(String(t).toLowerCase())){
-    for(const row of rows) if(String(row.value).toLowerCase().includes(String(t).toLowerCase())||String(t).toLowerCase().includes(String(row.value).toLowerCase())) missKeys.set(row.key,(missKeys.get(row.key)||0)+1);
-  }}
-  for(const t of r.scoring_targets?.do_not_disclose_values??[]){if(rel.text&&String(rel.text).toLowerCase().includes(String(t).toLowerCase())){
-    for(const row of rows) if(String(row.value).toLowerCase().includes(String(t).toLowerCase())||String(t).toLowerCase().includes(String(row.value).toLowerCase())) leakKeys.set(row.key,(leakKeys.get(row.key)||0)+1);
-  }}
+  const policy=r.generated_texts.privacy_policy_text??'', rows=rel.rows;
+  for(const row of rows) inc(decisionCounts,`${row.source}:${row.key}:${rowAllowed(policy,row)?'allow':'deny'}`);
+  for(const t of r.scoring_targets?.allowed_values??[]){
+    coverage.allowedTargets++;
+    const matching=rows.filter(row=>reveals(String(row.value),t)||reveals(t,String(row.value)));
+    if(!matching.length){coverage.noCandidate++;if(missExamples.length<30)missExamples.push({domain:r.domain,target:t,reason:'no_candidate',policy});continue;}
+    for(const src of new Set(matching.map(x=>x.source))) coverage[`${src}Candidate`]++;
+    const accepted=matching.filter(row=>rowAllowed(policy,row));
+    if(accepted.length) coverage.released++; else coverage.matchedButDenied++;
+    if(!accepted.length){
+      for(const row of matching) inc(missKeys,`${row.source}:${row.key}`);
+      if(missExamples.length<30)missExamples.push({domain:r.domain,target:t,reason:'candidate_denied',matches:matching.map(x=>({source:x.source,key:x.key,value:x.value,evidence:policyEvidence(policy,x.key)})),policy});
+    }
+  }
+  for(const t of r.scoring_targets?.do_not_disclose_values??[]){
+    if(reveals(rel.text,t)){
+      for(const row of rel.chosen.map(x=>x.row)) if(reveals(String(row.value),t)||reveals(t,String(row.value))) inc(leakKeys,`${row.source}:${row.key}`);
+    }
+  }
 }
 const pcc=summary(scores);
-const report={datasetSha256:sha,p1Cases:records.length,pcc,topMissKeys:[...missKeys].sort((a,b)=>b[1]-a[1]).slice(0,30),topLeakKeys:[...leakKeys].sort((a,b)=>b[1]-a[1]).slice(0,30)};
+const report={datasetSha256:sha,p1Cases:records.length,pcc,coverage,topMissKeys:[...missKeys].sort((a,b)=>b[1]-a[1]).slice(0,40),topLeakKeys:[...leakKeys].sort((a,b)=>b[1]-a[1]).slice(0,40),topDecisions:[...decisionCounts].sort((a,b)=>b[1]-a[1]).slice(0,80),missExamples};
 console.log(JSON.stringify(report,null,2));
 fs.mkdirSync('research/pcc-v2/out',{recursive:true});
 fs.writeFileSync('research/pcc-v2/out/dev-eval.json',JSON.stringify(report,null,2)+'\n');
