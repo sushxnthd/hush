@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hush Pocket</title>
+<style>
+:root{--bg:#f4f3ee;--card:#fff;--ink:#20231f;--muted:#70746c;--line:#e3e2db;--green:#243e2e;--red:#8b3030}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,-apple-system,sans-serif}.app{max-width:520px;margin:auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom))}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}.brand{font-weight:900;font-size:24px;letter-spacing:-.04em}.status{font-size:12px;color:var(--muted)}.dot{width:8px;height:8px;background:#aaa;border-radius:50%;display:inline-block;margin-right:5px}.dot.on{background:#3c7b51}.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:17px;margin:11px 0;box-shadow:0 8px 25px #1f2a2010}.label{font-size:10px;font-weight:850;letter-spacing:.12em;color:#718077}.hero{font-size:28px;line-height:1.05;letter-spacing:-.045em;margin:7px 0}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.stat{padding:12px;border-radius:13px;background:#eef1ec}.stat b{font-size:22px;display:block}.stat span{font-size:11px;color:var(--muted)}.row{padding:12px 0;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:space-between;align-items:center}.row:first-child{border-top:0}.meta{font-size:12px;color:var(--muted);margin-top:3px}button{border:0;border-radius:11px;background:var(--green);color:#fff;padding:10px 12px;font:inherit;font-weight:750}.deny{background:#fff0f0;color:var(--red);border:1px solid #ead3d3}.empty{color:var(--muted);padding:12px 0}.warning{font-size:12px;color:#775712;background:#fff5d8;border:1px solid #eddfb8;border-radius:12px;padding:11px;margin-top:12px}</style>
+</head>
+<body><main class="app">
+<div class="top"><div class="brand">hush</div><div class="status"><span id="dot" class="dot"></span><span id="state">checking</span></div></div>
+<section class="card"><div class="label">YOUR AI TRUST LAYER</div><div class="hero">Approve what matters.<br>Keep context private.</div><div class="stats"><div class="stat"><b id="waiting">–</b><span>waiting</span></div><div class="stat"><b id="receipts">–</b><span>receipts</span></div><div class="stat"><b id="footprint">–</b><span>AI footprint</span></div></div></section>
+<section class="card"><div class="label">APPROVALS</div><div id="pending"><div class="empty">Loading…</div></div></section>
+<div class="warning">This alpha shell intentionally connects only to a Hush core running on the same device. Remote network access is not enabled until an authenticated companion transport exists.</div>
+</main><script type="module" src="mobile.js"></script></body>
+</html>
