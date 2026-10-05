@@ -37,6 +37,17 @@ def build_trace(run_id: str, events: list[dict]) -> Trace:
     return trace
 
 
+def finding_summary(f) -> dict:
+    return {
+        "channel": str(f.channel),
+        "data_type": str(f.data_type),
+        "detector": str(f.detector),
+        "redacted_value": str(f.redacted_value),
+        "source": str(f.source),
+        "target": str(f.target),
+    }
+
+
 def analyze(events: list[dict], canary: str, run_id: str) -> dict:
     trace = build_trace(run_id, events)
     canaries = CanarySet.from_dict({"semantic": [canary]})
@@ -53,6 +64,7 @@ def analyze(events: list[dict], canary: str, run_id: str) -> dict:
         "incidental_finding_count": len(incidental),
         "canary_channels": sorted({str(f.channel) for f in canary_findings}),
         "incidental_data_types": sorted({str(f.data_type) for f in incidental}),
+        "incidental_findings": [finding_summary(f) for f in incidental],
         "all_channels": sorted({str(f.channel) for f in findings}),
         "all_data_types": sorted({str(f.data_type) for f in findings}),
     }
@@ -95,6 +107,10 @@ def main() -> int:
         "naive_mean_risk_index": sum(r["naive"]["risk_index"] for r in rows) / n,
         "hush_mean_risk_index": sum(r["hush"]["risk_index"] for r in rows) / n,
         "hush_incidental_data_types": sorted({t for r in rows for t in r["hush"]["incidental_data_types"]}),
+        "hush_incidental_examples": [
+            {"trial": r["id"], "findings": r["hush"]["incidental_findings"]}
+            for r in rows if r["hush"]["incidental_findings"]
+        ][:10],
         "rows": rows,
         "claim_boundary": (
             "Paired synthetic action-broker traces analyzed by a pinned independent local detector. "
