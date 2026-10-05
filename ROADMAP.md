@@ -2,6 +2,12 @@
 
 Hush is the user-controlled trust layer between people and AI systems: private context stays under user control, AI receives only the minimum result it needs, and side effects require scoped authority.
 
+## v1.2 convergence rule
+
+Hush v1.2 is the moonshot/convergence release. The full release contract is defined in [`V1_2_ACCEPTANCE.md`](./V1_2_ACCEPTANCE.md).
+
+Development is intentionally decomposed into bounded, independently testable modules so individual work can be implemented and verified without reducing scope. This is an execution strategy, not a feature cut: v1.2 is not complete until the full acceptance contract is integrated and green.
+
 ## Current state — 2026-10-05
 
 ### Implemented and merged
