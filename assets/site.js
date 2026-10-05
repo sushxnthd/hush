@@ -4,6 +4,7 @@ const mobile = matchMedia('(max-width: 1000px)');
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
 const scriptUrl = new URL(document.currentScript?.src || location.href, location.href);
 const siteRoot = new URL('../', scriptUrl).pathname;
+let renderedUrl = new URL(location.href);
 
 root.classList.add('enhanced');
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -256,10 +257,10 @@ async function animateIn(node) {
 
 async function navigate(destination, { push = true, restoreY = 0 } = {}) {
   const url = new URL(destination, location.href);
-  const current = new URL(location.href);
 
-  if (pathKey(url) === pathKey(current) && url.search === current.search) {
-    if (push && url.href !== current.href) history.pushState({ scrollY }, '', url.href);
+  if (pathKey(url) === pathKey(renderedUrl) && url.search === renderedUrl.search) {
+    if (push && url.href !== renderedUrl.href) history.pushState({ scrollY }, '', url.href);
+    renderedUrl = new URL(url.href);
     scrollToDestination(url, restoreY);
     return;
   }
@@ -285,6 +286,7 @@ async function navigate(destination, { push = true, restoreY = 0 } = {}) {
 
     const incomingCol = doc.querySelector('.col');
     col.innerHTML = incomingCol.innerHTML;
+    renderedUrl = new URL(url.href);
     updateHead(doc);
     replaceToc(doc);
     updatePrimaryNav(url);
@@ -347,9 +349,10 @@ document.addEventListener('click', event => {
   }
 
   const url = new URL(anchor.href, location.href);
-  if (pathKey(url) === pathKey(location.href) && url.hash) {
+  if (pathKey(url) === pathKey(renderedUrl) && url.hash) {
     event.preventDefault();
     history.pushState({ scrollY }, '', url.href);
+    renderedUrl = new URL(url.href);
     scrollToDestination(url, scrollY);
     closeMenu();
     return;
@@ -363,14 +366,14 @@ document.addEventListener('pointerover', event => {
   const anchor = event.target.closest('a[href]');
   if (!canNavigate(anchor)) return;
   const url = new URL(anchor.href, location.href);
-  if (pathKey(url) !== pathKey(location.href)) fetchPage(url).catch(() => {});
+  if (pathKey(url) !== pathKey(renderedUrl)) fetchPage(url).catch(() => {});
 }, { passive: true });
 
 document.addEventListener('focusin', event => {
   const anchor = event.target.closest?.('a[href]');
   if (!canNavigate(anchor)) return;
   const url = new URL(anchor.href, location.href);
-  if (pathKey(url) !== pathKey(location.href)) fetchPage(url).catch(() => {});
+  if (pathKey(url) !== pathKey(renderedUrl)) fetchPage(url).catch(() => {});
 });
 
 addEventListener('popstate', event => {
@@ -391,9 +394,7 @@ mobile.addEventListener('change', () => {
   scheduleSync();
 });
 
-motion.addEventListener('change', () => {
-  initReveals();
-});
+motion.addEventListener('change', initReveals);
 
 document.fonts?.ready.then(() => {
   layoutRuler();
@@ -403,7 +404,7 @@ document.fonts?.ready.then(() => {
 
 applyHushLogo(document);
 absoluteInternalLinks(document);
-updatePrimaryNav(location.href);
+updatePrimaryNav(renderedUrl);
 initReveals();
 initSections();
 history.replaceState({ ...(history.state || {}), scrollY }, '', location.href);
