@@ -1,0 +1,74 @@
+name: research-agentleak-context-boundary-v1
+
+on:
+  push:
+    branches:
+      - research/agentleak-context-boundary-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AGENTLEAK_SHA: 1301eb9245a03bbee8694ee2b74accbc8f6fefe6
+
+jobs:
+  development:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch pinned AgentLeak benchmark
+        run: |
+          git clone --filter=blob:none https://github.com/Privatris/AgentLeak.git agentleak
+          git -C agentleak checkout --detach "${AGENTLEAK_SHA}"
+          test "$(git -C agentleak rev-parse HEAD)" = "${AGENTLEAK_SHA}"
+      - name: Run development partition only
+        run: |
+          set +e
+          python research/external/agentleak_context_boundary_v1.py \
+            --dataset agentleak/agentleak_data/datasets/scenarios_full_1000.jsonl \
+            --partition dev \
+            --output agentleak-context-boundary-v1-dev.json | tee agentleak-context-boundary-v1-dev.txt
+          code=${PIPESTATUS[0]}
+          echo "${code}" > agentleak-context-boundary-v1-dev.exit
+          sha256sum agentleak-context-boundary-v1-dev.json > agentleak-context-boundary-v1-dev.sha256
+          exit 0
+      - name: Record provenance
+        if: always()
+        run: |
+          {
+            echo "hush_sha=$(git rev-parse HEAD)"
+            echo "agentleak_sha=$(git -C agentleak rev-parse HEAD)"
+            echo "python=$(python --version 2>&1)"
+          } | tee agentleak-context-boundary-v1-runtime.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hush-agentleak-context-boundary-v1-${{ github.sha }}
+          path: |
+            agentleak-context-boundary-v1-dev.json
+            agentleak-context-boundary-v1-dev.txt
+            agentleak-context-boundary-v1-dev.exit
+            agentleak-context-boundary-v1-dev.sha256
+            agentleak-context-boundary-v1-runtime.txt
+          if-no-files-found: warn
+      - name: Interpret development result
+        if: always()
+        run: |
+          test -f agentleak-context-boundary-v1-dev.exit || { echo 'No evaluator exit record' >&2; exit 1; }
+          code="$(cat agentleak-context-boundary-v1-dev.exit)"
+          if [ "${code}" = '1' ]; then
+            echo 'Technical evaluator error.' >&2
+            exit 1
+          elif [ "${code}" = '2' ]; then
+            echo 'No development configuration met the pre-registered freeze-readiness gates. Result preserved.'
+          elif [ "${code}" = '0' ]; then
+            echo 'At least one development configuration met freeze-readiness gates. Holdout remains unscored.'
+          else
+            echo "Unexpected evaluator exit ${code}." >&2
+            exit 1
+          fi
