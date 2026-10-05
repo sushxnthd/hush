@@ -1,0 +1,103 @@
+name: research-pisas-compiler-dev-v1
+
+on:
+  push:
+    branches:
+      - research/pisas-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TOKENIZERS_PARALLELISM: 'false'
+  PISAS_DATASET_SHA: 8a1ba30ba210d4a430bbd25cf4a3500d0e22c5b9
+  COMPILER_MODEL: Qwen/Qwen2.5-0.5B-Instruct
+
+jobs:
+  private-evidence-compiler-development:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned CPU research runtime
+        run: |
+          python -m pip install --disable-pip-version-check --index-url https://download.pytorch.org/whl/cpu 'torch==2.5.1'
+          python -m pip install --disable-pip-version-check 'transformers==4.46.3' 'safetensors==0.4.5' 'numpy==2.1.3' 'huggingface_hub==0.36.2'
+      - name: Resolve exact compiler model and PiSAs snapshots
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from huggingface_hub import HfApi, snapshot_download
+          api=HfApi()
+          model=os.environ['COMPILER_MODEL']
+          model_sha=api.model_info(model).sha
+          Path('compiler-model-sha.txt').write_text(model_sha+'\n',encoding='utf-8')
+          dataset_sha=os.environ['PISAS_DATASET_SHA']
+          root=snapshot_download('ServiceNow/PiSAs',repo_type='dataset',revision=dataset_sha)
+          Path('pisas-root.txt').write_text(root+'\n',encoding='utf-8')
+          print('compiler_model='+model)
+          print('compiler_sha='+model_sha)
+          print('pisas_dataset_sha='+dataset_sha)
+          PY
+      - name: Run development-only private evidence compiler
+        run: |
+          set +e
+          python research/external/pisas_private_compiler_dev_v1.py \
+            --dataset-root "$(cat pisas-root.txt)" \
+            --dataset-revision "${PISAS_DATASET_SHA}" \
+            --compiler-model "${COMPILER_MODEL}" \
+            --compiler-revision "$(cat compiler-model-sha.txt)" \
+            --max-new-tokens 160 \
+            --output pisas-private-compiler-dev-v1.json | tee pisas-private-compiler-dev-v1.txt
+          code=${PIPESTATUS[0]}
+          echo "${code}" > pisas-private-compiler-dev-v1.exit
+          if [ -f pisas-private-compiler-dev-v1.json ]; then sha256sum pisas-private-compiler-dev-v1.json > pisas-private-compiler-dev-v1.sha256; fi
+          exit 0
+      - name: Record immutable development provenance
+        if: always()
+        run: |
+          {
+            echo "hush_sha=$(git rev-parse HEAD)"
+            echo "pisas_dataset_sha=${PISAS_DATASET_SHA}"
+            echo "compiler_model=${COMPILER_MODEL}"
+            echo "compiler_sha=$(cat compiler-model-sha.txt 2>/dev/null || true)"
+            echo "python=$(python --version 2>&1)"
+            python - <<'PY'
+          import importlib.metadata as m
+          for p in ['torch','transformers','safetensors','numpy','huggingface_hub']:
+              print(f'{p}={m.version(p)}')
+          PY
+          } | tee pisas-private-compiler-dev-v1-runtime.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hush-pisas-private-compiler-dev-v1-${{ github.sha }}
+          path: |
+            pisas-private-compiler-dev-v1.json
+            pisas-private-compiler-dev-v1.txt
+            pisas-private-compiler-dev-v1.sha256
+            pisas-private-compiler-dev-v1.exit
+            pisas-private-compiler-dev-v1-runtime.txt
+            compiler-model-sha.txt
+          if-no-files-found: warn
+      - name: Interpret development result
+        if: always()
+        run: |
+          test -f pisas-private-compiler-dev-v1.exit || { echo 'No evaluator exit record.' >&2; exit 1; }
+          code="$(cat pisas-private-compiler-dev-v1.exit)"
+          if [ "${code}" = '1' ]; then
+            echo 'Technical compiler/evaluator error.' >&2
+            exit 1
+          elif [ "${code}" = '2' ]; then
+            echo 'Private compiler did not yet cross the preregistered utility floor.'
+          elif [ "${code}" = '0' ]; then
+            echo 'Private compiler produced at least one development configuration eligible for freeze.'
+          else
+            echo "Unexpected exit ${code}." >&2
+            exit 1
+          fi
