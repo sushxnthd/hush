@@ -1,14 +1,15 @@
-name: pcc-v2-dev-inspect
+name: pcc-v2-development
 on:
   push:
     branches: [research/pcc-v2-development]
     paths:
       - 'research/pcc-v2/dev_inspect.mjs'
+      - 'research/pcc-v2/dev_eval.mjs'
       - '.github/workflows/pcc-v2-dev-inspect.yml'
 permissions:
   contents: read
 jobs:
-  inspect:
+  develop:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -33,8 +34,10 @@ jobs:
           PY
       - name: Inspect P1 policy grammar
         run: node research/pcc-v2/dev_inspect.mjs /tmp/polar.json
+      - name: Evaluate PCC v2 prototype on failed P1 development set
+        run: node research/pcc-v2/dev_eval.mjs /tmp/polar.json
       - uses: actions/upload-artifact@v4
         with:
-          name: pcc-v2-dev-inspect
-          path: research/pcc-v2/out/dev-inspect.json
+          name: pcc-v2-development
+          path: research/pcc-v2/out/
           if-no-files-found: error
