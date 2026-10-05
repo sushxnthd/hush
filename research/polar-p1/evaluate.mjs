@@ -3,7 +3,10 @@ import crypto from 'node:crypto';
 import {compilePrivateConstraint} from '../../src/private-constraint-compiler.js';
 
 export const EXPECTED_DATA_SHA256='b1db0274228b1346df47d0a42bb75f9536ded1a6d750bb2720f43612c7abb266';
-export const BLOCKED_GENERATOR_KEY=/(?:scoring_targets|allowed_values|do_not_disclose_values|protected_attributes|task_attributes|gold|answer|target)/i;
+// Technical blinding guard: block exact evaluation/gold field names. Legitimate
+// source attributes such as `target_role` are not benchmark outcomes and remain
+// available to the frozen source adapter.
+export const BLOCKED_GENERATOR_KEY=/^(?:scoring_targets|allowed_values|do_not_disclose_values|protected_attributes|task_attributes|gold|answer|target)$/i;
 
 export function norm(value){
   return String(value??'').normalize('NFKC').toLowerCase()
