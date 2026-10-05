@@ -37,6 +37,12 @@ jobs:
           echo "${code}" > agentleak-context-boundary-v1d-dev.exit
           sha256sum agentleak-context-boundary-v1d-dev.json > agentleak-context-boundary-v1d-dev.sha256
           exit 0
+      - name: Diagnose v1d error classes
+        if: always()
+        run: |
+          python research/external/agentleak_context_diag_v1d.py \
+            --dataset agentleak/agentleak_data/datasets/scenarios_full_1000.jsonl \
+            --output agentleak-context-diag-v1d.json | tee agentleak-context-diag-v1d.txt
       - name: Record provenance
         if: always()
         run: |
@@ -52,8 +58,11 @@ jobs:
           path: |
             agentleak-context-boundary-v1d-dev.json
             agentleak-context-boundary-v1d-dev.txt
+            agentleak-context-boundary-v1d.exit
             agentleak-context-boundary-v1d-dev.exit
             agentleak-context-boundary-v1d-dev.sha256
+            agentleak-context-diag-v1d.json
+            agentleak-context-diag-v1d.txt
             agentleak-context-boundary-v1d-runtime.txt
           if-no-files-found: warn
       - name: Interpret v1d development result
