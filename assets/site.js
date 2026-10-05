@@ -7,6 +7,25 @@ const revealNodes = [...document.querySelectorAll('[data-reveal]')];
 
 root.classList.add('enhanced');
 
+const hushLogoMarkup = `
+  <svg viewBox="0 0 256 256" aria-hidden="true">
+    <g fill="currentColor">
+      <path d="M78 34H178C183.523 34 188 38.477 188 44V84H68V44C68 38.477 72.477 34 78 34Z"/>
+      <path d="M30 84H68V160H30C24.477 160 20 155.523 20 150V94C20 88.477 24.477 84 30 84Z"/>
+      <path d="M188 84H226C231.523 84 236 88.477 236 94V150C236 155.523 231.523 160 226 160H188V84Z"/>
+      <path d="M68 160H112V200H68V160Z"/>
+      <path d="M152 160H196V201L152 232V160Z"/>
+      <rect x="91" y="110" width="22" height="24"/>
+      <rect x="143" y="110" width="22" height="24"/>
+    </g>
+  </svg>`;
+
+document.querySelectorAll('.brandmark svg, .btn-tile svg, .lnode.kernel svg').forEach(svg => {
+  const wrapper = document.createElement('span');
+  wrapper.innerHTML = hushLogoMarkup.trim();
+  svg.replaceWith(wrapper.firstElementChild);
+});
+
 function closeMenu({ restoreFocus = false } = {}) {
   rail?.classList.remove('menu-open');
   menu?.setAttribute('aria-expanded', 'false');
