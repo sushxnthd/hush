@@ -1,0 +1,100 @@
+name: research-cimemories-v1
+
+on:
+  push:
+    branches: [research/cimemories-confirmatory-v1]
+    paths:
+      - 'research/CIMEMORIES_CONFIRMATORY_V1.md'
+      - 'research/external/cimemories_confirmatory_v1.py'
+      - '.github/workflows/research-cimemories-v1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  confirmatory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      CIMEMORIES_REVISION: cd96d5756e35b3549b5ec6ecbd316fc0349c8669
+      CIMEMORIES_SHA256: 88384ab2bb6a153396243b0ecfeb924f70ee6f5a57bd8209726dfc74da5eeea5
+      BGE_REVISION: 982532469af0dff5df8e70b38075b0940e863662
+      RERANK_REVISION: 588b01a83959436e6051d2133d8e9ecdcb28b1a5
+      TOKENIZERS_PARALLELISM: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install frozen local-model runtime
+        run: |
+          python -m pip install --disable-pip-version-check --index-url https://download.pytorch.org/whl/cpu 'torch==2.5.1'
+          python -m pip install --disable-pip-version-check 'transformers==4.46.3' 'safetensors==0.4.5' 'numpy==2.1.3'
+      - name: Fetch immutable CIMemories confirmatory artifact
+        run: |
+          curl -L --fail --retry 5 --retry-all-errors --connect-timeout 30 \
+            "https://huggingface.co/datasets/facebook/CIMemories/resolve/${CIMEMORIES_REVISION}/test.csv?download=true" \
+            -o cimemories-test.csv
+          actual="$(sha256sum cimemories-test.csv | awk '{print $1}')"
+          echo "CIMemories sha256=${actual}"
+          test "${actual}" = "${CIMEMORIES_SHA256}"
+          stat --printf='bytes=%s\n' cimemories-test.csv
+          sha256sum cimemories-test.csv > cimemories-test.sha256
+      - name: Run frozen confirmatory protocol once
+        id: evaluator
+        continue-on-error: true
+        run: |
+          set +e
+          python research/external/cimemories_confirmatory_v1.py \
+            --csv cimemories-test.csv \
+            --output cimemories-v1.json | tee cimemories-v1.txt
+          code=${PIPESTATUS[0]}
+          echo "exit_code=${code}" >> "$GITHUB_OUTPUT"
+          if [ -f cimemories-v1.json ]; then sha256sum cimemories-v1.json > cimemories-v1.sha256; fi
+          exit "${code}"
+      - name: Record immutable environment
+        if: always()
+        run: |
+          {
+            echo "hush_sha=${GITHUB_SHA}"
+            echo "cimemories_revision=${CIMEMORIES_REVISION}"
+            echo "cimemories_sha256=${CIMEMORIES_SHA256}"
+            echo "bge_revision=${BGE_REVISION}"
+            echo "rerank_revision=${RERANK_REVISION}"
+            echo "python=$(python --version 2>&1)"
+            python - <<'PY'
+          import importlib.metadata as m
+          for package in ['torch','transformers','safetensors','numpy']:
+              print(f'{package}={m.version(package)}')
+          PY
+            echo "evaluator_exit=${{ steps.evaluator.outputs.exit_code }}"
+          } | tee cimemories-v1-runtime.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hush-cimemories-v1-${{ github.sha }}
+          path: |
+            cimemories-v1.json
+            cimemories-v1.txt
+            cimemories-v1.sha256
+            cimemories-v1-runtime.txt
+            cimemories-test.sha256
+          if-no-files-found: warn
+      - name: Fail only on technical evaluator error
+        if: always()
+        run: |
+          code='${{ steps.evaluator.outputs.exit_code }}'
+          if [ -z "${code}" ]; then
+            echo 'Evaluator did not report an exit code.' >&2
+            exit 1
+          fi
+          if [ "${code}" = '1' ]; then
+            echo 'Technical evaluator error.' >&2
+            exit 1
+          fi
+          if [ "${code}" = '2' ]; then
+            echo 'Scientific superiority gate failed; result preserved without retuning.'
+          else
+            echo 'Scientific superiority gate passed.'
+          fi
