@@ -3,10 +3,13 @@ on:
   push:
     branches: [research/pcc-v2-p2-development]
     paths:
+      - 'research/pcc-v2/policy_compiler_v2.mjs'
       - 'research/pcc-v2/p2_diagnose.mjs'
       - '.github/workflows/pcc-v2-p2-development.yml'
 permissions:
   contents: read
+env:
+  PCC_V2_COMPILER_COMMIT: ${{ github.sha }}
 jobs:
   diagnose:
     runs-on: ubuntu-24.04
@@ -28,9 +31,14 @@ jobs:
           print('dataset_sha256='+h)
           if h!=e:raise SystemExit('hash mismatch')
           PY
-      - run: node research/pcc-v2/p2_diagnose.mjs /tmp/polar.json
+      - name: Preserve P1 development regression
+        run: node research/pcc-v2/p1_regression.mjs /tmp/polar.json
+      - name: Diagnose P2 development misses
+        run: node research/pcc-v2/p2_diagnose.mjs /tmp/polar.json
+      - name: Score updated compiler on P2 development data
+        run: node research/pcc-v2/p2_evaluate.mjs --input /tmp/polar.json --out research/pcc-v2/out/p2-dev-eval.json
       - uses: actions/upload-artifact@v4
         with:
           name: pcc-v2-p2-development
-          path: research/pcc-v2/out/p2-diagnostics.json
+          path: research/pcc-v2/out/
           if-no-files-found: error
