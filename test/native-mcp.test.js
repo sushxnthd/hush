@@ -14,12 +14,13 @@ function kernel(){
   return k;
 }
 
-test('native MCP surface exposes bounded computation plus approval-gated memory proposals',()=>{
+test('native MCP surface exposes bounded computation, routing, and approval-gated memory proposals',()=>{
   assert.deepEqual(NATIVE_MCP_TOOLS.map(x=>x.name),[
-    'hush_begin_private_task','hush_private_query','hush_private_decision','hush_propose_memory','hush_revoke_private_task'
+    'hush_begin_private_task','hush_private_query','hush_private_decision','hush_route_task','hush_propose_memory','hush_revoke_private_task'
   ]);
   assert.equal(isNativeMcpTool('hush_private_query'),true);
   assert.equal(isNativeMcpTool('hush_private_decision'),true);
+  assert.equal(isNativeMcpTool('hush_route_task'),true);
   assert.equal(isNativeMcpTool('hush_propose_memory'),true);
   assert.equal(isNativeMcpTool('get_raw_context'),false);
   assert.equal(NATIVE_MCP_TOOLS.some(x=>/raw|secret|password/i.test(x.name)),false);
@@ -76,6 +77,31 @@ test('MCP client can omit privateRef when task and clause roles identify context
   assert.equal(wire.includes('travel.preferredAirline'),false);
   assert.equal(wire.includes('1500'),false);
   assert.equal(wire.includes('ANA'),false);
+});
+
+test('MCP router chooses from user-registered models without receiving private context',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-native-router-'));
+  const k=new ContextKernel({dir,passphrase:'native router test passphrase'});
+  k.registerModel({id:'local',provider:'local',locality:'local',capabilities:['chat'],quality:0.7});
+  k.registerModel({id:'remote-smart',provider:'provider-a',locality:'remote',trustLevel:'standard',capabilities:['chat','reasoning'],quality:0.95,inputCostPerMillion:2,outputCostPerMillion:8,latencyMs:800});
+  const out=callNativeMcpTool({
+    name:'hush_route_task',
+    args:{task:'Solve a difficult problem.',requiredCapabilities:['reasoning'],privateContext:'bounded',privacyPreference:'strict'},
+    kernel:k,agent:'assistant',sink:'mcp:test'
+  });
+  assert.equal(out.structuredContent.decision,'allow');
+  assert.equal(out.structuredContent.model.id,'remote-smart');
+  assert.equal(out.structuredContent.request.privateContext,'bounded');
+});
+
+test('MCP router refuses tasks declared to require raw private context',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-native-router-raw-'));
+  const k=new ContextKernel({dir,passphrase:'native router raw context passphrase'});
+  k.registerModel({id:'local',provider:'local',locality:'local',capabilities:['chat'],quality:0.7});
+  const out=callNativeMcpTool({name:'hush_route_task',args:{requiredCapabilities:['chat'],privateContext:'raw'},kernel:k});
+  assert.equal(out.isError,true);
+  assert.equal(out.structuredContent.decision,'deny');
+  assert.match(out.structuredContent.reason,/does not route tasks that require raw private context/i);
 });
 
 test('MCP memory proposal does not echo or commit the proposed value before local approval',()=>{
