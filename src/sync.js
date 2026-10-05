@@ -72,7 +72,15 @@ export function createSyncEnvelope({bundle,identity,parentFingerprint=null,seque
 export function verifySyncEnvelope(envelope){
   if(envelope?.v!==1||!envelope.signature) throw new Error('Unsupported sync envelope');
   const {signature,...rawBody}=clone(envelope);
-  const body=envelopeBody(rawBody);
+  const body=envelopeBody({
+    bundle:rawBody.bundle,
+    deviceId:rawBody.deviceId,
+    label:rawBody.deviceLabel,
+    publicKey:rawBody.publicKey,
+    parentFingerprint:rawBody.parentFingerprint,
+    sequence:rawBody.sequence,
+    createdAt:rawBody.createdAt
+  });
   if(body.bundleFingerprint!==rawBody.bundleFingerprint) throw new Error('Sync bundle fingerprint mismatch');
   const valid=crypto.verify(null,Buffer.from(canonicalize(body)),body.publicKey,Buffer.from(String(signature),'base64url'));
   if(!valid) throw new Error('Invalid sync envelope signature');
