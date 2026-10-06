@@ -18,7 +18,6 @@ const arc=q('[data-card-for="arc"] img');
 if(arc) arc.alt='Hush AgentCIBench holdout evidence: completeness versus protected-context violation.';
 
 // The mission markup above reinstates source-style evidence keys after replica-fix initialized.
-// Wire only these newly-created keys without duplicating the existing global handlers.
 const newKeys=qa('#memo [data-card]');
 let active=null,keyActive=null;
 const close=()=>{if(active){active.classList.remove('is-on','is-above');active.setAttribute('aria-hidden','true')}if(keyActive)keyActive.setAttribute('aria-expanded','false');active=keyActive=null};
@@ -27,5 +26,17 @@ const open=key=>{const pop=q(`[data-card-for="${CSS.escape(key.dataset.card)}"]`
 newKeys.forEach(key=>{key.setAttribute('aria-expanded','false');key.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();open(key)});key.addEventListener('mouseenter',()=>open(key))});
 document.addEventListener('click',e=>{if(active&&!e.target.closest('[data-card-for]')&&!e.target.closest('#memo [data-card]'))close()});
 addEventListener('resize',()=>{if(active&&keyActive)place(keyActive,active)},{passive:true});
+
+// Prevent near-equal benchmark annotations from colliding while keeping source chart geometry.
+const curve=q('.cost-curve');
+if(curve){
+  const base=qa('.cc-annot--fs',curve),hush=qa('.cc-annot--hush',curve);
+  if(base[0]) base[0].setAttribute('y','346');
+  if(hush[0]) hush[0].setAttribute('y','301');
+  if(base[2]) base[2].setAttribute('y','48');
+  if(hush[2]) hush[2].setAttribute('y','76');
+  qa('[data-cc-tab]',curve).forEach((btn,i)=>{btn.setAttribute('aria-selected',i===0?'true':'false');btn.addEventListener('click',()=>qa('[data-cc-tab]',curve).forEach(b=>b.setAttribute('aria-selected',b===btn?'true':'false')))});
+}
+
 q('#hush-polish-guard')?.remove();
 })();
