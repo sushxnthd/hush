@@ -8,7 +8,7 @@ on:
 permissions:
   contents: read
 jobs:
-  diagnose:
+  develop:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -31,8 +31,10 @@ jobs:
           PY
       - name: Diagnose P2 misses
         run: node research/pcc-v3/p2_miss_diagnostics.mjs /tmp/polar.json
+      - name: Evaluate PCC v3 on P2 development data
+        run: node research/pcc-v3/p2_v3_regression.mjs /tmp/polar.json
       - uses: actions/upload-artifact@v4
         with:
-          name: pcc-v3-p2-diagnostics
-          path: research/pcc-v3/out/p2-miss-diagnostics.json
+          name: pcc-v3-development
+          path: research/pcc-v3/out/
           if-no-files-found: error
