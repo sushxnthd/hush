@@ -175,4 +175,13 @@ function initStandardPage() {
     hint.href = url.href;
     document.head.append(hint);
   }, { passive: true });
+
+  const pixelCss = document.createElement('link');
+  pixelCss.rel = 'stylesheet';
+  pixelCss.href = '../assets/subpage-integrity.css?v=2';
+  document.head.append(pixelCss);
+  const pixelScript = document.createElement('script');
+  pixelScript.src = '../assets/subpage-nav-pixel.js?v=1';
+  pixelScript.defer = true;
+  document.body.append(pixelScript);
 }
