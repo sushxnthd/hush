@@ -28,8 +28,8 @@
     .replaceAll('Markdown memory','semantic-only baseline')
     .replaceAll('FAIL_TO_PASS','completeness');
 
-  html=html.replace('</head>','<style id="hush-prepaint">html{visibility:hidden}</style></head>');
-  html=html.replace('</body>','<script src="assets/replica-fix.js?v=fb6e79de" onerror="document.getElementById(\'hush-prepaint\')?.remove()"></script></body>');
+  html=html.replace('</head>','<style id="hush-prepaint">html{visibility:hidden}</style><style id="hush-polish-guard">html{visibility:hidden}</style></head>');
+  html=html.replace('</body>','<script src="assets/replica-fix.js?v=fb6e79de" onerror="document.getElementById(\'hush-prepaint\')?.remove()"></script><script src="assets/replica-polish.js?v=6da744c5" onerror="document.getElementById(\'hush-polish-guard\')?.remove()"></script></body>');
 
   document.open();
   document.write(html);
