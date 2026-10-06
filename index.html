@@ -20,11 +20,20 @@
   const stream=new Blob([binary]).stream().pipeThrough(new DecompressionStream('gzip'));
   let html=await new Response(stream).text();
 
-  // Preserve the source-exact visual payload, but replace its old behavior with Hush's
-  // content-integrity and interaction layer before the first visible paint.
-  html=html.replace(/<script(?:\s[^>]*)?>[\s\S]*?<\/script>/g,'');
-  html=html.replace('</head>','<style id="hush-prepaint">html{visibility:hidden}</style><style id="hush-polish-guard">html{visibility:hidden}</style></head>');
-  html=html.replace('</body>','<script src="assets/replica-fix.js?v=fb6e79de" onerror="document.getElementById(\'hush-prepaint\')?.remove()"></script><script src="assets/replica-polish.js?v=c9ea6722" onerror="document.getElementById(\'hush-polish-guard\')?.remove()"></script></body>');
+  // Preserve the source-exact visual payload while removing mirror/runtime artifacts.
+  html=html
+    .replace(/^html(?=<html)/,'')
+    .replace(/<script(?:\s[^>]*)?>[\s\S]*?<\/script>/g,'');
+
+  const integrity=`
+    <style id="hush-integrity-css">
+      .cookie-bar,.cookie-panel,[data-cookie-consent],[data-cookie-dialog],.dials{display:none!important}
+      .field .still{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important}
+      .field .film{display:none!important}
+    </style>`;
+
+  html=html.replace('</head>',`${integrity}<style id="hush-prepaint">html{visibility:hidden}</style><style id="hush-polish-guard">html{visibility:hidden}</style></head>`);
+  html=html.replace('</body>','<script src="assets/replica-fix.js?v=fb6e79de" onerror="document.getElementById(\'hush-prepaint\')?.remove()"></script><script src="assets/replica-polish.js?v=c9ea6722" onerror="document.getElementById(\'hush-polish-guard\')?.remove()"></script><script src="assets/replica-qa.js?v=f7a09710"></script></body>');
 
   document.open();
   document.write(html);
