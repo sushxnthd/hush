@@ -24,11 +24,13 @@ function explicitSafeAllow(policy,key){
 function explicitDirectDeny(policy,key){return directEvidence(policy,key).some(x=>x.neg);}
 
 export function policyAllowsFieldV5(policy,key){
+  // Preserve every already-proven v4 allow decision, including its carefully scoped
+  // band-only overrides. V5 is strictly additive on top of v4.
+  if(policyAllowsFieldV4(policy,key))return true;
   // Raw exact concepts remain transform-only. V5 only routes to separately stored coarse facts.
   if(MUST_DERIVE.has(key))return false;
-  // Any explicit or semantic denial of the coarse field still wins.
+  // The new coarse routes still require no explicit or semantic denial of that coarse field.
   if(explicitDirectDeny(policy,key)||semanticDenyEvidence(policy,key).length)return false;
-  if(policyAllowsFieldV4(policy,key))return true;
   return explicitSafeAllow(policy,key);
 }
 
@@ -43,4 +45,4 @@ export function compileDisclosureV5(record){
   return {facts,chosen,text:chosen.map(x=>x.text).join('\n')};
 }
 
-export function pccV5Summary(){return {version:'pcc-v5',abstractionRouting:['task_relevant_fact','travel_date_window'],rawExactRelease:false,denyPrecedence:true,usesScoringTargets:false};}
+export function pccV5Summary(){return {version:'pcc-v5',abstractionRouting:['task_relevant_fact','travel_date_window'],rawExactRelease:false,preservesV4:true,denyPrecedence:true,usesScoringTargets:false};}
