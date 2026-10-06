@@ -23,7 +23,7 @@ async function buildFullHomepage() {
 
   const css = document.createElement('link');
   css.rel = 'stylesheet';
-  css.href = 'assets/hush-full.css?v=20261006b';
+  css.href = 'assets/hush-full.css?v=20261006c';
   const cssReady = new Promise(resolve => {
     css.onload = resolve;
     css.onerror = resolve;
@@ -33,7 +33,7 @@ async function buildFullHomepage() {
   const names = ['hero','memo','what','production','security','cta','writing','contribute','footer','cards'];
   try {
     const parts = await Promise.all(names.map(async name => {
-      const response = await fetch(`fragments/${name}.html?v=20261006b`, { cache: 'no-cache' });
+      const response = await fetch(`fragments/${name}.html?v=20261006c`, { cache: 'no-cache' });
       if (!response.ok) throw new Error(`${name}: ${response.status}`);
       return response.text();
     }));
@@ -62,7 +62,7 @@ async function buildFullHomepage() {
     }
 
     const full = document.createElement('script');
-    full.src = 'assets/hush-full.js?v=20261006b';
+    full.src = 'assets/hush-full.js?v=20261006c';
     full.defer = true;
     full.onload = reveal;
     full.onerror = reveal;
