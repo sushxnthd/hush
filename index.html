@@ -5,130 +5,71 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f4f4f6">
 <title>Hush — Private Mode for every AI</title>
-<meta name="description" content="Hush is the user-owned trust layer between you and every AI: private context, shared memory, privacy-aware routing and scoped authority without copying your private life into model providers.">
+<meta name="description" content="Hush is the user-owned private context, memory and permission layer between you and every AI.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="assets/hush.css?v=bd2609ce">
+<link rel="stylesheet" href="assets/hush.css?v=replica-reboot-1">
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
 <div class="page">
 <aside class="rail rail-toc" data-reveal="load">
-  <a class="brand" href="./" aria-label="Hush, home">
-    <svg class="hush-mark" viewBox="0 0 256 256" aria-hidden="true"><g fill="currentColor"><path d="M78 34H178C183.523 34 188 38.477 188 44V84H68V44C68 38.477 72.477 34 78 34Z"/><path d="M30 84H68V160H30C24.477 160 20 155.523 20 150V94C20 88.477 24.477 84 30 84Z"/><path d="M188 84H226C231.523 84 236 88.477 236 94V150C236 155.523 231.523 160 226 160H188V84Z"/><path d="M68 160H112V200H68V160Z"/><path d="M152 160H196V201L152 232V160Z"/><rect x="91" y="110" width="22" height="24"/><rect x="143" y="110" width="22" height="24"/></g></svg>
-    <span class="hush-word">hush</span>
-  </a>
+  <a class="brand" href="./" aria-label="Hush, home"><img src="assets/hush-logo.svg" alt="" style="width:29px;height:29px"><span class="hush-word">hush</span></a>
   <div class="format-wrap"><div class="format-switch"><a aria-current="page" href="#top">Human</a><a href="https://github.com/sushxnthd/hush">Agent</a></div></div>
   <button class="menu" type="button" aria-label="Toggle navigation" aria-expanded="false"><span class="menu-word"><span>Menu</span><span class="menu-shut">Close</span></span><span class="menu-glyph"><i></i><i></i></span></button>
   <nav class="nav nav-doors" aria-label="Main navigation">
-    <a href="./" aria-current="page" style="--k:0">Home</a>
-    <a href="product/" style="--k:1">Product</a>
-    <a href="writing/" style="--k:2">Research</a>
-    <a href="changelog/" style="--k:3">Changelog</a>
-    <a href="https://github.com/sushxnthd/hush" style="--k:4">Docs</a>
-    <a href="https://github.com/sushxnthd/hush" style="--k:5">GitHub</a>
+    <a href="./" aria-current="page" style="--k:0">Home</a><a href="product/" style="--k:1">Product</a><a href="writing/" style="--k:2">Research</a><a href="changelog/" style="--k:3">Changelog</a><a href="https://github.com/sushxnthd/hush" style="--k:4">Docs</a><a href="https://github.com/sushxnthd/hush" style="--k:5">GitHub</a>
   </nav>
   <hr class="rail-rule">
-  <nav class="nav nav-here" aria-label="On this page" data-toc>
-    <span class="nav-ruler"></span>
-    <a href="#top" data-section="top" style="--j:0;--t:0">Overview</a>
-    <a href="#mission" data-section="mission" style="--j:1;--t:5">Mission</a>
-    <a href="#what" data-section="what" style="--j:2;--t:10">What Hush does</a>
-    <a href="#production" data-section="production" style="--j:3;--t:15">Evidence</a>
-    <a href="#security" data-section="security" style="--j:4;--t:20">Surfaces</a>
-    <a href="#writing" data-section="writing" style="--j:5;--t:25">Research</a>
-  </nav>
-  <span class="nav-mark" aria-hidden="true"></span>
+  <nav class="nav nav-here" aria-label="On this page" data-toc><span class="nav-ruler"></span>
+    <a href="#top" data-section="top" style="--j:0;--t:0">Overview</a><a href="#mission" data-section="mission" style="--j:1;--t:5">Mission</a><a href="#what" data-section="what" style="--j:2;--t:10">What we do</a><a href="#production" data-section="production" style="--j:3;--t:15">In production</a><a href="#everywhere" data-section="everywhere" style="--j:4;--t:20">Everywhere</a><a href="#writing" data-section="writing" style="--j:5;--t:25">Writing</a>
+  </nav><span class="nav-mark" aria-hidden="true"></span>
 </aside>
 
 <main class="col" id="content" tabindex="-1">
   <div class="hero" id="top">
-    <a class="note" href="#production" data-reveal="load" style="--d:40ms"><span class="note-live"></span><span>Independent AgentLeak gate passed</span><span class="note-cta">See the evidence ↗</span></a>
-    <h1 class="statement" data-reveal="load" style="--d:110ms">Private Mode for every AI.</h1>
-    <p class="dek" data-reveal="load" style="--d:180ms">Hush keeps personal context under your control, answers bounded questions locally, carries approved memory across models, routes work under privacy constraints, and brokers actions without handing agents your credentials.</p>
+    <a class="note" href="#production" data-reveal="load" style="--d:40ms"><span class="note-live"></span><span>Hush alpha · frozen privacy gates passed</span><span class="note-cta">See the evidence ↗</span></a>
+    <h1 class="statement" data-reveal="load" style="--d:110ms">Hush is building private mode for every AI.</h1>
+    <p class="dek" data-reveal="load" style="--d:180ms">One user-controlled layer for private context, shared memory and permissioned actions across models. AI asks Hush for what it needs. Hush returns the minimum useful answer instead of handing the model your private life.</p>
     <div class="ways" data-reveal="load" style="--d:240ms"><div class="actions">
-      <a class="btn btn-primary" href="https://github.com/sushxnthd/hush"><span class="btn-slot"></span><span class="btn-rail"><span class="btn-tile"><svg class="hush-mark" viewBox="0 0 256 256" aria-hidden="true"><g fill="currentColor"><path d="M78 34H178C183.523 34 188 38.477 188 44V84H68V44C68 38.477 72.477 34 78 34Z"/><path d="M30 84H68V160H30C24.477 160 20 155.523 20 150V94C20 88.477 24.477 84 30 84Z"/><path d="M188 84H226C231.523 84 236 88.477 236 94V150C236 155.523 231.523 160 226 160H188V84Z"/><path d="M68 160H112V200H68V160Z"/><path d="M152 160H196V201L152 232V160Z"/><rect x="91" y="110" width="22" height="24"/><rect x="143" y="110" width="22" height="24"/></g></svg></span></span><span class="btn-label">Build with Hush</span></a>
+      <a class="btn btn-primary" href="https://github.com/sushxnthd/hush"><span class="btn-slot"></span><span class="btn-rail"><span class="btn-tile"><img src="assets/hush-logo.svg" alt="" style="width:20px;height:20px"></span></span><span class="btn-label">Build with Hush</span></a>
       <a class="btn btn-secondary" href="product/">Explore the system <span class="btn-arrow">↗</span></a>
     </div></div>
-    <div class="hero-proof" data-reveal="load" style="--d:300ms">
-      <span><b>0%</b>credential leakage</span>
-      <span><b>160/160</b>bounded decisions</span>
-      <span><b>8/8</b>frozen gates</span>
-      <span><b>95.07%</b>completeness</span>
-    </div>
-    <figure class="hero-field" data-reveal="load" style="--d:360ms"><span class="field-id">H / 009</span><span class="field-copy">PRIVATE MODE / AI queries you, it does not copy you</span></figure>
+    <div class="hero-proof" data-reveal="load" style="--d:300ms"><span><b>0%</b>credential leakage</span><span><b>160/160</b>bounded decisions</span><span><b>8/8</b>frozen gates</span><span><b>95.07%</b>completeness</span></div>
+    <figure class="hero-field" data-reveal="load" style="--d:360ms"><span class="field-id">H / 001</span><span class="field-copy">PRIVATE MODE / your context stays yours</span></figure>
   </div>
 
   <article class="memo" id="mission" data-reveal>
-    <p>Personal AI should not require every provider to maintain another standing copy of your calendar, files, messages, preferences, identity and credentials.</p>
+    <p>The useful AI future is multi-model. Your private life should not be duplicated into every model provider just to make each assistant useful.</p>
     <p class="beat">AI should query you, not copy you.</p>
-    <p>Hush keeps private state behind a user-controlled boundary. An agent asks a semantic question through <span class="memo-code">hush_private_query</span>; Hush resolves the relevant capability locally and returns the minimum useful result. Shared memories remain proposals until the user approves them. Actions use scoped authority and secret references instead of model-visible credentials.</p>
-    <figure class="memo-figure">
-      <div class="hush-loop">
-        <span class="loop-label">THE HUSH BOUNDARY</span>
-        <svg class="wires" viewBox="0 0 640 290" preserveAspectRatio="none" aria-hidden="true"><path d="M154 88H220V145H260M154 204H220V145M380 145H430V88H486M430 145V204H486"/><path class="flow" d="M154 88H220V145H260M380 145H430V88H486"/></svg>
-        <span class="hush-node left1">PRIVATE<br>CONTEXT</span><span class="hush-node left2">CONNECTOR<br>RECORDS</span>
-        <span class="hush-node kernel"><svg class="hush-mark" viewBox="0 0 256 256" aria-hidden="true"><g fill="currentColor"><path d="M78 34H178C183.523 34 188 38.477 188 44V84H68V44C68 38.477 72.477 34 78 34Z"/><path d="M30 84H68V160H30C24.477 160 20 155.523 20 150V94C20 88.477 24.477 84 30 84Z"/><path d="M188 84H226C231.523 84 236 88.477 236 94V150C236 155.523 231.523 160 226 160H188V84Z"/><path d="M68 160H112V200H68V160Z"/><path d="M152 160H196V201L152 232V160Z"/><rect x="91" y="110" width="22" height="24"/><rect x="143" y="110" width="22" height="24"/></g></svg><span>HUSH<br>KERNEL</span></span>
-        <span class="hush-node right1">BOUNDED<br>ANSWER</span><span class="hush-node right2">SCOPED<br>ACTION</span>
-      </div>
-      <figcaption>Figure 1. The model-facing surface is intentionally smaller than the private state behind it.</figcaption>
-    </figure>
+    <p>Hush keeps private state behind a user-controlled boundary. An AI asks a bounded question, Hush computes against the relevant local or encrypted context, and only the approved result crosses the boundary. Memory can travel across providers without becoming provider-owned. Actions use scoped authority instead of model-visible credentials.</p>
+    <figure class="memo-figure"><div class="hush-loop"><span class="loop-label">THE HUSH BOUNDARY</span><svg class="wires" viewBox="0 0 640 290" preserveAspectRatio="none" aria-hidden="true"><path d="M154 88H220V145H260M154 204H220V145M380 145H430V88H486M430 145V204H486"/><path class="flow" d="M154 88H220V145H260M380 145H430V88H486"/></svg><span class="hush-node left1">PRIVATE<br>CONTEXT</span><span class="hush-node left2">CONNECTED<br>SOURCES</span><span class="hush-node kernel"><img src="assets/hush-logo.svg" alt="" style="width:38px;height:38px;filter:invert(1)"><span>HUSH<br>KERNEL</span></span><span class="hush-node right1">BOUNDED<br>ANSWER</span><span class="hush-node right2">SCOPED<br>ACTION</span></div><figcaption>Figure 1. Hush exposes a deliberately smaller model-facing surface than the private state behind it.</figcaption></figure>
   </article>
 
   <section class="section" id="what" data-reveal>
-    <h2>What Hush does</h2>
-    <div class="rows">
-      <article class="row capability-row" data-reveal><div class="cap-visual"><span class="idx">001</span><span class="cap-orbit a"></span><span class="cap-orbit b"></span><span class="cap-core">YOU</span></div><div class="cap-copy"><h3>Private context that stays private.</h3><p>Hush computes over selected private fields locally and returns the bounded decision the model needs, not the underlying record, path or extraneous values.</p></div></article>
-      <article class="row capability-row" data-reveal><div class="cap-visual"><span class="idx">002</span><svg class="mem-net" viewBox="0 0 164 144" aria-hidden="true"><path d="M22 72 55 31 84 72 126 34M84 72 132 105M84 72 42 112M55 31 132 105M22 72 126 34"/><circle cx="22" cy="72" r="5"/><circle cx="55" cy="31" r="5"/><circle cx="84" cy="72" r="9"/><circle cx="126" cy="34" r="5"/><circle cx="132" cy="105" r="5"/><circle cx="42" cy="112" r="5"/></svg></div><div class="cap-copy"><h3>One memory, across models.</h3><p>Any AI can propose a preference or fact, but only the user can approve it into Hush's canonical shared memory. Continuity moves with the user instead of staying trapped in one provider.</p></div></article>
-      <article class="row capability-row" data-reveal><div class="cap-visual"><span class="idx">003</span><span class="auth-line"></span><span class="auth-key">KEY</span><span class="auth-gate"><svg viewBox="0 0 24 24"><path d="m12 3 7 3v5c0 5-7 10-7 10S5 16 5 11V6zM9 12l2 2 4-5"/></svg></span><span class="auth-ok">OK</span></div><div class="cap-copy"><h3>Authority without handing over secrets.</h3><p>Agents request narrow capabilities. Hush checks policy, binds exact approvals, keeps credentials outside model context and records receipts for what actually happened.</p></div></article>
-    </div>
-    <a class="more" href="product/">See the product <span class="arrow">↗</span></a>
+    <h2>What we do</h2><div class="rows">
+      <article class="row capability-row" data-reveal><div class="cap-visual"><span class="idx">001</span><span class="cap-orbit a"></span><span class="cap-orbit b"></span><span class="cap-core">YOU</span></div><div class="cap-copy"><h3>Private context that stays private.</h3><p>Models get the decision, summary or capability they need — not the raw records, secret fields, file paths or unrelated context behind it.</p></div></article>
+      <article class="row capability-row" data-reveal><div class="cap-visual"><span class="idx">002</span><svg class="mem-net" viewBox="0 0 164 144" aria-hidden="true"><path d="M22 72 55 31 84 72 126 34M84 72 132 105M84 72 42 112M55 31 132 105M22 72 126 34"/><circle cx="22" cy="72" r="5"/><circle cx="55" cy="31" r="5"/><circle cx="84" cy="72" r="9"/><circle cx="126" cy="34" r="5"/><circle cx="132" cy="105" r="5"/><circle cx="42" cy="112" r="5"/></svg></div><div class="cap-copy"><h3>One approved memory across models.</h3><p>Assistants can propose what should be remembered. Hush keeps a canonical user-owned memory layer so continuity follows you instead of staying trapped inside one provider.</p></div></article>
+      <article class="row capability-row" data-reveal><div class="cap-visual"><span class="idx">003</span><span class="auth-line"></span><span class="auth-key">KEY</span><span class="auth-gate"><svg viewBox="0 0 24 24"><path d="m12 3 7 3v5c0 5-7 10-7 10S5 16 5 11V6zM9 12l2 2 4-5"/></svg></span><span class="auth-ok">OK</span></div><div class="cap-copy"><h3>Authority without handing over secrets.</h3><p>Agents request narrow capabilities. Hush checks policy, binds approval, keeps credentials outside model context and records what actually happened.</p></div></article>
+    </div><a class="more" href="product/">Read more about the system <span class="arrow">→</span></a>
   </section>
 
   <section class="section" id="production" data-reveal>
-    <h2 class="eyebrow">In production / research evidence</h2>
-    <p class="creed">The product thesis is measurable: <b>keep usefulness high while reducing what the model ever gets to see.</b></p>
-    <div class="proof-strip">
-      <div class="proof-mini"><strong>0%</strong><span>credential-canary leakage<br>50 paired traces</span></div>
-      <div class="proof-mini"><strong>100%</strong><span>task success<br>same AgentLeak run</span></div>
-      <div class="proof-mini"><strong>160/160</strong><span>bounded decisions correct<br>4 connectors</span></div>
-      <div class="proof-mini"><strong>95.07%</strong><span>completeness<br>frozen holdout</span></div>
-      <div class="proof-mini"><strong>12% vs 0%</strong><span>leak-free rate<br>Hush vs baseline</span></div>
-    </div>
-
-    <div class="evidence-layout">
-      <div class="metric-stack">
-        <article class="metric-card"><span class="label">Independent AgentLeak</span><span class="num">0%</span><p>credential-canary leakage on the Hush path; naive path leaked in 100% of trials.</p></article>
-        <article class="metric-card"><span class="label">Connector-backed bounded compute</span><span class="num">160/160</span><p>correct decisions across Gmail, Calendar, Drive and GitHub with zero exact benchmark-secret exposures.</p></article>
-        <article class="metric-card"><span class="label">Frozen external holdout</span><span class="num">8/8</span><p>preregistered AgentCIBench scientific gates passed.</p></article>
-      </div>
-      <article class="chart-card"><span class="label">AgentCIBench / Hush vs semantic-only</span><h3>Lower protected-context violation while retaining high completeness.</h3><div class="metric-pair"><div><strong>12%</strong><span>leak-free · Hush</span></div><div><strong>0%</strong><span>leak-free · baseline</span></div></div><div class="bars"><div class="bar-row"><span>Violation</span><span class="bar-track"><span class="bar-fill" style="--w:79.6%"></span></span><b>79.6%</b></div><div class="bar-row baseline"><span>Baseline</span><span class="bar-track"><span class="bar-fill" style="--w:94.1%"></span></span><b>94.1%</b></div><div class="bar-row"><span>Complete</span><span class="bar-track"><span class="bar-fill" style="--w:95.07%"></span></span><b>95.1%</b></div></div></article>
-    </div>
-
-    <article class="wide-card"><div class="wide-head"><div><span class="label">Cross-agent cumulative privacy</span><h3>Shared accounting stops a reconstruction attack before the secret becomes unique.</h3></div><p class="wide-note">Siloed accounting reconstructs a 16-bit secret in 16 answers. Hush releases 8 informative bits and denies the ninth novel disclosure.</p></div><svg class="privacy-chart" viewBox="0 0 590 210" role="img" aria-label="Cumulative novel information released"><path class="grid" d="M50 30H560M50 70H600M50 110H560M50 150H560M50 190H600M50 30V190M178 30V190M306 30V190M434 30V190M560 30V190"/><path class="axis" d="M50 190H600M50 30V190"/><path class="naive" d="M50 180L82 170L114 160L146 150L178 140L210 130L242 120L274 110L306 100L338 90L370 80L402 70L434 60L466 50L498 40L530 30"/><path class="hush" pathLength="1" d="M50 180L82 170L114 160L146 150L178 140L210 130L242 120L274 110L306 110L338 110L370 110L402 110L434 110L466 110L498 110L530 110"/><text x="50" y="204">1</text><text x="288" y="204">9th denied</text><text x="515" y="204">16</text><text x="54" y="22">novel bits released</text></svg><div class="chart-legend"><span><i class="blue"></i>Hush shared budget</span><span><i></i>siloed accounting</span><span>256 candidates remain</span></div></article>
-
-    <article class="heat-card"><div class="wide-head"><div><span class="label">Connector coverage</span><h3>Bounded computation works across the records agents actually use.</h3></div><p class="wide-note">160 controlled tasks across four connectors: 160 correct bounded decisions, zero exact benchmark-secret exposures, zero connector-path exposures.</p></div><div class="heatmap"><span class="head"></span><span class="head">Select</span><span class="head">Count</span><span class="head">Filter</span><span class="head">Conflict</span><span class="head">Route</span><span class="rowhead">Gmail</span><span class="pass"></span><span class="pass"></span><span class="pass"></span><span class="pass"></span><span class="pass"></span><span class="rowhead">Calendar</span><span class="pass"></span><span class="pass"></span><span class="pass"></span><span class="pass"></span><span class="pass"></span><span class="rowhead">Drive</span><span class="pass"></span><span class="pass"></span><span class="pass"></span><span class="pass"></span><span class="pass"></span><span class="rowhead">GitHub</span><span class="pass"></span><span class="pass"></span><span class="pass"></span><span class="pass"></span><span class="pass"></span></div></article>
-
-    <figure class="said"><blockquote><p><strong>The strongest current claim is not “perfect privacy.”</strong> It is that Hush can preserve useful personalization and action success while measurably reducing explicit private-context exposure under the tested conditions.</p></blockquote><figcaption>Current Hush claim boundary · v0.9 alpha</figcaption></figure>
+    <h2 class="eyebrow">In production / research evidence</h2><p class="creed">The promise is simple: <b>keep usefulness high while reducing what the model ever gets to see.</b></p>
+    <div class="proof-strip"><div class="proof-mini"><strong>0%</strong><span>credential-canary leakage<br>50 paired traces</span></div><div class="proof-mini"><strong>100%</strong><span>task success<br>same evaluation</span></div><div class="proof-mini"><strong>160/160</strong><span>bounded decisions<br>connector-backed</span></div><div class="proof-mini"><strong>8/8</strong><span>frozen scientific gates<br>AgentCIBench</span></div><div class="proof-mini"><strong>95.07%</strong><span>completeness<br>frozen holdout</span></div></div>
+    <div class="evidence-layout"><div class="metric-stack"><article class="metric-card"><span class="label">Independent AgentLeak</span><span class="num">0%</span><p>credential-canary leakage on the Hush path; naive path leaked in every paired trial.</p></article><article class="metric-card"><span class="label">Bounded compute</span><span class="num">160/160</span><p>correct decisions across connector-backed cases with zero exact benchmark-secret exposures.</p></article><article class="metric-card"><span class="label">Frozen holdout</span><span class="num">8/8</span><p>preregistered scientific gates passed in the current frozen evaluation.</p></article></div><article class="chart-card"><span class="label">Core product thesis</span><h3>Useful AI does not need a wholesale copy of the user.</h3><div class="metric-pair"><div><strong>0%</strong><span>credential leakage</span></div><div><strong>100%</strong><span>tested task success</span></div></div><p class="data-note">Alpha research evidence only. These results describe the current frozen evaluations; they are not a security certification.</p></article></div>
   </section>
 
-  <section class="section" id="security" data-reveal>
-    <h2>Hush runs where the user does.</h2>
-    <p class="body">Browser, desktop and mobile companion surfaces sit around the same user-owned trust boundary. The model vendor is replaceable; the user's private state remains anchored to Hush.</p>
-    <ol class="places">
-      <li class="place"><div class="place-head"><h3 class="place-name">In your browser</h3><span class="place-n">001</span></div><div class="place-plate"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span><svg class="surface-svg" viewBox="0 0 160 140"><rect x="22" y="24" width="116" height="86" rx="3"/><path d="M22 40h116M31 32h3m6 0h3m6 0h3"/><rect class="ghost" x="42" y="57" width="76" height="34"/><path class="pulse" d="M49 74h62"/></svg></div></li>
-      <li class="place"><div class="place-head"><h3 class="place-name">On your desktop</h3><span class="place-n">002</span></div><div class="place-plate"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span><svg class="surface-svg" viewBox="0 0 160 140"><rect x="28" y="20" width="104" height="76" rx="3"/><path d="M64 112h32M80 96v16"/><rect class="ghost" x="46" y="39" width="68" height="38"/><path class="pulse" d="M56 58h48"/></svg></div></li>
-      <li class="place"><div class="place-head"><h3 class="place-name">On your phone</h3><span class="place-n">003</span></div><div class="place-plate"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span><svg class="surface-svg" viewBox="0 0 160 140"><rect x="52" y="12" width="56" height="116" rx="8"/><path d="M69 21h22M75 119h10"/><rect class="ghost" x="61" y="39" width="38" height="52"/><path class="pulse" d="M68 55h24M68 66h18M68 77h21"/></svg></div></li>
-    </ol>
-    <div class="sec"><h3 class="sec-title">The model is not the security boundary.</h3><p class="sec-text">Encrypted local context, semantic bounded queries, cumulative disclosure accounting, approval-gated memory, privacy-aware routing, credential brokerage, exact approvals, receipts and ciphertext-only sync are enforced outside the model.</p><ul class="seals"><li>SEALED<br>CONTEXT</li><li>BOUNDED<br>COMPUTE</li><li>USER-OWNED<br>AUTHORITY</li></ul><div class="sec-links"><a class="more" href="https://github.com/sushxnthd/hush/blob/main/THREAT_MODEL.md">Threat model <span class="arrow">↗</span></a><a class="more" href="product/">Product <span class="arrow">↗</span></a></div></div>
+  <section class="section" id="everywhere" data-reveal>
+    <h2>Hush runs where your context lives.</h2><p class="body">The privacy boundary should not depend on one model vendor. Hush is designed as a user-owned layer that can sit beside the browser, desktop, local services and model harnesses.</p>
+    <div class="rows" style="margin-top:32px"><article class="row"><div class="tile tile-icon">001</div><dt>In your browser</dt><dd>Private context and consent close to the user, across the AI surfaces they already use.</dd></article><article class="row"><div class="tile tile-icon">002</div><dt>On your desktop</dt><dd>Local-first computation and encrypted state without making a cloud model the system of record.</dd></article><article class="row"><div class="tile tile-icon">003</div><dt>Inside your AI harness</dt><dd>MCP, plugins and APIs expose narrow capabilities instead of raw credentials and raw personal data.</dd></article></div>
   </section>
 
-  <aside class="cta" data-reveal><h2 class="cta-title">Building AI that needs to know the user?</h2><p class="cta-text">Let it query the person through Hush instead of turning the person's life into another provider-side profile.</p><a class="btn btn-primary" href="https://github.com/sushxnthd/hush"><span class="btn-slot"></span><span class="btn-rail"><span class="btn-tile"><svg class="hush-mark" viewBox="0 0 256 256" aria-hidden="true"><g fill="currentColor"><path d="M78 34H178C183.523 34 188 38.477 188 44V84H68V44C68 38.477 72.477 34 78 34Z"/><path d="M30 84H68V160H30C24.477 160 20 155.523 20 150V94C20 88.477 24.477 84 30 84Z"/><path d="M188 84H226C231.523 84 236 88.477 236 94V150C236 155.523 231.523 160 226 160H188V84Z"/><path d="M68 160H112V200H68V160Z"/><path d="M152 160H196V201L152 232V160Z"/><rect x="91" y="110" width="22" height="24"/><rect x="143" y="110" width="22" height="24"/></g></svg></span></span><span class="btn-label">Build with Hush</span></a></aside>
+  <section class="section" id="security" data-reveal><h2>Privacy is the product boundary.</h2><p class="body">Hush is built around local/private computation, explicit consent, bounded disclosure, secretless agent actions and auditable receipts. The current alpha is research software, not a certification claim.</p></section>
 
-  <section class="section" id="writing" data-reveal><h2>Research</h2><ol class="entries"><li><a class="entry" href="https://github.com/sushxnthd/hush/pull/29"><span class="entry-tile">↗</span><span class="entry-n">01</span><span class="entry-title">Independent AgentLeak regression: secretless actions under an external detector</span></a></li><li><a class="entry" href="https://github.com/sushxnthd/hush/blob/main/research/AGENTCIBENCH_CONFIRMATORY_V1.md"><span class="entry-tile">↗</span><span class="entry-n">02</span><span class="entry-title">AgentCIBench confirmatory result: frozen contextual-integrity holdout</span></a></li><li><a class="entry" href="https://github.com/sushxnthd/hush/blob/main/research/AGENTCIBENCH_CONTEXT_BOUNDARY_DEV_V1F.md"><span class="entry-tile">↗</span><span class="entry-n">03</span><span class="entry-title">Lineage-aware context boundaries: development result and next freeze</span></a></li></ol><a class="more" href="writing/">All research <span class="arrow">↗</span></a></section>
+  <section class="section" id="writing" data-reveal><h2>Writing</h2><div class="rows"><article class="row"><div class="tile tile-icon">01</div><dt>Why AI should query you instead of copying you</dt><dd>The design argument for separating useful context from standing provider-side copies.</dd></article><article class="row"><div class="tile tile-icon">02</div><dt>Bounded disclosure as an interface for personal AI</dt><dd>How Hush turns privacy policy into a model-facing capability surface.</dd></article><article class="row"><div class="tile tile-icon">03</div><dt>Secretless actions and user-owned authority</dt><dd>Why the agent should receive permission to act without receiving the credential itself.</dd></article></div><a class="more" href="writing/">Read the research <span class="arrow">↗</span></a></section>
 
-  <footer class="foot" data-reveal><div class="foot-grid"><div class="foot-brand"><a class="foot-mark" href="./"><svg class="hush-mark" viewBox="0 0 256 256" aria-hidden="true"><g fill="currentColor"><path d="M78 34H178C183.523 34 188 38.477 188 44V84H68V44C68 38.477 72.477 34 78 34Z"/><path d="M30 84H68V160H30C24.477 160 20 155.523 20 150V94C20 88.477 24.477 84 30 84Z"/><path d="M188 84H226C231.523 84 236 88.477 236 94V150C236 155.523 231.523 160 226 160H188V84Z"/><path d="M68 160H112V200H68V160Z"/><path d="M152 160H196V201L152 232V160Z"/><rect x="91" y="110" width="22" height="24"/><rect x="143" y="110" width="22" height="24"/></g></svg><span class="hush-word">hush</span></a><p class="foot-line">The personal trust layer for every AI.</p><span class="foot-place">User controlled</span></div><nav class="foot-group"><span class="foot-head">Product</span><ul class="foot-links"><li><a href="product/">Product</a></li><li><a href="#production">Evidence</a></li><li><a href="https://github.com/sushxnthd/hush">Docs</a></li></ul></nav><nav class="foot-group"><span class="foot-head">Research</span><ul class="foot-links"><li><a href="writing/">Writing</a></li><li><a href="https://github.com/sushxnthd/hush/blob/main/THREAT_MODEL.md">Threat model</a></li><li><a href="https://github.com/sushxnthd/hush/blob/main/ROADMAP.md">Roadmap</a></li></ul></nav><nav class="foot-group"><span class="foot-head">Connect</span><ul class="foot-links"><li><a href="changelog/">Changelog</a></li><li><a href="https://github.com/sushxnthd/hush">GitHub</a></li><li><a href="#top">Back to top ↑</a></li></ul></nav></div><div class="foot-legal"><span>© 2026 Hush</span><span class="foot-status"><i class="dot"></i> Alpha</span><a class="foot-top" href="#top">Back to top ↑</a></div></footer>
+  <section class="section" data-reveal><h2>Building AI that needs private context?</h2><p class="body">Use Hush as the boundary between an agent and the parts of a user's life the model should never receive wholesale.</p><div class="ways"><div class="actions"><a class="btn btn-primary" href="https://github.com/sushxnthd/hush"><span class="btn-slot"></span><span class="btn-rail"><span class="btn-tile"><img src="assets/hush-logo.svg" alt="" style="width:20px;height:20px"></span></span><span class="btn-label">Build with Hush</span></a></div></div></section>
 </main>
 </div>
-<script src="assets/hush.js?v=7014efc3" defer></script>
-</body>
-</html>
+<script src="assets/hush.js?v=replica-reboot-1"></script>
+</body></html>
