@@ -1,0 +1,43 @@
+name: pcc-v2-development
+on:
+  push:
+    branches: [research/pcc-v2-development]
+    paths:
+      - 'research/pcc-v2/dev_inspect.mjs'
+      - 'research/pcc-v2/dev_eval.mjs'
+      - '.github/workflows/pcc-v2-dev-inspect.yml'
+permissions:
+  contents: read
+jobs:
+  develop:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download frozen POLAR release
+        run: |
+          python - <<'PY'
+          import hashlib, pathlib, urllib.request
+          url='https://huggingface.co/datasets/Qiaoyuan/POLAR-Bench/resolve/main/data/privacy_benchmark_rendered_repaired.json?download=true'
+          p=pathlib.Path('/tmp/polar.json')
+          with urllib.request.urlopen(url,timeout=180) as r, p.open('wb') as f:
+              while True:
+                  b=r.read(1024*1024)
+                  if not b: break
+                  f.write(b)
+          h=hashlib.sha256(p.read_bytes()).hexdigest()
+          expected='b1db0274228b1346df47d0a42bb75f9536ded1a6d750bb2720f43612c7abb266'
+          print('dataset_sha256='+h)
+          if h != expected: raise SystemExit('Frozen dataset hash mismatch')
+          PY
+      - name: Inspect P1 policy grammar
+        run: node research/pcc-v2/dev_inspect.mjs /tmp/polar.json
+      - name: Evaluate PCC v2 prototype on failed P1 development set
+        run: node research/pcc-v2/dev_eval.mjs /tmp/polar.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pcc-v2-development
+          path: research/pcc-v2/out/
+          if-no-files-found: error
