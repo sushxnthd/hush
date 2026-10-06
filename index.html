@@ -12,7 +12,7 @@
 <script>
 (async()=>{
   const parts=await Promise.all([0,1,2,3,4,5].map(async i=>{
-    const r=await fetch(`replica/${i}.b64?v=2`,{cache:'no-cache'});
+    const r=await fetch(`replica/${i}.b64?v=3`,{cache:'no-cache'});
     if(!r.ok) throw new Error(`replica/${i}.b64: ${r.status}`);
     return (await r.text()).trim();
   }));
@@ -25,6 +25,7 @@
     .replace(/^html(?=<html)/,'')
     .replace(/<script(?:\s[^>]*)?>[\s\S]*?<\/script>/g,'');
 
+  // Critical fixes are CSS-only and fail-open: no visibility guard can leave the site blank.
   const integrity=`
     <style id="hush-integrity-css">
       .cookie-bar,.cookie-panel,[data-cookie-consent],[data-cookie-dialog],.dials{display:none!important}
@@ -32,15 +33,15 @@
       .field .film{display:none!important}
     </style>`;
 
-  html=html.replace('</head>',`${integrity}<style id="hush-prepaint">html{visibility:hidden}</style><style id="hush-polish-guard">html{visibility:hidden}</style></head>`);
-  html=html.replace('</body>','<script src="assets/replica-fix.js?v=fb6e79de" onerror="document.getElementById(\'hush-prepaint\')?.remove()"></script><script src="assets/replica-polish.js?v=c9ea6722" onerror="document.getElementById(\'hush-polish-guard\')?.remove()"></script><script src="assets/replica-qa.js?v=f7a09710"></script></body>');
+  html=html.replace('</head>',`${integrity}</head>`);
+  html=html.replace('</body>','<script src="assets/replica-fix.js?v=fb6e79de"></script><script src="assets/replica-polish.js?v=c9ea6722"></script><script src="assets/replica-qa.js?v=f7a09710"></script></body>');
 
   document.open();
   document.write(html);
   document.close();
 })().catch(err=>{
   console.error(err);
-  document.body.innerHTML='<main style="font:16px system-ui;padding:40px;color:#0b1015">Hush failed to load. Refresh the page.</main>';
+  document.body.innerHTML='<main style="font:16px system-ui;padding:40px;color:#0b1015;max-width:720px;margin:0 auto"><h1 style="font-size:28px;margin:0 0 12px">Hush</h1><p>The site hit a loading error. Refresh once; if it persists, the static fallback will be restored.</p></main>';
 });
 </script>
 </body>
