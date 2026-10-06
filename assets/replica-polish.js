@@ -27,4 +27,5 @@ const open=key=>{const pop=q(`[data-card-for="${CSS.escape(key.dataset.card)}"]`
 newKeys.forEach(key=>{key.setAttribute('aria-expanded','false');key.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();open(key)});key.addEventListener('mouseenter',()=>open(key))});
 document.addEventListener('click',e=>{if(active&&!e.target.closest('[data-card-for]')&&!e.target.closest('#memo [data-card]'))close()});
 addEventListener('resize',()=>{if(active&&keyActive)place(keyActive,active)},{passive:true});
+q('#hush-polish-guard')?.remove();
 })();
