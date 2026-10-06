@@ -1,22 +1,43 @@
 document.documentElement.classList.add('js');
 const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
 const rail=q('.rail'),menu=q('.menu'),mobile=matchMedia('(max-width:1000px)');
+function closeMenu(){menu?.setAttribute('aria-expanded','false');rail?.classList.remove('is-open')}
 menu?.addEventListener('click',()=>{const open=menu.getAttribute('aria-expanded')!=='true';menu.setAttribute('aria-expanded',String(open));rail?.classList.toggle('is-open',open)});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){menu?.setAttribute('aria-expanded','false');rail?.classList.remove('is-open');closePop()}});
-document.addEventListener('click',e=>{if(mobile.matches&&rail?.classList.contains('is-open')&&!rail.contains(e.target)){menu?.setAttribute('aria-expanded','false');rail.classList.remove('is-open')}});
+qa('.nav-doors a').forEach(a=>a.addEventListener('click',closeMenu));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();closePop()}});
+document.addEventListener('click',e=>{if(mobile.matches&&rail?.classList.contains('is-open')&&!rail.contains(e.target))closeMenu()});
+
 const reveals=qa('[data-reveal]');
-if('IntersectionObserver'in window){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('is-visible');if(e.target.classList.contains('loop'))e.target.classList.add('is-in');io.unobserve(e.target)}}),{threshold:.08,rootMargin:'0px 0px -32px'});reveals.forEach(el=>el.dataset.reveal==='load'?requestAnimationFrame(()=>el.classList.add('is-visible')):io.observe(el));qa('.loop').forEach(el=>io.observe(el))}else{reveals.forEach(el=>el.classList.add('is-visible'));qa('.loop').forEach(el=>el.classList.add('is-in'))}
+if('IntersectionObserver'in window){
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('is-visible');if(e.target.classList.contains('loop'))e.target.classList.add('is-in');io.unobserve(e.target)}}),{threshold:.08,rootMargin:'0px 0px -32px'});
+  reveals.forEach(el=>el.dataset.reveal==='load'?requestAnimationFrame(()=>el.classList.add('is-visible')):io.observe(el));
+  qa('.loop').forEach(el=>io.observe(el));
+}else{reveals.forEach(el=>el.classList.add('is-visible'));qa('.loop').forEach(el=>el.classList.add('is-in'))}
+
 const toc=qa('[data-section]'),secs=toc.map(a=>q('#'+CSS.escape(a.dataset.section))).filter(Boolean),mark=q('.nav-mark');
 function sync(){if(!secs.length)return;let active=0,trigger=innerHeight*.38;secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<=trigger)active=i});if(scrollY+innerHeight>=document.documentElement.scrollHeight-2)active=secs.length-1;toc.forEach((a,i)=>i===active?a.setAttribute('aria-current','location'):a.removeAttribute('aria-current'));const a=toc[active];if(mark&&a&&!mobile.matches)mark.style.setProperty('--mark-y',`${a.offsetTop+a.offsetHeight/2-3}px`)}
-addEventListener('scroll',()=>requestAnimationFrame(sync),{passive:true});addEventListener('resize',sync,{passive:true});sync();
+let scrollTick=false;function scheduleSync(){if(scrollTick)return;scrollTick=true;requestAnimationFrame(()=>{sync();scrollTick=false})}
+addEventListener('scroll',scheduleSync,{passive:true});addEventListener('resize',scheduleSync,{passive:true});document.fonts?.ready.then(sync);sync();
+
 const promptText=q('#setup-prompt')?.textContent.trim()||'';
 async function copyPrompt(btn){try{await navigator.clipboard.writeText(promptText)}catch{const ta=document.createElement('textarea');ta.value=promptText;document.body.append(ta);ta.select();document.execCommand('copy');ta.remove()}const said=q('.prompt-said');if(said){said.textContent='Copied';setTimeout(()=>said.textContent='',1500)}if(btn?.closest('.opens-menu')){q('.opens-menu').hidden=true;q('.opens-toggle')?.setAttribute('aria-expanded','false')}}
 qa('[data-copy-prompt]').forEach(btn=>btn.addEventListener('click',()=>copyPrompt(btn)));
 const toggle=q('.opens-toggle'),opens=q('.opens-menu');toggle?.addEventListener('click',e=>{e.stopPropagation();const open=toggle.getAttribute('aria-expanded')!=='true';toggle.setAttribute('aria-expanded',String(open));opens.hidden=!open});document.addEventListener('click',e=>{if(opens&&!opens.hidden&&!e.target.closest('.opens')){opens.hidden=true;toggle?.setAttribute('aria-expanded','false')}});
-const blockSvg=q('.stat-blocks');if(blockSvg){const ns='http://www.w3.org/2000/svg',g=q('g',blockSvg);for(let r=0;r<4;r++)for(let c=0;c<10;c++){const rect=document.createElementNS(ns,'rect');rect.setAttribute('x',String(c*21+2));rect.setAttribute('y',String(r*18+2));rect.setAttribute('width','15');rect.setAttribute('height','12');rect.setAttribute('rx','1');rect.setAttribute('fill','var(--blue)');rect.style.opacity=String(.42+(c+r)%4*.16);g.append(rect)}}
+
+const blockSvg=q('.stat-blocks');
+if(blockSvg){
+  const ns='http://www.w3.org/2000/svg',g=q('g',blockSvg);
+  for(let r=0;r<8;r++)for(let c=0;c<20;c++){
+    const rect=document.createElementNS(ns,'rect');
+    rect.setAttribute('x',String(c*10.5+1));rect.setAttribute('y',String(r*9+1));rect.setAttribute('width','7.5');rect.setAttribute('height','6');rect.setAttribute('rx','.7');rect.setAttribute('fill','var(--blue)');rect.style.opacity=String(.46+(c+r)%4*.14);g.append(rect)
+  }
+}
+
 let activePop=null,activeKey=null;
 function placePop(key,pop){const r=key.getBoundingClientRect(),pw=Math.min(400,innerWidth-32),spaceBelow=innerHeight-r.bottom,above=spaceBelow<260&&r.top>spaceBelow;const left=Math.max(16,Math.min(innerWidth-pw-16,r.left+r.width/2-pw/2));pop.classList.toggle('is-above',above);pop.style.left=`${left}px`;pop.style.top=above?`${Math.max(16,r.top-pop.offsetHeight-14)}px`:`${Math.min(innerHeight-pop.offsetHeight-16,r.bottom+14)}px`;pop.style.setProperty('--tx',`${Math.max(16,Math.min(pw-16,r.left+r.width/2-left))}px`)}
-function openPop(key){const pop=q('#'+CSS.escape(key.dataset.ref));if(!pop)return;if(activePop===pop){closePop();return}closePop();activePop=pop;activeKey=key;key.setAttribute('aria-expanded','true');pop.classList.add('is-on');requestAnimationFrame(()=>placePop(key,pop))}
+function showPop(key){const pop=q('#'+CSS.escape(key.dataset.ref));if(!pop||activePop===pop)return;closePop();activePop=pop;activeKey=key;key.setAttribute('aria-expanded','true');pop.classList.add('is-on');requestAnimationFrame(()=>placePop(key,pop))}
 function closePop(){if(activePop)activePop.classList.remove('is-on');if(activeKey)activeKey.setAttribute('aria-expanded','false');activePop=null;activeKey=null}
-qa('[data-ref]').forEach(key=>{key.setAttribute('aria-expanded','false');key.addEventListener('click',e=>{e.stopPropagation();openPop(key)});key.addEventListener('mouseenter',()=>openPop(key))});qa('.pop').forEach(pop=>pop.addEventListener('mouseleave',closePop));document.addEventListener('click',e=>{if(activePop&&!e.target.closest('.pop')&&!e.target.closest('[data-ref]'))closePop()});addEventListener('resize',()=>{if(activePop&&activeKey)placePop(activeKey,activePop)},{passive:true});
-const prefetched=new Set();function internal(a){if(!a?.href)return null;let u;try{u=new URL(a.href,location.href)}catch{return null}if(u.origin!==location.origin)return null;if(!u.pathname.includes('/hush/')&&location.pathname.includes('/hush/'))return null;return u}document.addEventListener('pointerover',e=>{const a=e.target.closest?.('a[href]'),u=internal(a);if(!u||prefetched.has(u.href))return;prefetched.add(u.href);const l=document.createElement('link');l.rel='prefetch';l.href=u.href;document.head.append(l)},{passive:true});
+qa('[data-ref]').forEach(key=>{key.setAttribute('aria-expanded','false');key.addEventListener('click',e=>{e.stopPropagation();activeKey===key?closePop():showPop(key)});key.addEventListener('mouseenter',()=>showPop(key))});
+qa('.pop').forEach(pop=>pop.addEventListener('mouseleave',closePop));document.addEventListener('click',e=>{if(activePop&&!e.target.closest('.pop')&&!e.target.closest('[data-ref]'))closePop()});addEventListener('resize',()=>{if(activePop&&activeKey)placePop(activeKey,activePop)},{passive:true});
+
+const prefetched=new Set();function internal(a){if(!a?.href)return null;let u;try{u=new URL(a.href,location.href)}catch{return null}if(u.origin!==location.origin)return null;if(!u.pathname.includes('/hush/')&&location.pathname.includes('/hush/'))return null;return u}document.addEventListener('pointerover',e=>{const a=e.target.closest?.('a[href]'),u=internal(a);if(!u||prefetched.has(u.href)||u.pathname===location.pathname)return;prefetched.add(u.href);const l=document.createElement('link');l.rel='prefetch';l.href=u.href;document.head.append(l)},{passive:true});
