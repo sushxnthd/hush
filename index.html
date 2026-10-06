@@ -20,16 +20,11 @@
   const stream=new Blob([binary]).stream().pipeThrough(new DecompressionStream('gzip'));
   let html=await new Response(stream).text();
 
-  // The compressed payload is the source-exact visual replica. Strip its old shim and
-  // make only Hush integrity corrections before first paint.
-  html=html
-    .replace(/<script(?:\s[^>]*)?>[\s\S]*?<\/script>/g,'')
-    .replaceAll('learner-1','Hush kernel')
-    .replaceAll('Markdown memory','semantic-only baseline')
-    .replaceAll('FAIL_TO_PASS','completeness');
-
+  // Preserve the source-exact visual payload, but replace its old behavior with Hush's
+  // content-integrity and interaction layer before the first visible paint.
+  html=html.replace(/<script(?:\s[^>]*)?>[\s\S]*?<\/script>/g,'');
   html=html.replace('</head>','<style id="hush-prepaint">html{visibility:hidden}</style><style id="hush-polish-guard">html{visibility:hidden}</style></head>');
-  html=html.replace('</body>','<script src="assets/replica-fix.js?v=fb6e79de" onerror="document.getElementById(\'hush-prepaint\')?.remove()"></script><script src="assets/replica-polish.js?v=6da744c5" onerror="document.getElementById(\'hush-polish-guard\')?.remove()"></script></body>');
+  html=html.replace('</body>','<script src="assets/replica-fix.js?v=fb6e79de" onerror="document.getElementById(\'hush-prepaint\')?.remove()"></script><script src="assets/replica-polish.js?v=c9ea6722" onerror="document.getElementById(\'hush-polish-guard\')?.remove()"></script></body>');
 
   document.open();
   document.write(html);
