@@ -1,0 +1,20 @@
+<article class="memo" data-reveal="" id="memo">
+<p>The path to useful personal AI is to make context available without making raw private state portable. Hush turns <button class="key" data-ref="q-bounded" type="button">bounded computation<span class="fn"></span></button> into the default interface between a person and a model.</p>
+<p class="beat"><button class="key" data-ref="q-thesis" type="button">AI should query you, not copy you.<span class="fn"></span></button></p>
+<p>Private state stays behind a user-controlled boundary. Agents ask semantic questions, Hush computes locally over the relevant capability, and the model receives the minimum useful result. Approved memories can move across models. Scoped actions can run without exposing credentials. A <button class="key" data-ref="q-budget" type="button">persistent privacy budget<span class="fn"></span></button> follows disclosure across tasks and agents.</p>
+<p>The system is being falsified against external and controlled evaluations rather than sold as “perfect privacy.” The current <button class="key" data-ref="q-agentci" type="button">AgentCIBench holdout<span class="fn"></span></button> and <button class="key" data-ref="q-agentleak" type="button">AgentLeak action check<span class="fn"></span></button> define the strongest claims Hush can make today.</p>
+<figure aria-labelledby="loop-caption" class="loop">
+<div class="canvas">
+<svg aria-hidden="true" class="edges" preserveAspectRatio="none" viewBox="0 0 640 330"><path d="M84 74H177V145H252M84 165H177V145M84 256H177V145M386 145H465V84H556M465 145V245H556"></path><path class="edge-flow" d="M84 74H177V145H252M386 145H465V84H556"></path></svg>
+<div class="frame"></div>
+<span class="node tile n1">FILES</span><span class="node tile n2">CHATS</span><span class="node tile n3">APPS</span><span class="tag tag-src t1">private sources</span>
+<span class="node hub"><svg aria-hidden="true" class="hush-mark" viewBox="0 0 256 256"><g fill="currentColor"><path d="M78 34H178C183.523 34 188 38.477 188 44V84H68V44C68 38.477 72.477 34 78 34Z"></path><path d="M30 84H68V160H30C24.477 160 20 155.523 20 150V94C20 88.477 24.477 84 30 84Z"></path><path d="M188 84H226C231.523 84 236 88.477 236 94V150C236 155.523 231.523 160 226 160H188V84Z"></path><path d="M68 160H112V200H68V160Z"></path><path d="M152 160H196V201L152 232V160Z"></path><rect height="24" width="22" x="91" y="110"></rect><rect height="24" width="22" x="143" y="110"></rect></g></svg></span><span class="tag tag-under th">Hush kernel</span>
+<span class="node tile tile-lg mem">ENCRYPTED<br/>CONTEXT</span><span class="tag tag-under tm">user-owned state</span>
+<span class="verb">COMPUTE · ACCOUNT · APPROVE · BROKER</span>
+<span class="node tile tile-lg out1">BOUNDED<br/>ANSWER</span><span class="tag tag-under to1">model context</span>
+<span class="node tile tile-lg out2">SCOPED<br/>ACTION</span><span class="tag tag-under to2">authorized effect</span>
+<span class="fleet"><i></i><i></i><i></i></span>
+</div>
+<figcaption id="loop-caption">Figure 1. Private state enters Hush; the model-facing surface contains only bounded results, approved memory and scoped authority.</figcaption>
+</figure>
+</article>
