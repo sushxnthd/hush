@@ -2,31 +2,42 @@ import {norm} from '../polar-p1/evaluate.mjs';
 import {policyClauses,provenanceErasedFacts,humanField,MUST_DERIVE} from '../pcc-v2/policy_compiler_v2.mjs';
 import {policyAllowsFieldV3} from '../pcc-v3/policy_compiler_v3.mjs';
 
-const NEG=/\b(?:do not|don t|never|keep|private|confidential|off limits|off-limits|should not|not be disclosed|must not|cannot share|can t share|without revealing)\b/;
 const POS=/\b(?:can share|may share|can disclose|may disclose|can discuss|may discuss|can mention|may mention|can be shared|is okay to share|okay to share)\b/;
+const PRE_DENY='(?:do not|don t|never|keep|must not|should not|cannot|can t)';
+const POST_DENY='(?:private|confidential|off limits|off-limits|must not be disclosed|should not be disclosed|must not be shared|should not be shared|cannot be shared|can t be shared)';
 
 const BAND_RULES={
   credit_score_band:{
     allow:[/\bcredit score\b[^.]*\b(?:only )?(?:as|in terms of|in) (?:a )?band\b/,/\bcredit score band\b/],
-    deny:[/\bcredit score band\b/,/\bband(?:ed)? credit score\b/]
+    objects:['credit score band','banded credit score']
   },
   income_band:{
     allow:[/\bincome\b[^.]*\b(?:only )?(?:as|in terms of|in) (?:an? )?(?:income )?band\b/,/\bincome band\b/],
-    deny:[/\bincome band\b/,/\bband(?:ed)? income\b/]
+    objects:['income band','banded income']
   },
   monthly_income_band:{
     allow:[/\b(?:monthly )?income\b[^.]*\b(?:only )?(?:as|in terms of|in) (?:an? )?(?:monthly )?income band\b/,/\bmonthly income band\b/],
-    deny:[/\bmonthly income band\b/,/\bband(?:ed)? monthly income\b/]
+    objects:['monthly income band','banded monthly income']
   }
 };
 
+function esc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
 function explicitBandAllow(policy,key){
   const rule=BAND_RULES[key];if(!rule)return false;
   return policyClauses(policy).some(clause=>POS.test(clause)&&rule.allow.some(re=>re.test(clause)));
 }
+function objectScopedBandDeny(clause,object){
+  const o=esc(object);
+  // Bind negative force to the abstraction object itself. This intentionally does
+  // not treat a later phrase such as "never the exact amount" as a denial of a
+  // previously permitted band.
+  const before=new RegExp(`\\b${PRE_DENY}\\b(?:\\s+\\w+){0,6}\\s+${o}\\b`);
+  const after=new RegExp(`\\b${o}\\b(?:\\s+\\w+){0,6}\\s+\\b${POST_DENY}\\b`);
+  return before.test(clause)||after.test(clause);
+}
 function explicitBandDeny(policy,key){
   const rule=BAND_RULES[key];if(!rule)return false;
-  return policyClauses(policy).some(clause=>NEG.test(clause)&&rule.deny.some(re=>re.test(clause)));
+  return policyClauses(policy).some(clause=>rule.objects.some(object=>objectScopedBandDeny(clause,object)));
 }
 
 export function policyAllowsFieldV4(policy,key){
@@ -50,4 +61,4 @@ export function compileDisclosureV4(record){
   return {facts,chosen,text:chosen.map(x=>x.text).join('\n')};
 }
 
-export function pccV4Summary(){return {version:'pcc-v4',abstractionAwareBands:Object.keys(BAND_RULES),rawValueOverride:false,usesScoringTargets:false};}
+export function pccV4Summary(){return {version:'pcc-v4',abstractionAwareBands:Object.keys(BAND_RULES),rawValueOverride:false,objectScopedDeny:true,usesScoringTargets:false};}
