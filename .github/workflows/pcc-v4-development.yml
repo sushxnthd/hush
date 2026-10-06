@@ -8,13 +8,17 @@ on:
 permissions:
   contents: read
 jobs:
-  diagnose:
+  develop:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: PCC v4 abstraction-safety invariants
+        run: |
+          node --test research/pcc-v3/policy_compiler_v3.test.mjs
+          node --test research/pcc-v4/policy_compiler_v4.test.mjs
       - name: Download exact POLAR release
         run: |
           python - <<'PY'
@@ -31,8 +35,11 @@ jobs:
           PY
       - name: Diagnose P3 conditional misses
         run: node research/pcc-v4/p3_miss_diagnostics.mjs /tmp/polar.json
+      - name: Regress PCC v4 across P1-P3 development regimes
+        run: node research/pcc-v4/dev_regression.mjs /tmp/polar.json
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: pcc-v4-p3-diagnostics
+          name: pcc-v4-development
           path: research/pcc-v4/out/
           if-no-files-found: error
