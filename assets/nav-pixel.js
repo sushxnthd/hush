@@ -7,6 +7,10 @@ window.initHushNavPixel=()=>{
   const brand=rail.querySelector('.hush-brand');
   if(brand){brand.innerHTML='<img class="hush-brand-logo" src="assets/hush-logo.svg" alt="" aria-hidden="true"><span class="hush-brand-word">hush</span>'}
 
+  const human=rail.querySelector('[data-format-human]'),agent=rail.querySelector('[data-format-agent]');
+  if(human){human.href='./';human.setAttribute('aria-current','page')}
+  if(agent){agent.href='index.md';agent.type='text/markdown';agent.title='Read this page as Markdown';agent.removeAttribute('aria-current')}
+
   const docs=[...rail.querySelectorAll('.nav-doors a')].find(a=>a.textContent.trim()==='Docs');
   docs?.classList.add('nav-mobile-keep');
 
@@ -88,34 +92,5 @@ window.initHushNavPixel=()=>{
     sync();
     const revealDelay=parseFloat(getComputedStyle(rail).getPropertyValue('--h'))||0;
     ready=false;setTimeout(()=>{ready=true;sync()},reduce?0:revealDelay+460+Math.max(active,0)*60)
-  }
-
-  const human=rail.querySelector('[data-format-human]'),agent=rail.querySelector('[data-format-agent]'),main=document.querySelector('main#content');
-  if(human&&agent&&main){
-    const makeMarkdown=()=>{
-      const parts=['# Hush','',document.querySelector('.hero .dek')?.textContent?.trim()||'Private mode for every AI.',''];
-      document.querySelectorAll('main section[id]').forEach(section=>{
-        const h=section.querySelector('h2,h3');if(h)parts.push(`## ${h.textContent.trim()}`,'');
-        section.querySelectorAll(':scope > p, :scope .body, :scope .lead').forEach(p=>parts.push(p.textContent.trim(),''))
-      });
-      parts.push('---','','Research and implementation: https://github.com/sushxnthd/hush');
-      return parts.join('\n')
-    };
-    const showAgent=updateUrl=>{
-      if(agent.hasAttribute('aria-current'))return;
-      let pre=main.querySelector('.agent-markdown');
-      if(!pre){pre=document.createElement('pre');pre.className='agent-markdown';pre.tabIndex=-1;pre.textContent=makeMarkdown();main.append(pre)}
-      main.classList.add('is-agent');human.removeAttribute('aria-current');agent.setAttribute('aria-current','page');rail.classList.add('is-agent');
-      if(updateUrl){const u=new URL(location.href);u.searchParams.set('agent','1');history.replaceState(history.state,'',u)}
-      scrollTo({top:0,behavior:'instant'});pre.focus({preventScroll:true})
-    };
-    const showHuman=()=>{
-      if(!agent.hasAttribute('aria-current'))return;
-      main.querySelector('.agent-markdown')?.remove();main.classList.remove('is-agent');agent.removeAttribute('aria-current');human.setAttribute('aria-current','page');rail.classList.remove('is-agent');
-      const u=new URL(location.href);u.searchParams.delete('agent');history.replaceState(history.state,'',u);scrollTo({top:0,behavior:'instant'});human.focus({preventScroll:true})
-    };
-    agent.addEventListener('click',e=>{e.preventDefault();showAgent(true)});
-    human.addEventListener('click',e=>{if(agent.hasAttribute('aria-current')){e.preventDefault();showHuman()}});
-    if(new URL(location.href).searchParams.has('agent'))showAgent(false)
   }
 };
