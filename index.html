@@ -12,13 +12,25 @@
 <script>
 (async()=>{
   const parts=await Promise.all([0,1,2,3,4,5].map(async i=>{
-    const r=await fetch(`replica/${i}.b64?v=1`,{cache:'no-cache'});
+    const r=await fetch(`replica/${i}.b64?v=2`,{cache:'no-cache'});
     if(!r.ok) throw new Error(`replica/${i}.b64: ${r.status}`);
     return (await r.text()).trim();
   }));
   const binary=Uint8Array.from(atob(parts.join('')),c=>c.charCodeAt(0));
   const stream=new Blob([binary]).stream().pipeThrough(new DecompressionStream('gzip'));
-  const html=await new Response(stream).text();
+  let html=await new Response(stream).text();
+
+  // The compressed payload is the source-exact visual replica. Strip its old shim and
+  // make only Hush integrity corrections before first paint.
+  html=html
+    .replace(/<script(?:\s[^>]*)?>[\s\S]*?<\/script>/g,'')
+    .replaceAll('learner-1','Hush kernel')
+    .replaceAll('Markdown memory','semantic-only baseline')
+    .replaceAll('FAIL_TO_PASS','completeness');
+
+  html=html.replace('</head>','<style id="hush-prepaint">html{visibility:hidden}</style></head>');
+  html=html.replace('</body>','<script src="assets/replica-fix.js?v=fb6e79de" onerror="document.getElementById(\'hush-prepaint\')?.remove()"></script></body>');
+
   document.open();
   document.write(html);
   document.close();
