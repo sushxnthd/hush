@@ -178,7 +178,7 @@ function initStandardPage() {
 
   const pixelCss = document.createElement('link');
   pixelCss.rel = 'stylesheet';
-  pixelCss.href = '../assets/subpage-integrity.css?v=2';
+  pixelCss.href = '../assets/subpage-integrity.css?v=3';
   document.head.append(pixelCss);
   const pixelScript = document.createElement('script');
   pixelScript.src = '../assets/subpage-nav-pixel.js?v=1';
