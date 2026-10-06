@@ -1,0 +1,29 @@
+name: topr-composition-development
+on:
+  push:
+    branches: [research/topr-composition-development]
+    paths:
+      - 'research/topr/**'
+      - '.github/workflows/topr-composition-development.yml'
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download TOP-Bench v2 development files only
+        run: |
+          curl -L --fail --silent --show-error https://raw.githubusercontent.com/1Ponder/TOP-R/main/TOP-Bench-v2/Trajectories.json -o /tmp/topr-v2.json
+          curl -L --fail --silent --show-error https://raw.githubusercontent.com/1Ponder/TOP-R/main/TOP-Bench-v2/Negative_control.json -o /tmp/topr-v2-neg.json
+          sha256sum /tmp/topr-v2.json /tmp/topr-v2-neg.json
+      - name: Diagnose structure
+        run: node research/topr/diagnose_v2.mjs /tmp/topr-v2.json /tmp/topr-v2-neg.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: topr-v2-development-diagnostics
+          path: research/topr/out/v2-diagnostics.json
+          if-no-files-found: error
