@@ -1,0 +1,56 @@
+name: pcc-v3-p3-confirmatory
+on:
+  push:
+    branches: [research/pcc-v3-p3-confirmatory]
+    paths:
+      - 'research/pcc-v3/P3_PREREGISTRATION.md'
+      - 'research/pcc-v3/p3_evaluate.mjs'
+      - 'research/pcc-v3/p3_finalize.mjs'
+      - '.github/workflows/pcc-v3-p3-confirmatory.yml'
+permissions:
+  contents: read
+env:
+  NODE_OPTIONS: --max-old-space-size=4096
+  PCC_V3_COMPILER_COMMIT: b7043bb7c259969b4575142a21603b9f0aac54ed
+jobs:
+  confirm:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Freeze invariants before confirmatory outputs
+        run: |
+          node --test research/pcc-v3/policy_compiler_v3.test.mjs
+          node --test research/pcc-v2/p2_evaluate.test.mjs
+      - name: Download exact frozen POLAR release
+        run: |
+          python - <<'PY'
+          import hashlib,pathlib,urllib.request
+          p=pathlib.Path('/tmp/polar.json');u='https://huggingface.co/datasets/Qiaoyuan/POLAR-Bench/resolve/main/data/privacy_benchmark_rendered_repaired.json?download=true'
+          with urllib.request.urlopen(u,timeout=180) as r,p.open('wb') as f:
+            while True:
+              b=r.read(1024*1024)
+              if not b: break
+              f.write(b)
+          h=hashlib.sha256(p.read_bytes()).hexdigest();e='b1db0274228b1346df47d0a42bb75f9536ded1a6d750bb2720f43612c7abb266'
+          print('dataset_sha256='+h)
+          if h!=e: raise SystemExit('Frozen dataset hash mismatch')
+          PY
+      - name: Confirmatory run 1
+        run: node research/pcc-v3/p3_evaluate.mjs --input /tmp/polar.json --out research/pcc-v3/out/p3-run1.json
+      - name: Confirmatory run 2
+        run: node research/pcc-v3/p3_evaluate.mjs --input /tmp/polar.json --out research/pcc-v3/out/p3-run2.json
+      - name: Finalize frozen gates and reproduction
+        continue-on-error: true
+        run: node research/pcc-v3/p3_finalize.mjs research/pcc-v3/out/p3-run1.json research/pcc-v3/out/p3-run2.json research/pcc-v3/out/p3-final.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pcc-v3-p3-confirmatory
+          path: research/pcc-v3/out/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Enforce preregistered result
+        run: node -e "const r=require('./research/pcc-v3/out/p3-final.json'); console.log('overallPass='+r.overallPass); if(!r.overallPass) process.exit(2)"
