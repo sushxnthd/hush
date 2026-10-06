@@ -32,10 +32,11 @@ function mentions(clause,key){return phrases(key).some(p=>clause.includes(p));}
 function policyEvidence(policy,key){const out=[];for(const c of splitClauses(policy))if(mentions(c,key))out.push({clause:c,...polarity(c)});return out;}
 function scalarRows(obj,source){const out=[];if(!obj||typeof obj!=='object')return out;for(const [key,v] of Object.entries(obj)){if(Array.isArray(v)){for(const x of v)if(['string','number','boolean'].includes(typeof x))out.push({key,value:x,source});}else if(v&&typeof v==='object'){for(const [sub,x] of Object.entries(v))if(['string','number','boolean'].includes(typeof x))out.push({key:`${key}_${sub}`,value:x,source});}else if(['string','number','boolean'].includes(typeof v))out.push({key,value:v,source});}return out;}
 const ABSTRACT_CUE=/\b(?:broad|bucket|band|category|summary|high level|country|city|industry|type|network range|anonymous|general|overview)\b/;
+const RESTRICTED_ABSTRACTION=/\b(?:only|range|broad|bucket|band|category|summary|high level|country|city|industry|type|anonymous|general|overview)\b/;
 function rowAllowed(policy,row){
   const ev=policyEvidence(policy,row.key), anyNeg=ev.some(e=>e.neg), anyPos=ev.some(e=>e.pos);
-  // Lane precedence: raw private facts fail closed on any explicit prohibition.
-  if(row.source==='raw') return anyPos&&!anyNeg;
+  // A raw value cannot satisfy a clause that authorizes only a coarser abstraction.
+  if(row.source==='raw') return anyPos&&!anyNeg&&!ev.some(e=>e.pos&&RESTRICTED_ABSTRACTION.test(e.clause));
   // Trusted task facts are already local-schema-classified as task relevant; policy can still veto them.
   if(row.source==='direct') return !anyNeg;
   // Derived facts require affirmative abstraction language; they never inherit raw-field permission.
