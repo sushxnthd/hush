@@ -3,11 +3,14 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { Vault, Store, createReceipt, verifyReceiptChain } from '../src/core.js';
 import { SealedContextStore } from '../src/secure-context.js';
 
 const durationMs=Math.max(1000,Number(process.env.HUSH_SOAK_DURATION_MS||30000));
 const maxIterations=Math.max(1,Number(process.env.HUSH_SOAK_MAX_ITERATIONS||1000000));
+const pauseMs=Math.max(0,Number(process.env.HUSH_SOAK_PAUSE_MS||0));
+const requireFullDuration=process.env.HUSH_SOAK_REQUIRE_FULL_DURATION==='1';
 const started=Date.now();
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'hush-soak-'));
 const contextDir=path.join(root,'context');
@@ -52,14 +55,18 @@ try{
     assert.equal(reopenedStore.grantUses.get('persistent-grant'),iterations);
     assert.equal(verifyReceiptChain(reopenedStore.receipts),true);
     reopens+=3;
+    if(pauseMs) await sleep(pauseMs);
   }
+  const elapsed=Date.now()-started;
+  if(requireFullDuration&&elapsed<durationMs) throw new Error(`Soak ended before required duration (${elapsed}ms < ${durationMs}ms); increase HUSH_SOAK_MAX_ITERATIONS`);
 }catch(error){ failure=error; process.exitCode=1; }
 
 const elapsedMs=Date.now()-started;
+const fullDurationSatisfied=elapsedMs>=durationMs;
 const report={
   schema:'hush.durability-soak.v1',status:failure?'fail':'pass',startedAt:new Date(started).toISOString(),completedAt:new Date().toISOString(),
-  requestedDurationMs:durationMs,elapsedMs,iterations,writes,reopens,operationsPerSecond:elapsedMs?Math.round(((writes+reopens)/(elapsedMs/1000))*100)/100:null,
-  failure:failure?failure.message:null
+  requestedDurationMs:durationMs,elapsedMs,requireFullDuration,fullDurationSatisfied,iterations,writes,reopens,pauseMs,
+  operationsPerSecond:elapsedMs?Math.round(((writes+reopens)/(elapsedMs/1000))*100)/100:null,failure:failure?failure.message:null
 };
 fs.mkdirSync('dist/evidence',{recursive:true});
 fs.writeFileSync('dist/evidence/soak.json',JSON.stringify(report,null,2)+'\n');
