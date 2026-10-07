@@ -14,7 +14,23 @@ export function canonicalize(v){if(v===null||typeof v!=='object')return JSON.str
 export const sha256=s=>crypto.createHash('sha256').update(s).digest('hex');
 const b64=x=>Buffer.from(x).toString('base64url'); const unb64=x=>Buffer.from(x,'base64url');
 
-export function getOrCreateKeys(dir){fs.mkdirSync(dir,{recursive:true});const priv=path.join(dir,'grant-private.pem'),pub=path.join(dir,'grant-public.pem');if(!fs.existsSync(priv)||!fs.existsSync(pub)){const k=crypto.generateKeyPairSync('ed25519');fs.writeFileSync(priv,k.privateKey.export({type:'pkcs8',format:'pem'}),{mode:0o600});fs.writeFileSync(pub,k.publicKey.export({type:'spki',format:'pem'}),{mode:0o644});}return{privateKey:fs.readFileSync(priv,'utf8'),publicKey:fs.readFileSync(pub,'utf8')}}
+function atomicWrite(file,data,{mode=0o600}={}){
+  fs.mkdirSync(path.dirname(file),{recursive:true});
+  const temp=`${file}.${process.pid}.${crypto.randomBytes(5).toString('hex')}.tmp`;
+  const payload=Buffer.isBuffer(data)?data:Buffer.from(String(data));
+  const fd=fs.openSync(temp,'wx',mode);
+  try{ fs.writeFileSync(fd,payload); fs.fsyncSync(fd); }
+  finally{ fs.closeSync(fd); }
+  fs.renameSync(temp,file);
+  try{fs.chmodSync(file,mode);}catch{}
+  try{
+    const dirFd=fs.openSync(path.dirname(file),'r');
+    try{fs.fsyncSync(dirFd);}finally{fs.closeSync(dirFd);}
+  }catch{}
+}
+function atomicWriteJson(file,value){ atomicWrite(file,JSON.stringify(value,null,2)); }
+
+export function getOrCreateKeys(dir){fs.mkdirSync(dir,{recursive:true});const priv=path.join(dir,'grant-private.pem'),pub=path.join(dir,'grant-public.pem');if(!fs.existsSync(priv)||!fs.existsSync(pub)){const k=crypto.generateKeyPairSync('ed25519');atomicWrite(priv,k.privateKey.export({type:'pkcs8',format:'pem'}),{mode:0o600});atomicWrite(pub,k.publicKey.export({type:'spki',format:'pem'}),{mode:0o644});}return{privateKey:fs.readFileSync(priv,'utf8'),publicKey:fs.readFileSync(pub,'utf8')}}
 export function getOrCreateMasterKey(dir){return getOrCreatePlatformRootKey(dir).key}
 export function encryptJson(v,key){const iv=crypto.randomBytes(12),c=crypto.createCipheriv('aes-256-gcm',key,iv),ct=Buffer.concat([c.update(Buffer.from(JSON.stringify(v))),c.final()]);return{v:1,iv:iv.toString('base64url'),tag:c.getAuthTag().toString('base64url'),ciphertext:ct.toString('base64url')}}
 export function decryptJson(v,key){const d=crypto.createDecipheriv('aes-256-gcm',key,Buffer.from(v.iv,'base64url'));d.setAuthTag(Buffer.from(v.tag,'base64url'));return JSON.parse(Buffer.concat([d.update(Buffer.from(v.ciphertext,'base64url')),d.final()]).toString())}
@@ -38,6 +54,6 @@ export function consumeApproval(a,r){if(!a)throw Error('Approval not found');if(
 export function createReceipt({previousHash=null,request,decision,grantId=null,result=null}){const x={v:1,id:crypto.randomUUID(),at:Date.now(),previousHash,grantId,request,decision,result};x.hash=sha256(canonicalize(x));return x}
 export function verifyReceiptChain(list){let prev=null;for(const r of list){const{hash,...body}=r;if(body.previousHash!==prev||sha256(canonicalize(body))!==hash)return false;prev=hash}return true}
 
-export class Vault{constructor(dir,key){this.file=path.join(dir,'vault.json');this.key=key;this.items=this.load()}load(){if(!fs.existsSync(this.file))return[];return decryptJson(JSON.parse(fs.readFileSync(this.file,'utf8')),this.key)}save(){fs.writeFileSync(this.file,JSON.stringify(encryptJson(this.items,this.key),null,2),{mode:0o600})}list(){return this.items.map(({value,...x})=>x)}put({label,type='secret',value,tags=[]}){const x={id:crypto.randomUUID(),label,type,value,tags,createdAt:Date.now()};this.items.push(x);this.save();const{value:_,...safe}=x;return safe}resolve(id){const x=this.items.find(item=>item.id===id);if(!x)throw Error('Vault item not found');return x.value}remove(id){const n=this.items.length;this.items=this.items.filter(x=>x.id!==id);if(this.items.length===n)return false;this.save();return true}}
+export class Vault{constructor(dir,key){this.file=path.join(dir,'vault.json');this.key=key;this.items=this.load()}load(){if(!fs.existsSync(this.file))return[];return decryptJson(JSON.parse(fs.readFileSync(this.file,'utf8')),this.key)}save(){atomicWriteJson(this.file,encryptJson(this.items,this.key))}list(){return this.items.map(({value,...x})=>x)}put({label,type='secret',value,tags=[]}){const x={id:crypto.randomUUID(),label,type,value,tags,createdAt:Date.now()};this.items.push(x);this.save();const{value:_,...safe}=x;return safe}resolve(id){const x=this.items.find(item=>item.id===id);if(!x)throw Error('Vault item not found');return x.value}remove(id){const n=this.items.length;this.items=this.items.filter(x=>x.id!==id);if(this.items.length===n)return false;this.save();return true}}
 
-export class Store{constructor(dir){this.dir=dir;fs.mkdirSync(dir,{recursive:true});this.grantUses=new Map();this.revokedGrants=new Set();this.pending=new Map();this.receipts=this.load('receipts.json',[]);this.policy=this.load('policy.json',DEFAULT_POLICY)}load(f,d){const p=path.join(this.dir,f);return fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')):structuredClone(d)}save(f,v){fs.writeFileSync(path.join(this.dir,f),JSON.stringify(v,null,2))}addReceipt(r){this.receipts.push(r);this.save('receipts.json',this.receipts)}}
+export class Store{constructor(dir){this.dir=dir;fs.mkdirSync(dir,{recursive:true});this.grantUses=new Map();this.revokedGrants=new Set();this.pending=new Map();this.receipts=this.load('receipts.json',[]);this.policy=this.load('policy.json',DEFAULT_POLICY)}load(f,d){const p=path.join(this.dir,f);return fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')):structuredClone(d)}save(f,v){atomicWriteJson(path.join(this.dir,f),v)}addReceipt(r){this.receipts.push(r);this.save('receipts.json',this.receipts)}}
