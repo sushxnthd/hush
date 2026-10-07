@@ -96,7 +96,7 @@ export class LocalClientAuth {
     this.sessions.set(sessionId,{expiresAt});
     return {
       sessionId,expiresAt,
-      cookie:`hush_session=${encodeURIComponent(sessionId)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${Math.floor(this.sessionTtlMs/1000)}`
+      cookie:`hush_session=${encodeURIComponent(sessionId)}; Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age=${Math.floor(this.sessionTtlMs/1000)}`
     };
   }
   revokeDashboardSession(sessionId){ return this.sessions.delete(String(sessionId??'')); }
