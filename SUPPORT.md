@@ -44,3 +44,7 @@ Until a formal support SLA is published, support is best-effort and no guarantee
 ## Incident status
 
 Material incidents affecting released users should be documented through the project's incident process and release/security channels. The incident runbook is maintained in `INCIDENT_RESPONSE.md`.
+
+## Browser workspace support
+
+Start at https://sushxnthd.github.io/hush/docs/. Workspace data is encrypted in the browser; there is no account recovery or passphrase reset. Export a backup before clearing site storage or restoring another backup. A save conflict means another tab updated the workspace: lock and unlock to reload it. The local runtime and browser workspace have separate stores.

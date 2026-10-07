@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+await import('./write-product-site.mjs');
 const media = path.join(root, 'assets/source/media');
 const groups = new Map();
 for (const filename of (await readdir(media)).sort()) {
@@ -21,13 +22,17 @@ for (const [filename, parts] of groups) {
 const output = path.join(root, '.site-dist');
 await rm(output, {recursive:true, force:true});
 await mkdir(output, {recursive:true});
-const routes = ['product','writing','changelog','demo','start','support','security','privacy','terms'];
+const routes = ['product','writing','changelog','demo','app','docs','company','start','support','security','privacy','terms'];
 for (const route of routes) await cp(path.join(root, route), path.join(output, route), {recursive:true});
-await cp(path.join(root, 'assets'), path.join(output, 'assets'), {
-  recursive:true,
-  filter: source => !source.endsWith('.b64')
-});
-for (const filename of ['index.html','index.md','product.md','research.md','changelog.md','sitemap.xml','.nojekyll']) {
+// Only assets used by the current product site ship. Historical replica scripts
+// and encoded source packages remain in the repo, outside the published bundle.
+await mkdir(path.join(output,'assets/source/brand/media'),{recursive:true});
+await mkdir(path.join(output,'assets/source/media'),{recursive:true});
+for(const item of ['fonts','vendor','hush-logo.svg','favicon.svg','product-site.css','product-site.js','workspace.css','workspace.js','workspace-core.js'])
+  await cp(path.join(root,'assets',item),path.join(output,'assets',item),{recursive:true});
+await cp(path.join(root,'assets/source/brand/media/field-still.webp'),path.join(output,'assets/source/brand/media/field-still.webp'));
+for(const filename of groups.keys())await cp(path.join(media,filename),path.join(output,'assets/source/media',filename));
+for (const filename of ['index.html','index.md','sitemap.xml','robots.txt','.nojekyll']) {
   await cp(path.join(root, filename), path.join(output, filename));
 }
 console.log(`Website built: ${routes.length + 1} routes, ${groups.size} preserved media files.`);

@@ -23,6 +23,7 @@ import { acquireRuntimeLock } from './runtime-lock.js';
 import { assertLocalHttpRequest, parseTrustedExtensionOrigins, securityHeaders } from './local-http-security.js';
 import { LocalClientAuth } from './local-client-auth.js';
 import { signReceipt, verifySignedReceiptChain } from './receipt-security.js';
+import { handleOwnerContextRequest } from './owner-context-http.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { dataDir, migration:dataMigration } = resolveHushDataDir({appRoot:root});
@@ -274,6 +275,7 @@ async function mcp(req,res,u){
 }
 
 async function api(req,res,u){
+  if(await handleOwnerContextRequest({req,res,u,kernel:contextKernel,send,audit:(action,result)=>receipt({agent:'hush-owner',purpose:'local context management',category:'context',action,resource:'local'},'allow',null,result)})) return;
   if(u.pathname.startsWith('/api/onboarding/')){
     const handled=await handleOnboardingRequest({req,res,u,onboarding:providerOnboarding,auditAction:providerActionAudit});
     if(handled) return;

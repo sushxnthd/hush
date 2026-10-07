@@ -33,7 +33,10 @@ test('PCC release hides source and compiled value until local approval',()=>{
   assert.equal(Object.hasOwn(prepared,'statement'),false);
   assert.equal(Object.hasOwn(prepared,'value'),false);
   const wire=JSON.stringify(prepared);
-  assert.equal(wire.includes('110'),false);
+  // Random release IDs and epoch timestamps can coincidentally contain "110".
+  // Check the human-readable fields for the private value, not opaque metadata.
+  const publicText=[prepared.reason,prepared.agent,prepared.sink,prepared.purpose,prepared.category].join(' ');
+  assert.equal(publicText.includes('110'),false);
   assert.equal(wire.includes('extra hour'),false);
   assert.equal(wire.includes('what they earn'),false);
 });

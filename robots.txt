@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /hush/app/
+Sitemap: https://sushxnthd.github.io/hush/sitemap.xml

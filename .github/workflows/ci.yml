@@ -22,7 +22,11 @@ jobs:
           package-manager-cache: false
       - run: npm test
       - run: npm run check:syntax
-      - run: node scripts/build-website.mjs
+      - run: npm run dashboard:build
+      - run: npm run site:build
+      - run: npm run site:verify
+      - run: npm run launch:smoke
+        if: runner.os == 'Linux'
 
   benchmark:
     runs-on: ubuntu-latest

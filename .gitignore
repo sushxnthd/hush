@@ -6,3 +6,4 @@ data/
 /assets/source/media/*.mp4
 /assets/source/media/*.jpg
 /.site-dist/
+/dist/

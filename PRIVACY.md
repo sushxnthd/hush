@@ -49,3 +49,11 @@ Material privacy changes should be documented in this notice before or when the 
 ## Contact
 
 For general support, use the channels listed in `SUPPORT.md`. For security reports, follow `SECURITY.md`.
+
+## Browser workspace
+
+The hosted browser workspace stores notes, memory and activity as AES-256-GCM ciphertext in IndexedDB. PBKDF2-SHA256 with a random salt and 600,000 iterations derives a non-exportable key from the user’s passphrase. The passphrase is not persisted or transmitted. The unlocked page can access plaintext in memory. Inactivity locks the workspace after 15 minutes.
+
+The browser app has no remote model requests, tracking scripts or automatic cloud sync. Reviewed context can be copied to the system clipboard with explicit approval; the user separately decides whether to paste it into an external provider. Pattern detection is incomplete. Encrypted backups preserve a snapshot and can retain data removed later. Clearing browser storage or losing the passphrase can make data unrecoverable. Browser storage is separate from the local runtime.
+
+Website hosting may process request metadata according to GitHub Pages policies. The public privacy notice is at https://sushxnthd.github.io/hush/privacy/.

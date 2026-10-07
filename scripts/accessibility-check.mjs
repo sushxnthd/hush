@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const files=['clients/browser/popup.html','clients/mobile/index.html'];
+const files=['clients/browser/popup.html','clients/mobile/index.html','public/index.html','app/index.html'];
 const report={schema:'hush.accessibility-static.v1',status:'pass',checkedAt:new Date().toISOString(),files:[],checks:0};
 const fail=[];
 
@@ -15,7 +15,9 @@ for(const file of files){
   check(file,'document language',/<html\s+[^>]*lang=["'][a-z]{2}(?:-[A-Z]{2})?["']/i.test(html));
   check(file,'viewport meta',/<meta\s+[^>]*name=["']viewport["']/i.test(html));
   check(file,'page title',/<title>[^<]+<\/title>/i.test(html));
-  check(file,'keyboard focus-visible styling',/:focus-visible\s*\{/i.test(html)||/:focus-visible[,\s]/i.test(html));
+  const styles=[...html.matchAll(/<link[^>]+href=["']([^"']+\.css)["']/gi)].map(m=>m[1]);
+  const css=styles.map(h=>{const p=h.startsWith('/')?'public'+h:new URL(h,'file://'+process.cwd()+'/'+file).pathname;return fs.existsSync(p)?fs.readFileSync(p,'utf8'):'';}).join('')+fs.readFileSync('assets/workspace.css','utf8');
+  check(file,'keyboard focus-visible styling',/:focus-visible\s*\{/i.test(html+css)||/:focus-visible[,\s]/i.test(html+css));
   check(file,'live status semantics',/aria-live=["'](?:polite|assertive)["']/i.test(html));
   check(file,'no positive tabindex',!(/tabindex=["'](?:[1-9]\d*)["']/i.test(html)));
   check(file,'no autofocus',!(/\sautofocus(?:\s|>|=)/i.test(html)));

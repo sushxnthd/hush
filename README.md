@@ -8,6 +8,14 @@ Hush is an experimental local trust layer for **deep AI personalization without 
 
 Instead of moving your calendar, finances, identity, preferences, credentials and history into model context, an agent can send a bounded decision problem to Hush. Hush computes against private state locally and returns the minimum useful result.
 
+## Use Hush today
+
+- **Browser workspace:** https://sushxnthd.github.io/hush/app/ — encrypted private notes, approved memory, exact context preview and encrypted backups. No Hush account or API key required.
+- **Sample workspace:** https://sushxnthd.github.io/hush/app/#sample — temporary data for a quick product walkthrough.
+- **Local runtime:** run `npm start`, then open the authenticated dashboard with `node clients/desktop/hush-desktop.mjs dashboard` in another terminal. Requires Node.js 22+ and a supported OS keystore for production mode.
+
+The browser workspace makes no AI calls and does not enforce permissions in another app. It prepares manually reviewed context for copy and paste. Its encrypted browser store is separate from the native Context Kernel. The local runtime is a release candidate; external registrations, signed installers and independent assurance remain release gates.
+
 ## How it works
 
 ```text
