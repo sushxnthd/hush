@@ -5,7 +5,7 @@ import crypto from 'node:crypto';
 import { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import {
-  getOrCreateKeys, getOrCreateMasterKey, Vault, Store,
+  getOrCreateKeys, Vault, Store,
   redactSensitive, detectSensitive, issueGrant, verifyGrantToken,
   assertGrantAllows, evaluatePolicy, riskForRequest, createApproval,
   consumeApproval, createReceipt, verifyReceiptChain
@@ -17,13 +17,15 @@ import { ContextKernel } from './context-kernel.js';
 import { NATIVE_MCP_TOOLS, callNativeMcpTool, isNativeMcpTool } from './native-mcp.js';
 import { ProviderOnboarding } from './provider-onboarding.js';
 import { handleOnboardingRequest } from './onboarding-http.js';
+import { getOrCreatePlatformRootKey, deriveContextPassphrase } from './platform-key-store.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = path.join(root, 'data');
 process.chdir(root);
 fs.mkdirSync(dataDir, { recursive:true });
 const { privateKey, publicKey } = getOrCreateKeys(dataDir);
-const vault = new Vault(dataDir, getOrCreateMasterKey(dataDir));
+const rootKeyInfo = getOrCreatePlatformRootKey(dataDir);
+const vault = new Vault(dataDir, rootKeyInfo.key);
 const store = new Store(dataDir);
 const port = Number(process.env.PORT || 8787);
 
@@ -32,8 +34,8 @@ for (const [agent, profile] of Object.entries(store.load('trust.json', {}))) tru
 const disclosureLedger = new DisclosureLedger({ trustRegistry });
 disclosureLedger.events = store.load('disclosures.json', []);
 
-const contextPassphrase = process.env.HUSH_CONTEXT_PASSPHRASE || null;
-const contextKernel = contextPassphrase ? new ContextKernel({dir:path.join(dataDir,'context'),passphrase:contextPassphrase}) : null;
+const contextPassphrase = process.env.HUSH_CONTEXT_PASSPHRASE || deriveContextPassphrase(rootKeyInfo.key);
+const contextKernel = new ContextKernel({dir:path.join(dataDir,'context'),passphrase:contextPassphrase});
 const providerOnboarding = new ProviderOnboarding({vault,kernel:contextKernel,port});
 
 const mcpCatalog = new McpToolCatalog();
@@ -231,7 +233,7 @@ async function api(req,res,u){
     const handled=await handleOnboardingRequest({req,res,u,onboarding:providerOnboarding});
     if(handled) return;
   }
-  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Hush',version:'0.9.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:contextKernel?{enabled:true,...contextKernel.stats()}:{enabled:false},onboarding:providerOnboarding.status(),mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});
+  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Hush',version:'0.9.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:{enabled:true,...contextKernel.stats()},security:{rootKeyBackend:rootKeyInfo.backend,productionKeyStore:rootKeyInfo.backend!=='restricted-file'},onboarding:providerOnboarding.status(),mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});
   if(req.method==='GET'&&u.pathname==='/api/vault') return send(res,200,{items:vault.list()});
   if(req.method==='GET'&&u.pathname==='/api/pending') return send(res,200,{requests:[...store.pending.values()].filter(x=>x.status==='pending')});
   if(req.method==='GET'&&u.pathname==='/api/receipts') return send(res,200,{receipts:store.receipts.slice(-50).reverse(),chainValid:verifyReceiptChain(store.receipts)});
@@ -240,31 +242,25 @@ async function api(req,res,u){
   if(req.method==='GET'&&u.pathname==='/api/mcp/scan') return send(res,200,scanMcpCatalog(mcpCatalog.list(),{annotationsTrusted:trustMcpAnnotations}));
 
   if(req.method==='GET'&&u.pathname==='/api/context'){
-    if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with HUSH_CONTEXT_PASSPHRASE.'});
     return send(res,200,{items:contextKernel.list(),exposure:contextKernel.exposure(),partition:contextKernel.partitionExposure(),jointChoice:contextKernel.jointChoiceExposure()});
   }
   if(req.method==='GET'&&u.pathname==='/api/context/exposure'){
-    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
     return send(res,200,{fields:contextKernel.exposure(),partition:contextKernel.partitionExposure(),jointChoice:contextKernel.jointChoiceExposure()});
   }
   if(req.method==='GET'&&u.pathname==='/api/context/sync-bundle'){
-    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
     return send(res,200,{bundle:contextKernel.exportCiphertextBundle(),fingerprint:contextKernel.ciphertextFingerprint(),plaintextIncluded:false});
   }
   if(req.method==='POST'&&u.pathname==='/api/context'){
-    if(!contextKernel) return send(res,423,{error:'Private context is locked. Start the local runtime with HUSH_CONTEXT_PASSPHRASE.'});
     const b=await body(req);
     if(!b.path||!Object.hasOwn(b,'value')) return send(res,400,{error:'path and value are required'});
     const item=contextKernel.put(String(b.path),b.value,{label:b.label??null,category:String(b.category??'general'),tags:Array.isArray(b.tags)?b.tags:[],domain:b.domain??undefined});
     return send(res,201,{item});
   }
   if(req.method==='POST'&&u.pathname==='/api/context/trajectory'){
-    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
     const b=await body(req);
     return send(res,201,contextKernel.beginTrajectory(b));
   }
   if(req.method==='POST'&&u.pathname==='/api/context/decision'){
-    if(!contextKernel) return send(res,423,{error:'Private context is locked.'});
     const b=await body(req);
     if(!b.trajectoryId||!b.program) return send(res,400,{error:'trajectoryId and program are required'});
     const result=contextKernel.run({trajectoryId:String(b.trajectoryId),agent:String(b.agent??'unknown-agent'),sink:String(b.sink??'unknown-sink'),program:b.program});
