@@ -18,6 +18,14 @@ test('client defaults to the local Hush runtime and rejects remote endpoints',()
   assert.throws(()=>new HushClient({baseUrl:'https://example.com',fetchImpl:()=>{}}),/Remote Hush endpoints are disabled/i);
 });
 
+test('native auth token is attached to local API requests but never to the URL',async()=>{
+  let seen;
+  const client=new HushClient({authToken:'local-control-secret',fetchImpl:fake(async(url,options)=>{seen={url,options};return {body:{ok:true}};})});
+  await client.status();
+  assert.equal(seen.options.headers.authorization,'Hush local-control-secret');
+  assert.equal(seen.url.href.includes('local-control-secret'),false);
+});
+
 test('status and pending use the expected local API routes',async()=>{
   const seen=[];
   const client=new HushClient({fetchImpl:fake(async(url,options)=>{seen.push([url.pathname,options.method]);return {body:{path:url.pathname}};})});
@@ -50,6 +58,17 @@ test('approval ids are URL encoded and approval remains a POST',async()=>{
   assert.equal(seen.path,'/api/pending/id%20with%2Fslash/approve');
   assert.equal(seen.method,'POST');
   assert.equal(seen.body,'{}');
+});
+
+test('Google consent requires an explicit capability selection',async()=>{
+  let calls=0;
+  const client=new HushClient({fetchImpl:fake(async()=>{calls+=1;return {body:{}};})});
+  assert.throws(()=>client.startGoogle(),/Select at least one Google connector or action/i);
+  assert.equal(calls,0);
+  let sent;
+  const selected=new HushClient({fetchImpl:fake(async(_url,options)=>{sent=JSON.parse(options.body);return {body:{authorizationUrl:'https://accounts.google.com/test'}};})});
+  await selected.startGoogle(['gmail'],[]);
+  assert.deepEqual(sent,{connectors:['gmail'],actions:[]});
 });
 
 test('redaction sends text only to the local runtime',async()=>{
