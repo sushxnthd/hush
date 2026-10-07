@@ -105,5 +105,5 @@ export function getOrCreatePlatformRootKey(dir,{production=process.env.NODE_ENV=
 
 export function deriveContextPassphrase(rootKey){
   if(!validKey(rootKey)) throw new Error('A valid Hush root key is required');
-  return crypto.hkdfSync('sha256',rootKey,Buffer.from('hush-context-kernel-v1'),Buffer.from('local-context-passphrase'),32).toString('base64url');
+  return Buffer.from(crypto.hkdfSync('sha256',rootKey,Buffer.from('hush-context-kernel-v1'),Buffer.from('local-context-passphrase'),32)).toString('base64url');
 }
