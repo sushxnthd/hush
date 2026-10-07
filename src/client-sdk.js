@@ -19,6 +19,11 @@ function providerName(value){
   if(!['google','github'].includes(provider)) throw new HushClientError('provider must be google or github');
   return provider;
 }
+function requiredId(value,name){
+  const id=String(value??'').trim();
+  if(!id) throw new HushClientError(`${name} is required`);
+  return encodeURIComponent(id);
+}
 
 export class HushClientError extends Error {
   constructor(message,{status=null,payload=null}={}){
@@ -89,6 +94,8 @@ export class HushClient {
   vaultInventory(){ return this.request('/api/vault'); }
   contextInventory(){ return this.request('/api/context'); }
   onboardingStatus(){ return this.request('/api/onboarding/status'); }
+  actions(){ return this.request('/api/onboarding/actions'); }
+  actionReceipts(){ return this.request('/api/onboarding/actions/receipts'); }
 
   redact(text){
     const value=String(text??'');
@@ -97,14 +104,12 @@ export class HushClient {
   }
 
   approve(pendingId){
-    const id=encodeURIComponent(String(pendingId||''));
-    if(!id) throw new HushClientError('pendingId is required');
+    const id=requiredId(pendingId,'pendingId');
     return this.request(`/api/pending/${id}/approve`,{method:'POST',body:{}});
   }
 
   deny(pendingId){
-    const id=encodeURIComponent(String(pendingId||''));
-    if(!id) throw new HushClientError('pendingId is required');
+    const id=requiredId(pendingId,'pendingId');
     return this.request(`/api/pending/${id}/deny`,{method:'POST',body:{}});
   }
 
@@ -112,8 +117,8 @@ export class HushClient {
     return this.request('/api/privacy/trust',{method:'POST',body:{agent:String(agent),level:String(level)}});
   }
 
-  startGoogle(connectors=['gmail','calendar','drive','contacts']){
-    return this.request('/api/onboarding/google/start',{method:'POST',body:{connectors:[...connectors]}});
+  startGoogle(connectors=['gmail','calendar','drive','contacts'],actions=[]){
+    return this.request('/api/onboarding/google/start',{method:'POST',body:{connectors:[...connectors],actions:[...actions]}});
   }
 
   startGithub(){
@@ -134,6 +139,24 @@ export class HushClient {
   disconnectProvider(provider){
     const name=providerName(provider);
     return this.request(`/api/onboarding/${name}/disconnect`,{method:'POST',body:{}});
+  }
+
+  requestAction({provider='google',action,agent='unknown-agent',sink=null,purpose='unspecified',category=null,resource='me',arguments:args={}}={}){
+    if(!String(action??'').trim()) throw new HushClientError('action is required');
+    return this.request('/api/onboarding/actions/request',{method:'POST',body:{provider,action,agent,sink,purpose,category,resource,arguments:args}});
+  }
+
+  approveAction(actionId){
+    return this.request(`/api/onboarding/actions/${requiredId(actionId,'actionId')}/approve`,{method:'POST',body:{}});
+  }
+
+  denyAction(actionId){
+    return this.request(`/api/onboarding/actions/${requiredId(actionId,'actionId')}/deny`,{method:'POST',body:{}});
+  }
+
+  executeAction(actionId,{agent,sink}={}){
+    if(!String(agent??'').trim()||!String(sink??'').trim()) throw new HushClientError('agent and sink are required');
+    return this.request(`/api/onboarding/actions/${requiredId(actionId,'actionId')}/execute`,{method:'POST',body:{agent:String(agent),sink:String(sink)}});
   }
 }
 
