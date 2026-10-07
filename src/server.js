@@ -8,7 +8,7 @@ import {
   getOrCreateKeys, Vault, Store,
   redactSensitive, detectSensitive, issueGrant, verifyGrantToken,
   assertGrantAllows, evaluatePolicy, riskForRequest, createApproval,
-  consumeApproval, createReceipt, verifyReceiptChain
+  consumeApproval, createReceipt
 } from './core.js';
 import { DisclosureLedger, TrustRegistry, TRUST_PROFILES } from './privacy.js';
 import { McpToolCatalog, evaluateMcpCall, jsonRpcError, sanitizeForwardHeaders } from './mcp.js';
@@ -19,10 +19,14 @@ import { ProviderOnboarding } from './provider-onboarding.js';
 import { handleOnboardingRequest } from './onboarding-http.js';
 import { getOrCreatePlatformRootKey, deriveContextPassphrase } from './platform-key-store.js';
 import { resolveHushDataDir } from './runtime-paths.js';
+import { acquireRuntimeLock } from './runtime-lock.js';
+import { assertLocalHttpRequest, securityHeaders } from './local-http-security.js';
+import { signReceipt, verifySignedReceiptChain } from './receipt-security.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { dataDir, migration:dataMigration } = resolveHushDataDir({appRoot:root});
 process.chdir(root);
+const runtimeLock = acquireRuntimeLock(dataDir);
 const { privateKey, publicKey } = getOrCreateKeys(dataDir);
 const rootKeyInfo = getOrCreatePlatformRootKey(dataDir);
 const vault = new Vault(dataDir, rootKeyInfo.key);
@@ -38,6 +42,15 @@ const contextPassphrase = process.env.HUSH_CONTEXT_PASSPHRASE || deriveContextPa
 const contextKernel = new ContextKernel({dir:path.join(dataDir,'context'),passphrase:contextPassphrase});
 const providerOnboarding = new ProviderOnboarding({vault,kernel:contextKernel,port});
 
+let startupAudit=verifySignedReceiptChain(store.receipts,publicKey);
+if(!startupAudit.valid&&process.env.NODE_ENV==='production') throw new Error(`Hush audit chain failed verification: ${startupAudit.reason}`);
+if(startupAudit.valid&&store.receipts.length&&!startupAudit.anchored){
+  const anchor=signReceipt(createReceipt({previousHash:store.receipts.at(-1)?.hash??null,request:{agent:'hush-runtime',purpose:'audit-migration',category:'system',action:'receipt_anchor',resource:'local'},decision:'allow',result:{legacyReceiptCount:store.receipts.length}}),privateKey);
+  store.addReceipt(anchor);
+  startupAudit=verifySignedReceiptChain(store.receipts,publicKey);
+}
+const auditStatus=()=>verifySignedReceiptChain(store.receipts,publicKey);
+
 const mcpCatalog = new McpToolCatalog();
 const mcpApprovals = new Map();
 const mcpUpstream = process.env.HUSH_MCP_UPSTREAM || null;
@@ -52,7 +65,7 @@ if (mcpUpstream) {
 
 const send = (res, status, payload) => {
   const x = JSON.stringify(payload);
-  res.writeHead(status, {'content-type':'application/json; charset=utf-8','cache-control':'no-store','content-length':Buffer.byteLength(x)});
+  res.writeHead(status, securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(x)}));
   res.end(x);
 };
 const sendRpc = (res, payload) => send(res, 200, payload);
@@ -73,7 +86,8 @@ async function body(req){
 }
 
 function receipt(request, decision, grantId=null, result=null){
-  const r=createReceipt({previousHash:store.receipts.at(-1)?.hash??null,request,decision,grantId,result});
+  const unsigned=createReceipt({previousHash:store.receipts.at(-1)?.hash??null,request,decision,grantId,result});
+  const r=signReceipt(unsigned,privateKey);
   store.addReceipt(r);
   return r;
 }
@@ -116,8 +130,7 @@ function responseHeaders(headers){
     if(['content-length','content-encoding','transfer-encoding','connection'].includes(key)) continue;
     out[key]=v;
   }
-  out['cache-control']='no-store';
-  return out;
+  return securityHeaders(out);
 }
 function brokeredMcpAuth(){
   let value=null;
@@ -146,12 +159,12 @@ async function pipeMcpResponse(res,upstream){
 
 async function mcp(req,res,u){
   if(req.method==='GET'||req.method==='DELETE'){
-    if(!mcpUpstream){res.writeHead(405,{'allow':'POST'});res.end();return;}
+    if(!mcpUpstream){res.writeHead(405,securityHeaders({'allow':'POST'}));res.end();return;}
     const upstream=await fetchMcpUpstream(req,u,null);
     return pipeMcpResponse(res,upstream);
   }
   if(req.method!=='POST'){
-    res.writeHead(405,{'allow':'GET, POST, DELETE'});res.end();return;
+    res.writeHead(405,securityHeaders({'allow':'GET, POST, DELETE'}));res.end();return;
   }
 
   const raw=await rawBody(req);
@@ -172,7 +185,7 @@ async function mcp(req,res,u){
 
   if(rpc.method==='server/discover') return rpcResult({supportedVersions:['2026-07-28','2025-11-25'],capabilities:{tools:{listChanged:false}},instructions:'Hush provides bounded private computation. Private values are not exposed as MCP tools.'});
   if(rpc.method==='initialize'&&!mcpUpstream) return sendRpc(res,{jsonrpc:'2.0',id:rpc.id,result:{protocolVersion:'2025-11-25',capabilities:{tools:{listChanged:false}},serverInfo:{name:'hush',version:'0.9.0'},instructions:'Hush provides bounded private computation. Private values are not exposed as MCP tools.'}});
-  if(rpc.method==='notifications/initialized'){res.writeHead(204);res.end();return;}
+  if(rpc.method==='notifications/initialized'){res.writeHead(204,securityHeaders());res.end();return;}
   if(rpc.method==='ping') return rpcResult({});
   if(rpc.method==='tools/list'&&!mcpUpstream) return rpcResult({tools:NATIVE_MCP_TOOLS});
 
@@ -233,10 +246,13 @@ async function api(req,res,u){
     const handled=await handleOnboardingRequest({req,res,u,onboarding:providerOnboarding});
     if(handled) return;
   }
-  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Hush',version:'0.9.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:{enabled:true,...contextKernel.stats()},runtime:{stateLocation:'user-data',legacyMigrated:Boolean(dataMigration)},security:{rootKeyBackend:rootKeyInfo.backend,productionKeyStore:rootKeyInfo.backend!=='restricted-file'},onboarding:providerOnboarding.status(),mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});
+  if(req.method==='GET'&&u.pathname==='/api/status'){
+    const audit=auditStatus();
+    return send(res,200,{product:'Hush',version:'0.9.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:{enabled:true,...contextKernel.stats()},runtime:{stateLocation:'user-data',legacyMigrated:Boolean(dataMigration),singleInstance:true},security:{rootKeyBackend:rootKeyInfo.backend,productionKeyStore:rootKeyInfo.backend!=='restricted-file',signedAudit:audit.anchored,auditValid:audit.valid,signedReceipts:audit.signed,legacyUnsignedReceipts:audit.legacyUnsigned},onboarding:providerOnboarding.status(),mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:audit.valid});
+  }
   if(req.method==='GET'&&u.pathname==='/api/vault') return send(res,200,{items:vault.list()});
   if(req.method==='GET'&&u.pathname==='/api/pending') return send(res,200,{requests:[...store.pending.values()].filter(x=>x.status==='pending')});
-  if(req.method==='GET'&&u.pathname==='/api/receipts') return send(res,200,{receipts:store.receipts.slice(-50).reverse(),chainValid:verifyReceiptChain(store.receipts)});
+  if(req.method==='GET'&&u.pathname==='/api/receipts'){const audit=auditStatus();return send(res,200,{receipts:store.receipts.slice(-50).reverse(),chainValid:audit.valid,audit});}
   if(req.method==='GET'&&u.pathname==='/api/privacy/footprint') return send(res,200,{agents:disclosureLedger.footprint(),windowMs:disclosureLedger.windowMs});
   if(req.method==='GET'&&u.pathname==='/api/privacy/trust') return send(res,200,{levels:Object.keys(TRUST_PROFILES),profiles:[...trustRegistry.profiles.entries()].map(([agent,p])=>({agent,...p}))});
   if(req.method==='GET'&&u.pathname==='/api/mcp/scan') return send(res,200,scanMcpCatalog(mcpCatalog.list(),{annotationsTrusted:trustMcpAnnotations}));
@@ -351,20 +367,34 @@ function staticFile(res,u){
   const pub=path.join(root,'public'),p=path.resolve(pub,u.pathname==='/'?'index.html':u.pathname.slice(1));
   if(!p.startsWith(pub)||!fs.existsSync(p)||fs.statSync(p).isDirectory()) return false;
   const type={'.html':'text/html; charset=utf-8'}[path.extname(p)]??'application/octet-stream';
-  res.writeHead(200,{'content-type':type,'x-content-type-options':'nosniff'});fs.createReadStream(p).pipe(res);return true;
+  res.writeHead(200,securityHeaders({'content-type':type}));fs.createReadStream(p).pipe(res);return true;
 }
 
-http.createServer(async(req,res)=>{
-  const u=new URL(req.url,`http://${req.headers.host||'localhost'}`);
+const server=http.createServer(async(req,res)=>{
+  let u=null;
   try{
+    assertLocalHttpRequest(req);
+    u=new URL(req.url,'http://127.0.0.1');
     if(u.pathname==='/mcp') return await mcp(req,res,u);
     if(u.pathname.startsWith('/api/')) return await api(req,res,u);
     if(staticFile(res,u)) return;
-    res.writeHead(404);res.end('Not found');
+    res.writeHead(404,securityHeaders());res.end('Not found');
   }
   catch(e){
     console.error(e);
-    if(u.pathname==='/mcp') return sendRpc(res,jsonRpcError(null,-32603,e.code==='NO_MCP_UPSTREAM'?e.message:'Hush MCP proxy error.'));
-    send(res,500,{error:e.message||'Internal error'});
+    if(u?.pathname==='/mcp') return sendRpc(res,jsonRpcError(null,-32603,e.code==='NO_MCP_UPSTREAM'?e.message:'Hush MCP proxy error.'));
+    send(res,Number(e?.status)||500,{error:e.message||'Internal error'});
   }
-}).listen(port,'127.0.0.1',()=>console.log(`Hush running at http://127.0.0.1:${port}`));
+});
+server.listen(port,'127.0.0.1',()=>console.log(`Hush running at http://127.0.0.1:${port}`));
+
+let shuttingDown=false;
+function shutdown(){
+  if(shuttingDown) return;
+  shuttingDown=true;
+  server.close(()=>{runtimeLock.release();process.exit(0);});
+  setTimeout(()=>{runtimeLock.release();process.exit(1);},5000).unref();
+}
+process.once('SIGINT',shutdown);
+process.once('SIGTERM',shutdown);
+process.once('exit',()=>runtimeLock.release());
