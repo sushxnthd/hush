@@ -1,5 +1,7 @@
 import crypto from 'node:crypto';
 import { syncConnectorToKernel } from './connector-clients.js';
+import { ActionBroker } from './action-broker.js';
+import { GOOGLE_ACTION_SCOPES, registerGoogleActionAdapter } from './google-actions.js';
 
 const GOOGLE_CONNECTOR_SCOPES=Object.freeze({
   gmail:'https://www.googleapis.com/auth/gmail.readonly',
@@ -37,11 +39,13 @@ function publicTokenMetadata(bundle){
     expiresAt:bundle.expiresAt??null,
     refreshExpiresAt:bundle.refreshExpiresAt??null,
     connectors:bundle.connectors??[],
+    actions:bundle.actions??[],
     scopes:bundle.scopes??[],
     identity:bundle.identity??null,
     needsReauth:Boolean(bundle.needsReauth)
   };
 }
+function unique(values=[]){return [...new Set((values??[]).map(x=>String(x).toLowerCase()).filter(Boolean))];}
 
 export function createPkcePair(){
   const verifier=randomToken(48);
@@ -58,6 +62,8 @@ export class ProviderOnboarding {
     this.port=Number(port);
     this.now=now;
     this.sessions=new Map();
+    this.actionBroker=new ActionBroker({now});
+    registerGoogleActionAdapter({broker:this.actionBroker,getAccessToken:()=>this.accessToken('google'),fetchImpl:this.fetchImpl});
   }
 
   _config(provider){
@@ -83,7 +89,7 @@ export class ProviderOnboarding {
 
   status(){
     this._purgeSessions();
-    const result={configured:this.configured(),providers:{}};
+    const result={configured:this.configured(),providers:{},actions:{supported:this.actionBroker.listAdapters()}};
     for(const provider of ['google','github']){
       const bundle=this._load(provider);
       result.providers[provider]=bundle?publicTokenMetadata({...bundle,needsReauth:Boolean(bundle.expiresAt&&this.now()>=bundle.expiresAt&&!bundle.refresh_token)}):{connected:false,provider};
@@ -91,17 +97,21 @@ export class ProviderOnboarding {
     return result;
   }
 
-  startGoogle({connectors=['gmail','calendar','drive','contacts']}={}){
+  startGoogle({connectors=['gmail','calendar','drive','contacts'],actions=[]}={}){
     const {clientId}=this._config('google'); if(!clientId) throw new Error('Google onboarding is not configured');
-    const selected=[...new Set(connectors.map(x=>String(x).toLowerCase()))];
-    if(!selected.length||selected.some(x=>!GOOGLE_CONNECTOR_SCOPES[x])) throw new Error('Unsupported Google connector selection');
+    const selected=unique(connectors);
+    const selectedActions=unique(actions);
+    if(selected.some(x=>!GOOGLE_CONNECTOR_SCOPES[x])) throw new Error('Unsupported Google connector selection');
+    if(selectedActions.some(x=>!GOOGLE_ACTION_SCOPES[x])) throw new Error('Unsupported Google action selection');
+    if(!selected.length&&!selectedActions.length) throw new Error('At least one Google connector or action is required');
     const id=crypto.randomUUID(),state=randomToken(),pkce=createPkcePair();
     const redirectUri=`http://127.0.0.1:${this.port}/api/onboarding/callback/google`;
-    const scopes=['openid','email',...selected.map(x=>GOOGLE_CONNECTOR_SCOPES[x])];
-    this.sessions.set(id,{id,provider:'google',state,verifier:pkce.verifier,redirectUri,connectors:selected,scopes,expiresAt:this.now()+SESSION_TTL_MS});
+    const scopes=['openid','email',...selected.map(x=>GOOGLE_CONNECTOR_SCOPES[x]),...selectedActions.map(x=>GOOGLE_ACTION_SCOPES[x])];
+    const uniqueScopes=[...new Set(scopes)];
+    this.sessions.set(id,{id,provider:'google',state,verifier:pkce.verifier,redirectUri,connectors:selected,actions:selectedActions,scopes:uniqueScopes,expiresAt:this.now()+SESSION_TTL_MS});
     const url=new URL(GOOGLE_AUTH);
-    for(const [key,value] of Object.entries({client_id:clientId,redirect_uri:redirectUri,response_type:'code',scope:scopes.join(' '),state,code_challenge:pkce.challenge,code_challenge_method:'S256',access_type:'offline',prompt:'consent',include_granted_scopes:'true'})) url.searchParams.set(key,value);
-    return {sessionId:id,provider:'google',authorizationUrl:url.toString(),expiresAt:this.now()+SESSION_TTL_MS,connectors:selected,pkce:'S256'};
+    for(const [key,value] of Object.entries({client_id:clientId,redirect_uri:redirectUri,response_type:'code',scope:uniqueScopes.join(' '),state,code_challenge:pkce.challenge,code_challenge_method:'S256',access_type:'offline',prompt:'consent',include_granted_scopes:'true'})) url.searchParams.set(key,value);
+    return {sessionId:id,provider:'google',authorizationUrl:url.toString(),expiresAt:this.now()+SESSION_TTL_MS,connectors:selected,actions:selectedActions,pkce:'S256'};
   }
 
   async completeGoogle({state,code,error}={}){
@@ -115,7 +125,9 @@ export class ProviderOnboarding {
     const token=await providerJson(this.fetchImpl,GOOGLE_TOKEN,{values:{client_id:clientId,code,code_verifier:session.verifier,redirect_uri:session.redirectUri,grant_type:'authorization_code'}});
     if(!token.access_token) throw new Error('Google token exchange returned no access token');
     const connectedAt=this.now();
-    const bundle={provider:'google',access_token:token.access_token,refresh_token:token.refresh_token??null,token_type:token.token_type??'Bearer',connectedAt,expiresAt:token.expires_in?connectedAt+Number(token.expires_in)*1000:null,refreshExpiresAt:null,connectors:session.connectors,scopes:String(token.scope||session.scopes.join(' ')).split(/\s+/).filter(Boolean)};
+    const grantedScopes=String(token.scope||session.scopes.join(' ')).split(/\s+/).filter(Boolean);
+    const actions=session.actions.filter(action=>grantedScopes.includes(GOOGLE_ACTION_SCOPES[action]));
+    const bundle={provider:'google',access_token:token.access_token,refresh_token:token.refresh_token??null,token_type:token.token_type??'Bearer',connectedAt,expiresAt:token.expires_in?connectedAt+Number(token.expires_in)*1000:null,refreshExpiresAt:null,connectors:session.connectors,actions,scopes:grantedScopes};
     return this._save('google',bundle);
   }
 
@@ -145,7 +157,7 @@ export class ProviderOnboarding {
     if(!payload.access_token) return {status:'pending',retryAfterMs:session.intervalMs};
     this.sessions.delete(session.id);
     const connectedAt=this.now();
-    const bundle={provider:'github',access_token:payload.access_token,refresh_token:payload.refresh_token??null,token_type:payload.token_type??'bearer',connectedAt,expiresAt:payload.expires_in?connectedAt+Number(payload.expires_in)*1000:null,refreshExpiresAt:payload.refresh_token_expires_in?connectedAt+Number(payload.refresh_token_expires_in)*1000:null,connectors:['github'],scopes:[]};
+    const bundle={provider:'github',access_token:payload.access_token,refresh_token:payload.refresh_token??null,token_type:payload.token_type??'bearer',connectedAt,expiresAt:payload.expires_in?connectedAt+Number(payload.expires_in)*1000:null,refreshExpiresAt:payload.refresh_token_expires_in?connectedAt+Number(payload.refresh_token_expires_in)*1000:null,connectors:['github'],actions:[],scopes:[]};
     return {status:'connected',connection:this._save('github',bundle)};
   }
 
@@ -156,6 +168,7 @@ export class ProviderOnboarding {
     if(!payload.access_token) throw new Error('Google refresh returned no access token');
     const now=this.now();
     const next={...bundle,access_token:payload.access_token,refresh_token:payload.refresh_token??bundle.refresh_token,token_type:payload.token_type??bundle.token_type,expiresAt:payload.expires_in?now+Number(payload.expires_in)*1000:null,scopes:payload.scope?String(payload.scope).split(/\s+/).filter(Boolean):bundle.scopes,needsReauth:false};
+    next.actions=Object.entries(GOOGLE_ACTION_SCOPES).filter(([,scope])=>next.scopes.includes(scope)).map(([action])=>action);
     this._save('google',next);
     return next;
   }
@@ -181,6 +194,25 @@ export class ProviderOnboarding {
     }
     return {provider,syncedAt:this.now(),connectors:results};
   }
+
+  requestAction({provider='google',action,agent='unknown-agent',sink=null,purpose='unspecified',category=null,resource='me',arguments:args={}}={}){
+    const normalizedProvider=String(provider).toLowerCase();
+    const actionName=String(action??'').toLowerCase();
+    if(normalizedProvider!=='google'||!GOOGLE_ACTION_SCOPES[actionName]) throw new Error('Unsupported provider action');
+    const bundle=this._load('google');
+    if(!bundle) return {decision:'reauthorize',reason:'Google is not connected.',authorization:this.startGoogle({connectors:[],actions:[actionName]})};
+    const requiredScope=GOOGLE_ACTION_SCOPES[actionName];
+    if(!bundle.scopes?.includes(requiredScope)){
+      const currentActions=unique([...(bundle.actions??[]),actionName]);
+      return {decision:'reauthorize',reason:'This action needs an additional least-privilege Google scope.',requiredScope,authorization:this.startGoogle({connectors:bundle.connectors??[],actions:currentActions})};
+    }
+    return this.actionBroker.request({adapter:'google',action:actionName,agent,sink:sink??`google:${actionName}`,purpose,category:category??(actionName==='send_email'?'communication':'calendar'),resource,arguments:args,credentialRefs:[]});
+  }
+  actionQueue(){ return this.actionBroker.queue(); }
+  approveAction(actionId){ return this.actionBroker.approve(actionId); }
+  denyAction(actionId){ return this.actionBroker.deny(actionId); }
+  executeAction({actionId,agent='unknown-agent',sink='unknown-sink'}={}){ return this.actionBroker.execute({actionId,agent,sink}); }
+  actionReceipts(){ return this.actionBroker.receiptLog(); }
 
   async disconnect(provider,{remote=true}={}){
     const bundle=this._load(provider); if(!bundle) return {provider,disconnected:true,remoteRevoked:false};
