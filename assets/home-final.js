@@ -3,8 +3,6 @@ window.initHushHomeFinal=()=>{
   const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const dek=$('.hero .dek');
-  if(dek)dek.textContent='Private context, memory and scoped authority for every model.';
 
   const prod=$('#production');
   if(prod){

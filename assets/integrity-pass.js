@@ -10,25 +10,15 @@ window.initHushIntegrityPass=()=>{
     desired.forEach(([href,label],i)=>{const a=document.createElement('a');a.href=href;a.textContent=label;a.style.setProperty('--j',i);a.style.setProperty('--t',i*5);toc.append(a)});
   }
 
-  const note=$('.hero .note');
-  if(note){
-    const text=$('.note-text',note)||$$('span',note)[1]; const cta=$('.note-cta',note);
-    if(text)text.textContent='AgentCIBench · 8/8 frozen gates passed';
-    if(cta)cta.innerHTML='See evidence <span aria-hidden="true" class="arrow">↗</span>';
-    note.href='#production';
-  }
-  const dek=$('.hero .dek');
-  if(dek)dek.textContent='One user-owned trust layer for private context, cross-AI memory and scoped authority across models.';
-
   const field=$('.hero .field');
   if(field){
     const still=$('.still',field), film=$('.film',field);
-    if(still)still.src='https://supermemory.ai/brand/media/field-still.webp';
-    if(film){film.poster='https://supermemory.ai/brand/media/field-poster.webp';let src=$('source',film);if(!src){src=document.createElement('source');film.append(src)}src.src='https://supermemory.ai/brand/media/field.mp4';src.type='video/mp4'}
+    if(still)still.src='assets/source/brand/media/field-still.webp';
+    if(film){film.poster='assets/source/brand/media/field-still.webp';let src=$('source',film);if(!src){src=document.createElement('source');film.append(src)}src.src='assets/source/media/field.mp4';src.type='video/mp4'}
   }
   const featureMedia=[['learn','Private context'],['carry','Cross-AI memory'],['scale','Scoped authority']];
-  $$('#what video[data-tile]').forEach((v,i)=>{const slug=featureMedia[i]?.[0];if(!slug)return;v.poster=`https://supermemory.ai/what/${slug}.jpg`;let sources=$$('source',v);if(!sources.length){v.innerHTML=`<source src="https://supermemory.ai/what/${slug}-av1.mp4" type='video/mp4; codecs="av01.0.05M.08"'><source src="https://supermemory.ai/what/${slug}.mp4" type="video/mp4">`} });
-  const ctaArt=$('.cta-art');if(ctaArt)ctaArt.src='https://supermemory.ai/brand/media/cta-dawn.jpg';
+  $$('#what video[data-tile]').forEach((v,i)=>{const slug=featureMedia[i]?.[0];if(!slug)return;v.poster=`assets/source/media/${slug}.jpg`;let sources=$$('source',v);if(!sources.length){v.innerHTML=`<source src="assets/source/what/${slug}-av1.mp4" type='video/mp4; codecs="av01.0.05M.08"'><source src="assets/source/what/${slug}.mp4" type="video/mp4">`} });
+  const ctaArt=$('.cta-art');if(ctaArt)ctaArt.src='assets/source/brand/media/cta-dawn.jpg';
   const whatRows=$$('#what .row');
   const whatCopy=[
     ['Private computation instead of disclosure.','Hush runs bounded predicates, ranking, filtering and selection against sealed private state, returning the useful result without handing the model the underlying private facts.'],
@@ -61,8 +51,6 @@ window.initHushIntegrityPass=()=>{
     if(secText)secText.textContent='Encrypted local context, cross-agent reconstruction accounting, signed scoped Grants, secretless action brokerage and tamper-evident receipts share one user-controlled policy boundary. Hush remains research software, not a security certification.';
     ['CUMULATIVE PRIVACY','SCOPED GRANTS','SECRETLESS ACTIONS'].forEach((x,i)=>{if(seals[i])seals[i].textContent=x});
   }
-  const cta=$('.cta');if(cta){const t=$('.cta-text',cta);if(t)t.textContent='Put one user-owned trust layer between the agent and the private context, memory and authority it should never receive wholesale.'}
-
   const entries=$$('#writing .entry');
   const papers=[
     ['01','Scientific Superiority v1: 4,000 paired tasks, zero exact private inputs','internal protocol','https://github.com/sushxnthd/hush/blob/main/research/SUPERIORITY_RESULTS_V1.md'],
@@ -71,8 +59,6 @@ window.initHushIntegrityPass=()=>{
   ];
   entries.forEach((a,i)=>{const p=papers[i];if(!p)return;const n=$('.entry-n',a),t=$('.entry-title',a);if(n)n.textContent=p[0];if(t)t.textContent=p[1];a.dataset.kind=p[2];a.href=p[3];a.target='_blank';a.rel='noopener noreferrer'});
   const researchMore=$('#writing .more');if(researchMore){researchMore.textContent='Read the research ';const arrow=document.createElement('span');arrow.className='arrow';arrow.setAttribute('aria-hidden','true');arrow.textContent='↗';researchMore.append(arrow);researchMore.href='https://github.com/sushxnthd/hush/tree/main/research';researchMore.target='_blank';researchMore.rel='noopener noreferrer'}
-
-  const roadmap=$('#careers');if(roadmap){const h=$('h2',roadmap),p=$('.body',roadmap),a=$('.more',roadmap);if(h)h.textContent='v1.2';if(p)p.textContent='The convergence release unifies encrypted private context, bounded computation, cross-AI memory, scoped Grants, secretless actions, receipts and revocation. Remaining release gates center on OS-backed key handling, zero-terminal onboarding, the consumer trust surface, protocol hardening, semantic/end-to-end leakage evaluation and independent reproduction.';if(a){a.textContent='Read the acceptance contract ';const ar=document.createElement('span');ar.className='arrow';ar.setAttribute('aria-hidden','true');ar.textContent='↗';a.append(ar);a.href='V1_2_ACCEPTANCE.md'}}
 
   const animated=$$('#production .stat');
   if(reduce)animated.forEach(el=>el.classList.add('integrity-in'));

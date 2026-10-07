@@ -3,3 +3,6 @@ data/
 .env
 *.log
 .DS_Store
+/assets/source/media/*.mp4
+/assets/source/media/*.jpg
+/.site-dist/

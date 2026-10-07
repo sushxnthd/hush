@@ -36,14 +36,16 @@ window.initHushSourceEvidence=()=>{
 
   if(bench){
     const halves=$$('.bench-half',bench);
+    if(halves[0])halves[0].innerHTML='<div class="verdict">Pinned AgentLeak detector</div><span class="stat-n">0<span class="stat-unit">%</span></span><p>credential-canary leakage with 100% task success across 50 Hush-generated paired ActionBroker traces</p>';
+    if(halves[1])halves[1].innerHTML='<div class="verdict">Frozen AgentCIBench holdout</div><span class="stat-n">95.07<span class="stat-unit">%</span></span><p>completeness · 15.4% relative reduction in exact protected-context violation against the matched semantic-only retriever</p>';
     if(halves[0]){
       const label=$('.stat-label',halves[0]);if(label)label.innerHTML='Frozen external holdout<small>AgentCIBench confirmatory v1 · 50 cases</small>';
-      const q=$('.verdict',halves[0]);if(q)q.innerHTML='“Hush reduced mean exact protected-context violation by <b>15.4% relative</b> to the matched semantic-only retriever while retaining <strong>95.07%</strong> completeness.”';
+      const q=$('.verdict',halves[0]);if(q)q.textContent='Pinned AgentLeak detector';
       const a=$('.more',halves[0]);if(a){a.href='https://github.com/sushxnthd/hush/blob/main/research/results/AGENTCIBENCH_CONFIRMATORY_V1.md';a.target='_blank';a.rel='noopener noreferrer';a.innerHTML='Read the result<span class="arrow" aria-hidden="true">↗</span>'}
     }
     if(halves[1]){
       const label=$('.stat-label',halves[1]);if(label)label.innerHTML='Pre-specified scientific gates<small>Scientific Superiority v1</small>';
-      const n=$('.stat-n',halves[1]);if(n)n.innerHTML='8<span class="stat-unit">/8</span>';
+      const n=$('.stat-n',halves[1]);if(n)n.innerHTML='95.07<span class="stat-unit">%</span>';
       const rank=$('.stat-rank',halves[1]);if(rank){rank.setAttribute('aria-label','Eight of eight pre-specified scientific gates passed');const bars=$$('.bar',rank);bars.forEach((b,i)=>{b.classList.add('us');b.style.setProperty('--h',`${38+i*8.5}%`);b.style.setProperty('--i',i);b.innerHTML=''})}
       const a=$('.more',halves[1]);if(a){a.href='https://github.com/sushxnthd/hush/blob/main/research/SUPERIORITY_RESULTS_V1.md';a.target='_blank';a.rel='noopener noreferrer';a.innerHTML='See the research<span class="arrow" aria-hidden="true">↗</span>'}
     }

@@ -1,0 +1,68 @@
+/* Launch routes extend Hush's existing rail, Geist typography and blue palette. */
+:root{color-scheme:light}
+[hidden]{display:none!important}
+.launch-skip{position:fixed;top:8px;left:8px;z-index:1000;padding:12px 18px;background:#0562ef;color:#fff;transform:translateY(-180%)}
+.launch-skip:focus{transform:none}
+:focus-visible{outline:2px solid #0562ef;outline-offset:4px}
+.launch-caption{font-size:14px;line-height:1.5;color:#50565e;margin:20px 0 0;max-width:38em}
+.launch-page{padding-top:64px}
+.launch-header{margin-bottom:36px}
+.launch-header h1{font-size:clamp(32px,4vw,44px);line-height:1.1;font-weight:460;letter-spacing:-.045em;margin:20px 0}
+.launch-header p,.launch-section p,.launch-card p,.demo-panel p{font-size:16px;line-height:1.65;color:#50565e}
+.launch-eyebrow{font:500 12px/1.5 "Geist Mono",monospace;letter-spacing:.045em;text-transform:uppercase;color:#50565e}
+.launch-section{padding:32px 0;border-top:1px solid #0b10151a;margin-top:24px;scroll-margin-top:32px}
+.launch-section h2,.demo-panel h2{font-size:27px;line-height:1.2;font-weight:500;letter-spacing:-.035em;margin:0 0 16px}
+.launch-section h2:not(:first-child){margin-top:36px}
+.launch-section h3,.launch-card h2,.demo-panel h3{font-size:21px;font-weight:500;letter-spacing:-.02em;line-height:1.25;margin:12px 0}
+.launch-section a:not(.launch-action),.demo-panel a,.launch-page .launch-notice a{color:#0458d4;text-decoration:underline;text-underline-offset:3px}
+.launch-options{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.launch-card{display:block;text-decoration:none;color:#0b1015;padding:24px;border:1px solid #0b101526;background:#fff;transition:border-color .2s,background .2s}
+.launch-card:hover{border-color:#0562ef;background:#f8fbff}
+.launch-link{display:block;color:#0458d4;font-size:14px;font-weight:550;margin-top:22px}
+.launch-steps{padding-left:24px;margin:28px 0 0}
+.launch-steps li{padding-left:10px;margin:28px 0}
+.launch-small,.launch-page p.launch-small{font-size:14px;line-height:1.55;color:#50565e}
+.code-block{position:relative;margin:16px 0;border:1px solid #0b101526;background:#f4f4f6;padding:18px 18px 56px}
+.code-block pre{margin:0;font:14px/1.7 "Geist Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
+.code-block button{position:absolute;bottom:12px;right:12px;font-size:14px;border:1px solid #0b101526;padding:6px 10px;background:#fff;cursor:pointer}
+.platform-switch,.demo-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 12px}
+.platform-switch button,.demo-tabs button{font:500 14px/1.3 Geist,system-ui;padding:10px 12px;border:1px solid #0b101526;color:#50565e;background:#fff;cursor:pointer}
+.platform-switch [aria-pressed=true],.demo-tabs [aria-selected=true]{color:#fff;background:#0562ef;border-color:#0562ef}
+.launch-notice{padding:18px 20px;border-left:2px solid #0562ef;background:#f0f6ff;font-size:16px;line-height:1.6;color:#303a46}
+.launch-table{width:100%;border-collapse:collapse;font-size:15px;line-height:1.5}
+.launch-table caption{text-align:left;font-size:14px;color:#50565e;margin:8px 0 12px}
+.launch-table th,.launch-table td{border-bottom:1px solid #0b10151a;padding:14px 12px 14px 0;text-align:left;vertical-align:top}
+.launch-table th{font-weight:550;width:45%}
+.launch-table thead th{color:#50565e;font-size:14px}
+.launch-action,.demo-controls button{display:inline-block;background:#0562ef;color:#fff;border:1px solid #0562ef;padding:12px 18px;font:500 15px/1.3 Geist,system-ui;text-decoration:none;cursor:pointer}
+.launch-action:hover,.demo-controls button:hover{background:#0446c9}
+.launch-faq details,.demo-panel details{border-bottom:1px solid #0b10151a;padding:20px 0}
+.launch-faq summary,.demo-panel summary{font-size:16px;font-weight:550;line-height:1.5;cursor:pointer}
+.launch-faq details p{margin:14px 0 0}
+.launch-list{padding-left:24px;font-size:16px;line-height:1.7;color:#50565e}
+.launch-list li{margin:12px 0}
+.launch-legal{display:flex;gap:16px;flex-wrap:wrap}
+.foot-legal{gap:18px;flex-wrap:wrap}
+.foot-links,.foot-status,.foot-line,.foot-place{font-size:14px!important;line-height:1.6!important}
+.foot-head{font-size:12px!important}
+.foot-legal{font-size:12px!important}
+.foot-grid{grid-template-columns:1.5fr 1fr 1fr 1fr!important;gap:24px!important}
+.demo-panel{border:1px solid #0b101526;background:#fff;padding:26px;margin-top:16px}
+.demo-head{margin-bottom:24px}
+.demo-head h2{margin-top:12px}
+.demo-label{display:block;font-size:14px;font-weight:550;margin:0 0 8px}
+.demo-panel select{width:100%;font:16px Geist,system-ui;background:#fff;padding:12px;border:1px solid #0b10154d;border-radius:0;color:#0b1015}
+.demo-split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+.demo-boundary,.demo-result{background:#f4f4f6;padding:20px;border:1px solid #0b10151a}
+.demo-result{background:#f0f6ff;border-color:#0562ef33;margin-top:16px}
+.demo-split .demo-result{margin:0}
+.demo-badge{display:block;font-size:12px;line-height:1.4;color:#0458d4}
+.demo-result code{display:block;white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.6 "Geist Mono",monospace}
+.demo-controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.demo-controls .secondary,.demo-panel button.secondary,.demo-bottom .secondary{border:1px solid #0b10154d;background:#fff;color:#303a46;font:500 14px/1.4 Geist,system-ui;padding:10px 14px;cursor:pointer}
+.demo-controls button:disabled{opacity:.55;cursor:default}
+.demo-bottom{margin-top:20px;min-height:80px}
+.demo-bottom p{font-size:14px;line-height:1.5}
+@media(max-width:700px){.launch-options,.demo-split{grid-template-columns:1fr}.launch-page{padding-top:40px}.foot-grid{grid-template-columns:1fr 1fr!important}.demo-panel{padding:20px}}
+@media(max-width:520px){.launch-page{padding-top:100px}.launch-caption{margin-bottom:16px}.launch-header h1{font-size:34px}.launch-card{padding:20px}.demo-tabs{gap:6px}.demo-tabs button{padding:10px;font-size:14px;flex:1}.launch-table{font-size:14px}.launch-table th{width:42%}.foot-grid{gap:22px!important}.foot-legal{align-items:flex-start}.launch-steps{padding-left:20px}.launch-steps li{padding-left:4px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
