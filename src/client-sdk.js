@@ -14,6 +14,11 @@ function cleanBaseUrl(value,{allowRemote=false}={}){
 }
 function pathUrl(base,path){ return new URL(String(path).replace(/^\//,''),base); }
 function clone(value){ return structuredClone(value); }
+function providerName(value){
+  const provider=String(value??'').toLowerCase();
+  if(!['google','github'].includes(provider)) throw new HushClientError('provider must be google or github');
+  return provider;
+}
 
 export class HushClientError extends Error {
   constructor(message,{status=null,payload=null}={}){
@@ -25,9 +30,10 @@ export class HushClientError extends Error {
 }
 
 /**
- * Small dependency-free client shared by browser-extension, desktop and future
- * mobile shells. It intentionally defaults to loopback only: exposing the alpha
- * local API over a network without a separate authenticated transport is unsafe.
+ * Dependency-free client shared by browser-extension, desktop and mobile shells.
+ * It defaults to loopback only: provider credentials and private context must not
+ * be exposed through a remotely reachable local API without a separate secure
+ * authenticated transport.
  */
 export class HushClient {
   constructor({baseUrl=DEFAULT_BASE_URL,fetchImpl=globalThis.fetch,allowRemote=false,timeoutMs=5000}={}){
@@ -82,6 +88,7 @@ export class HushClient {
   trust(){ return this.request('/api/privacy/trust'); }
   vaultInventory(){ return this.request('/api/vault'); }
   contextInventory(){ return this.request('/api/context'); }
+  onboardingStatus(){ return this.request('/api/onboarding/status'); }
 
   redact(text){
     const value=String(text??'');
@@ -103,6 +110,30 @@ export class HushClient {
 
   setTrust(agent,level){
     return this.request('/api/privacy/trust',{method:'POST',body:{agent:String(agent),level:String(level)}});
+  }
+
+  startGoogle(connectors=['gmail','calendar','drive','contacts']){
+    return this.request('/api/onboarding/google/start',{method:'POST',body:{connectors:[...connectors]}});
+  }
+
+  startGithub(){
+    return this.request('/api/onboarding/github/start',{method:'POST',body:{}});
+  }
+
+  pollGithub(sessionId){
+    const id=String(sessionId??'').trim();
+    if(!id) throw new HushClientError('sessionId is required');
+    return this.request('/api/onboarding/github/poll',{method:'POST',body:{sessionId:id}});
+  }
+
+  syncProvider(provider,{connectors=undefined,limit=50}={}){
+    const name=providerName(provider);
+    return this.request(`/api/onboarding/${name}/sync`,{method:'POST',body:{connectors,limit}});
+  }
+
+  disconnectProvider(provider){
+    const name=providerName(provider);
+    return this.request(`/api/onboarding/${name}/disconnect`,{method:'POST',body:{}});
   }
 }
 
