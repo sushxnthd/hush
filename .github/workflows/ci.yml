@@ -22,6 +22,7 @@ jobs:
           package-manager-cache: false
       - run: npm test
       - run: npm run check:syntax
+      - run: node scripts/build-website.mjs
 
   benchmark:
     runs-on: ubuntu-latest
