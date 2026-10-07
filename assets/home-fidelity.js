@@ -9,11 +9,6 @@ window.initHushHomeFidelity=()=>{
   if(window.__hushHomeFidelity)return;window.__hushHomeFidelity=true;
   const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 
-  const statement=$('.hero .statement');
-  if(statement)statement.textContent='Hush is building the user-owned trust layer for private context across every AI.';
-  const dek=$('.hero .dek');
-  if(dek)dek.textContent='Private context, memory and scoped authority across every model.';
-
   const prod=$('#production'),saved=window.__hushSourceCards||{};
   if(prod){
     const restore=(area,node)=>{const cur=prod.querySelector(`.stat[style*="grid-area: ${area}"]`);if(cur&&node){const fresh=node.cloneNode(true);cur.replaceWith(fresh);return fresh}return cur};
@@ -47,7 +42,7 @@ window.initHushHomeFidelity=()=>{
   if(security){
     const names=$$('.place-name',security),imgs=$$('.place-plate img',security);
     ['In your data center','In your VPC','On your laptop'].forEach((v,i)=>{if(names[i])names[i].textContent=v});
-    const assets=['datacenter.svg','vpc.svg','laptop.svg'];imgs.forEach((img,i)=>{if(assets[i])img.src=`https://supermemory.ai/brand/deploy/${assets[i]}`});
+    const assets=['datacenter.svg','vpc.svg','laptop.svg'];imgs.forEach((img,i)=>{if(assets[i])img.src=`assets/source/brand/deploy/${assets[i]}`});
     const body=$('.body',security);if(body)body.textContent='The privacy boundary should not depend on one model vendor. Hush can sit beside your infrastructure and agent harnesses while keeping one user-owned policy boundary.';
   }
 };
