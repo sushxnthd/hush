@@ -1,0 +1,7 @@
+{
+  "status": "pass",
+  "issuedAt": "2026-10-07T15:56:00Z",
+  "evidence": "Release-candidate workflow run 37647761404 passed independent release:verify on Ubuntu, Windows and macOS for commit d03a9addfd46b9ce4f91a7d377b3bfb20e11fbaf. Artifact digests: Linux sha256:00ebc42ccc42804777f9398b7d3a661d87db05772fceba0fa22de6c3a428254b (artifact 11494794010); macOS sha256:907f86d850286d15f3ce4ab5f86e680eebbe89a00118f016067c285242af7921 (artifact 11494779369); Windows sha256:8f7990a9df34644799e3532894413815f04d563d81816a4554e1b2f79cae0631 (artifact 11494739072). The verifier checked SPDX 2.3 inventory, release-manifest file hashes/sizes, SHA256SUMS, symlink absence, and runtime-secret exclusion.",
+  "workflowRun": 37647761404,
+  "commit": "d03a9addfd46b9ce4f91a7d377b3bfb20e11fbaf"
+}
