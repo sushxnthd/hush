@@ -1,0 +1,56 @@
+name: release-candidate
+
+on:
+  push:
+    branches: [production/v1.0-hardening]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable:
+    name: portable-${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Syntax gate
+        run: npm run check:syntax
+      - name: Unit and security tests
+        run: npm test
+      - name: Build portable release candidate
+        env:
+          SOURCE_DATE_EPOCH: '1791331200'
+        run: npm run release:build
+      - name: Inspect release summary
+        run: node -e "const fs=require('fs');const x=JSON.parse(fs.readFileSync('dist/release-summary.json','utf8'));if(!x.files||!x.sbom||!x.checksums)process.exit(1);console.log(x)"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: hush-portable-${{ runner.os }}-${{ github.sha }}
+          path: dist/hush-0.9.0-portable
+          if-no-files-found: error
+          retention-days: 14
+
+  research-benchmarks:
+    name: frozen-research-benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: npm run bench
