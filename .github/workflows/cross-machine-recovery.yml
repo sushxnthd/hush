@@ -1,0 +1,59 @@
+name: cross-machine-recovery
+
+on:
+  push:
+    branches: [production/v1.0-hardening]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  producer:
+    name: recovery-producer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Create ciphertext-only synthetic recovery fixture
+        run: node scripts/recovery-fixture.mjs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: hush-cross-machine-recovery-${{ github.sha }}
+          path: dist/cross-machine-recovery
+          if-no-files-found: error
+          retention-days: 3
+
+  consumer:
+    name: recovery-consumer-${{ matrix.os }}
+    needs: producer
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: hush-cross-machine-recovery-${{ github.sha }}
+          path: dist/cross-machine-recovery
+      - name: Recover on fresh runner and verify digest
+        run: node scripts/recovery-consumer.mjs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: hush-cross-machine-recovery-evidence-${{ runner.os }}-${{ github.sha }}
+          path: dist/evidence
+          if-no-files-found: error
+          retention-days: 14

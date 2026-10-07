@@ -1,0 +1,7 @@
+{
+  "status": "pass",
+  "issuedAt": "2026-10-07T15:59:10Z",
+  "evidence": "Cross-machine-recovery workflow run 37648312238 passed from a synthetic ciphertext-only producer artifact on one runner into independent fresh Ubuntu, Windows and macOS consumer runner VMs. Each consumer reconstructed the same expected state digest and separately rejected a wrong recovery phrase and tampered recovery bundle. Producer artifact 11495780998 digest sha256:8476d3d29d572b4cde1ab66eb4392cf77ab4cfc6d22f2ce1bfdf601e2ab8a47e; consumer evidence digests: Linux sha256:4d3706b8e3fbfe840cf7927c82d0d5b278a9c924628cef8abbbeae792788e15e, Windows sha256:c945da07cb116e94204da2cabbac552f1fdb1b8302ecb90dc8d867cdc1a3976b, macOS sha256:77a559065938366d544a0f2e1f6be16d160068fca97fc3220fc27fbf29c22fe6.",
+  "workflowRun": 37648312238,
+  "commit": "dde48dec0c394139888bf35da1808fcb0c7d27ce"
+}

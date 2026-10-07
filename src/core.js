@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { getOrCreatePlatformRootKey } from './platform-key-store.js';
 
 export const DEFAULT_POLICY={version:1,rules:[
 {id:'deny-secret-export',match:{category:'secrets',action:'export_raw'},decision:'deny',reason:'Raw secrets never leave Hush.'},
@@ -13,10 +14,53 @@ export function canonicalize(v){if(v===null||typeof v!=='object')return JSON.str
 export const sha256=s=>crypto.createHash('sha256').update(s).digest('hex');
 const b64=x=>Buffer.from(x).toString('base64url'); const unb64=x=>Buffer.from(x,'base64url');
 
-export function getOrCreateKeys(dir){fs.mkdirSync(dir,{recursive:true});const priv=path.join(dir,'grant-private.pem'),pub=path.join(dir,'grant-public.pem');if(!fs.existsSync(priv)||!fs.existsSync(pub)){const k=crypto.generateKeyPairSync('ed25519');fs.writeFileSync(priv,k.privateKey.export({type:'pkcs8',format:'pem'}),{mode:0o600});fs.writeFileSync(pub,k.publicKey.export({type:'spki',format:'pem'}),{mode:0o644});}return{privateKey:fs.readFileSync(priv,'utf8'),publicKey:fs.readFileSync(pub,'utf8')}}
-export function getOrCreateMasterKey(dir){fs.mkdirSync(dir,{recursive:true});const p=path.join(dir,'master.key');if(!fs.existsSync(p))fs.writeFileSync(p,crypto.randomBytes(32),{mode:0o600});return fs.readFileSync(p)}
+function atomicWrite(file,data,{mode=0o600}={}){
+  fs.mkdirSync(path.dirname(file),{recursive:true,mode:0o700});
+  const temp=`${file}.${process.pid}.${crypto.randomBytes(5).toString('hex')}.tmp`;
+  const payload=Buffer.isBuffer(data)?data:Buffer.from(String(data));
+  const fd=fs.openSync(temp,'wx',mode);
+  try{ fs.writeFileSync(fd,payload); fs.fsyncSync(fd); }
+  finally{ fs.closeSync(fd); }
+  fs.renameSync(temp,file);
+  try{fs.chmodSync(file,mode);}catch{}
+  try{
+    const dirFd=fs.openSync(path.dirname(file),'r');
+    try{fs.fsyncSync(dirFd);}finally{fs.closeSync(dirFd);}
+  }catch{}
+}
+function atomicWriteJson(file,value){ atomicWrite(file,JSON.stringify(value,null,2)); }
+
 export function encryptJson(v,key){const iv=crypto.randomBytes(12),c=crypto.createCipheriv('aes-256-gcm',key,iv),ct=Buffer.concat([c.update(Buffer.from(JSON.stringify(v))),c.final()]);return{v:1,iv:iv.toString('base64url'),tag:c.getAuthTag().toString('base64url'),ciphertext:ct.toString('base64url')}}
 export function decryptJson(v,key){const d=crypto.createDecipheriv('aes-256-gcm',key,Buffer.from(v.iv,'base64url'));d.setAuthTag(Buffer.from(v.tag,'base64url'));return JSON.parse(Buffer.concat([d.update(Buffer.from(v.ciphertext,'base64url')),d.final()]).toString())}
+
+export function getOrCreateKeys(dir){
+  fs.mkdirSync(dir,{recursive:true,mode:0o700});
+  const rootKey=getOrCreatePlatformRootKey(dir).key;
+  const legacyPriv=path.join(dir,'grant-private.pem');
+  const encPriv=path.join(dir,'grant-private.enc.json');
+  const pub=path.join(dir,'grant-public.pem');
+  if(!fs.existsSync(encPriv)){
+    let privatePem,publicPem;
+    if(fs.existsSync(legacyPriv)&&fs.existsSync(pub)){
+      privatePem=fs.readFileSync(legacyPriv,'utf8');
+      publicPem=fs.readFileSync(pub,'utf8');
+    }else{
+      const k=crypto.generateKeyPairSync('ed25519');
+      privatePem=k.privateKey.export({type:'pkcs8',format:'pem'});
+      publicPem=k.publicKey.export({type:'spki',format:'pem'});
+    }
+    atomicWriteJson(encPriv,encryptJson({privatePem},rootKey));
+    atomicWrite(pub,publicPem,{mode:0o644});
+    if(fs.existsSync(legacyPriv)) fs.rmSync(legacyPriv,{force:true});
+  }
+  const privateKey=decryptJson(JSON.parse(fs.readFileSync(encPriv,'utf8')),rootKey)?.privatePem;
+  const publicKey=fs.readFileSync(pub,'utf8');
+  if(typeof privateKey!=='string') throw Error('Encrypted signing key is invalid');
+  const probe=Buffer.from('hush-signing-key-self-test');
+  if(!crypto.verify(null,probe,publicKey,crypto.sign(null,probe,privateKey))) throw Error('Hush signing keypair failed self-test');
+  return{privateKey,publicKey,privateKeyStorage:'encrypted-under-platform-root'};
+}
+export function getOrCreateMasterKey(dir){return getOrCreatePlatformRootKey(dir).key}
 
 export function issueGrant(input,privateKey,now=Date.now()){const ttl=Math.max(1000,Math.min(Number(input.ttlMs??900000),86400000));const grant={v:1,id:input.id??crypto.randomUUID(),subject:input.subject??'local-user',agent:String(input.agent||'unknown-agent'),purpose:String(input.purpose||'unspecified'),actions:[...new Set(input.actions??[])].sort(),resources:[...new Set(input.resources??[])].sort(),constraints:{maxAmount:input.constraints?.maxAmount??null,currency:input.constraints?.currency??null,merchants:[...new Set(input.constraints?.merchants??[])].sort(),recipients:[...new Set(input.constraints?.recipients??[])].sort()},issuedAt:now,expiresAt:now+ttl,maxUses:Math.max(1,Number(input.maxUses??1))};const payload=b64(canonicalize(grant)),sig=crypto.sign(null,Buffer.from(payload),privateKey).toString('base64url');return{grant,token:`${payload}.${sig}`}}
 export function verifyGrantToken(token,publicKey,now=Date.now()){const p=String(token||'').split('.');if(p.length!==2)throw Error('Malformed grant token');if(!crypto.verify(null,Buffer.from(p[0]),publicKey,unb64(p[1])))throw Error('Invalid grant signature');const g=JSON.parse(unb64(p[0]).toString());if(g.v!==1)throw Error('Unsupported grant version');if(now>=g.expiresAt)throw Error('Grant expired');return g}
@@ -37,6 +81,45 @@ export function consumeApproval(a,r){if(!a)throw Error('Approval not found');if(
 export function createReceipt({previousHash=null,request,decision,grantId=null,result=null}){const x={v:1,id:crypto.randomUUID(),at:Date.now(),previousHash,grantId,request,decision,result};x.hash=sha256(canonicalize(x));return x}
 export function verifyReceiptChain(list){let prev=null;for(const r of list){const{hash,...body}=r;if(body.previousHash!==prev||sha256(canonicalize(body))!==hash)return false;prev=hash}return true}
 
-export class Vault{constructor(dir,key){this.file=path.join(dir,'vault.json');this.key=key;this.items=this.load()}load(){if(!fs.existsSync(this.file))return[];return decryptJson(JSON.parse(fs.readFileSync(this.file,'utf8')),this.key)}save(){fs.writeFileSync(this.file,JSON.stringify(encryptJson(this.items,this.key),null,2),{mode:0o600})}list(){return this.items.map(({value,...x})=>x)}put({label,type='secret',value,tags=[]}){const x={id:crypto.randomUUID(),label,type,value,tags,createdAt:Date.now()};this.items.push(x);this.save();const{value:_,...safe}=x;return safe}resolve(id){const x=this.items.find(item=>item.id===id);if(!x)throw Error('Vault item not found');return x.value}remove(id){const n=this.items.length;this.items=this.items.filter(x=>x.id!==id);if(this.items.length===n)return false;this.save();return true}}
+export class Vault{constructor(dir,key){this.file=path.join(dir,'vault.json');this.key=key;this.items=this.load()}load(){if(!fs.existsSync(this.file))return[];return decryptJson(JSON.parse(fs.readFileSync(this.file,'utf8')),this.key)}save(){atomicWriteJson(this.file,encryptJson(this.items,this.key))}list(){return this.items.map(({value,...x})=>x)}put({label,type='secret',value,tags=[]}){const x={id:crypto.randomUUID(),label,type,value,tags,createdAt:Date.now()};this.items.push(x);this.save();const{value:_,...safe}=x;return safe}resolve(id){const x=this.items.find(item=>item.id===id);if(!x)throw Error('Vault item not found');return x.value}remove(id){const n=this.items.length;this.items=this.items.filter(x=>x.id!==id);if(this.items.length===n)return false;this.save();return true}}
 
-export class Store{constructor(dir){this.dir=dir;fs.mkdirSync(dir,{recursive:true});this.grantUses=new Map();this.revokedGrants=new Set();this.pending=new Map();this.receipts=this.load('receipts.json',[]);this.policy=this.load('policy.json',DEFAULT_POLICY)}load(f,d){const p=path.join(this.dir,f);return fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')):structuredClone(d)}save(f,v){fs.writeFileSync(path.join(this.dir,f),JSON.stringify(v,null,2))}addReceipt(r){this.receipts.push(r);this.save('receipts.json',this.receipts)}}
+class DurableMap extends Map{
+  constructor(entries,onChange){super();this.onChange=onChange;for(const [k,v] of entries)super.set(k,v)}
+  set(k,v){super.set(k,v);this.onChange?.();return this}
+  delete(k){const changed=super.delete(k);if(changed)this.onChange?.();return changed}
+  clear(){if(this.size){super.clear();this.onChange?.()}}
+}
+class DurableSet extends Set{
+  constructor(values,onChange){super();this.onChange=onChange;for(const v of values)super.add(v)}
+  add(v){const before=this.size;super.add(v);if(this.size!==before)this.onChange?.();return this}
+  delete(v){const changed=super.delete(v);if(changed)this.onChange?.();return changed}
+  clear(){if(this.size){super.clear();this.onChange?.()}}
+}
+
+export class Store{
+  constructor(dir){
+    this.dir=dir;fs.mkdirSync(dir,{recursive:true,mode:0o700});
+    this.authorityFile=path.join(dir,'authority-state.enc.json');
+    this.authorityKey=getOrCreatePlatformRootKey(dir).key;
+    const authority=this.loadProtectedAuthority();
+    const persist=()=>this.saveProtectedAuthority();
+    this.grantUses=new DurableMap(Object.entries(authority.grantUses??{}).map(([k,v])=>[k,Number(v)||0]),persist);
+    this.revokedGrants=new DurableSet(authority.revokedGrants??[],persist);
+    this.pending=new Map();
+    this.receipts=this.load('receipts.json',[]);
+    this.policy=this.load('policy.json',DEFAULT_POLICY);
+  }
+  loadProtectedAuthority(){
+    if(!fs.existsSync(this.authorityFile)) return {v:1,grantUses:{},revokedGrants:[]};
+    const value=decryptJson(JSON.parse(fs.readFileSync(this.authorityFile,'utf8')),this.authorityKey);
+    if(value?.v!==1||typeof value.grantUses!=='object'||!Array.isArray(value.revokedGrants)) throw Error('Invalid encrypted authority state');
+    return value;
+  }
+  saveProtectedAuthority(){
+    const value={v:1,grantUses:Object.fromEntries(this.grantUses??[]),revokedGrants:[...(this.revokedGrants??[])].sort()};
+    atomicWriteJson(this.authorityFile,encryptJson(value,this.authorityKey));
+  }
+  load(f,d){const p=path.join(this.dir,f);return fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')):structuredClone(d)}
+  save(f,v){atomicWriteJson(path.join(this.dir,f),v)}
+  addReceipt(r){this.receipts.push(r);this.save('receipts.json',this.receipts)}
+}

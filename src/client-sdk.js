@@ -14,6 +14,16 @@ function cleanBaseUrl(value,{allowRemote=false}={}){
 }
 function pathUrl(base,path){ return new URL(String(path).replace(/^\//,''),base); }
 function clone(value){ return structuredClone(value); }
+function providerName(value){
+  const provider=String(value??'').toLowerCase();
+  if(!['google','github'].includes(provider)) throw new HushClientError('provider must be google or github');
+  return provider;
+}
+function requiredId(value,name){
+  const id=String(value??'').trim();
+  if(!id) throw new HushClientError(`${name} is required`);
+  return encodeURIComponent(id);
+}
 
 export class HushClientError extends Error {
   constructor(message,{status=null,payload=null}={}){
@@ -25,18 +35,20 @@ export class HushClientError extends Error {
 }
 
 /**
- * Small dependency-free client shared by browser-extension, desktop and future
- * mobile shells. It intentionally defaults to loopback only: exposing the alpha
- * local API over a network without a separate authenticated transport is unsafe.
+ * Dependency-free client shared by browser-extension, desktop and mobile shells.
+ * It defaults to loopback only. Native production clients should provide the
+ * OS-root-derived authToken; browser extensions use the exact registered origin
+ * or Native Messaging boundary instead of storing this control credential.
  */
 export class HushClient {
-  constructor({baseUrl=DEFAULT_BASE_URL,fetchImpl=globalThis.fetch,allowRemote=false,timeoutMs=5000}={}){
+  constructor({baseUrl=DEFAULT_BASE_URL,fetchImpl=globalThis.fetch,allowRemote=false,timeoutMs=5000,authToken=null}={}){
     if(typeof fetchImpl!=='function') throw new Error('HushClient requires fetch');
     const timeout=Number(timeoutMs);
     if(!Number.isFinite(timeout)||timeout<100||timeout>120000) throw new Error('timeoutMs must be between 100 and 120000');
     this.baseUrl=cleanBaseUrl(baseUrl,{allowRemote});
     this.fetchImpl=fetchImpl;
     this.timeoutMs=timeout;
+    this.authToken=authToken==null?null:String(authToken).trim();
   }
 
   async request(path,{method='GET',body=undefined,signal=undefined}={}){
@@ -48,7 +60,9 @@ export class HushClient {
       else signal.addEventListener('abort',relayAbort,{once:true});
     }
     try{
-      const options={method:String(method).toUpperCase(),signal:controller.signal,headers:{accept:'application/json'}};
+      const headers={accept:'application/json'};
+      if(this.authToken) headers.authorization=`Hush ${this.authToken}`;
+      const options={method:String(method).toUpperCase(),signal:controller.signal,headers};
       if(body!==undefined){
         options.headers['content-type']='application/json';
         options.body=JSON.stringify(body);
@@ -82,6 +96,10 @@ export class HushClient {
   trust(){ return this.request('/api/privacy/trust'); }
   vaultInventory(){ return this.request('/api/vault'); }
   contextInventory(){ return this.request('/api/context'); }
+  onboardingStatus(){ return this.request('/api/onboarding/status'); }
+  actions(){ return this.request('/api/onboarding/actions'); }
+  actionReceipts(){ return this.request('/api/onboarding/actions/receipts'); }
+  dashboardLaunch(){ return this.request('/api/dashboard/launch',{method:'POST',body:{}}); }
 
   redact(text){
     const value=String(text??'');
@@ -90,19 +108,65 @@ export class HushClient {
   }
 
   approve(pendingId){
-    const id=encodeURIComponent(String(pendingId||''));
-    if(!id) throw new HushClientError('pendingId is required');
+    const id=requiredId(pendingId,'pendingId');
     return this.request(`/api/pending/${id}/approve`,{method:'POST',body:{}});
   }
 
   deny(pendingId){
-    const id=encodeURIComponent(String(pendingId||''));
-    if(!id) throw new HushClientError('pendingId is required');
+    const id=requiredId(pendingId,'pendingId');
     return this.request(`/api/pending/${id}/deny`,{method:'POST',body:{}});
   }
 
   setTrust(agent,level){
     return this.request('/api/privacy/trust',{method:'POST',body:{agent:String(agent),level:String(level)}});
+  }
+
+  startGoogle(connectors=[],actions=[]){
+    if(!(connectors?.length||actions?.length)) throw new HushClientError('Select at least one Google connector or action before requesting consent');
+    return this.request('/api/onboarding/google/start',{method:'POST',body:{connectors:[...connectors],actions:[...actions]}});
+  }
+
+  startGithub(){
+    return this.request('/api/onboarding/github/start',{method:'POST',body:{}});
+  }
+
+  pollGithub(sessionId){
+    const id=String(sessionId??'').trim();
+    if(!id) throw new HushClientError('sessionId is required');
+    return this.request('/api/onboarding/github/poll',{method:'POST',body:{sessionId:id}});
+  }
+
+  syncProvider(provider,{connectors=undefined,limit=50}={}){
+    const name=providerName(provider);
+    return this.request(`/api/onboarding/${name}/sync`,{method:'POST',body:{connectors,limit}});
+  }
+
+  disconnectProvider(provider){
+    const name=providerName(provider);
+    return this.request(`/api/onboarding/${name}/disconnect`,{method:'POST',body:{}});
+  }
+
+  async requestAction({provider='google',action,agent='unknown-agent',sink=null,purpose='unspecified',category=null,resource='me',arguments:args={}}={}){
+    if(!String(action??'').trim()) throw new HushClientError('action is required');
+    try{
+      return await this.request('/api/onboarding/actions/request',{method:'POST',body:{provider,action,agent,sink,purpose,category,resource,arguments:args}});
+    }catch(error){
+      if(error instanceof HushClientError&&error.status===409&&error.payload?.decision==='reauthorize') return clone(error.payload);
+      throw error;
+    }
+  }
+
+  approveAction(actionId){
+    return this.request(`/api/onboarding/actions/${requiredId(actionId,'actionId')}/approve`,{method:'POST',body:{}});
+  }
+
+  denyAction(actionId){
+    return this.request(`/api/onboarding/actions/${requiredId(actionId,'actionId')}/deny`,{method:'POST',body:{}});
+  }
+
+  executeAction(actionId,{agent,sink}={}){
+    if(!String(agent??'').trim()||!String(sink??'').trim()) throw new HushClientError('agent and sink are required');
+    return this.request(`/api/onboarding/actions/${requiredId(actionId,'actionId')}/execute`,{method:'POST',body:{agent:String(agent),sink:String(sink)}});
   }
 }
 

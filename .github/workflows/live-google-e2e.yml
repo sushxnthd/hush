@@ -1,0 +1,43 @@
+name: live-google-e2e
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: live-google-actions
+    runs-on: ubuntu-latest
+    environment: production-e2e
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Require dedicated production test credentials
+        shell: bash
+        env:
+          HUSH_GOOGLE_CLIENT_ID: ${{ secrets.HUSH_GOOGLE_CLIENT_ID }}
+          HUSH_GOOGLE_REFRESH_TOKEN: ${{ secrets.HUSH_GOOGLE_REFRESH_TOKEN }}
+          HUSH_E2E_EMAIL: ${{ secrets.HUSH_E2E_EMAIL }}
+        run: |
+          test -n "$HUSH_GOOGLE_CLIENT_ID"
+          test -n "$HUSH_GOOGLE_REFRESH_TOKEN"
+          test -n "$HUSH_E2E_EMAIL"
+      - name: Run real Gmail + Calendar through Hush approval and action broker
+        env:
+          HUSH_GOOGLE_CLIENT_ID: ${{ secrets.HUSH_GOOGLE_CLIENT_ID }}
+          HUSH_GOOGLE_REFRESH_TOKEN: ${{ secrets.HUSH_GOOGLE_REFRESH_TOKEN }}
+          HUSH_E2E_EMAIL: ${{ secrets.HUSH_E2E_EMAIL }}
+        run: node scripts/live-google-e2e.mjs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: hush-live-google-e2e-${{ github.sha }}
+          path: dist/evidence/live-google-e2e.json
+          if-no-files-found: error
+          retention-days: 30

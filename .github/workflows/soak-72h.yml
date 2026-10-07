@@ -1,0 +1,38 @@
+name: soak-72h
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  soak:
+    name: 72h-crash-restart-durability
+    runs-on: [self-hosted, hush-soak]
+    environment: production-soak
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Syntax and unit safety gate before soak
+        run: npm run check:syntax && npm test
+      - name: Run full 72-hour encrypted state reopen soak
+        env:
+          HUSH_SOAK_DURATION_MS: '259200000'
+          HUSH_SOAK_MAX_ITERATIONS: '400000'
+          HUSH_SOAK_PAUSE_MS: '1000'
+          HUSH_SOAK_REQUIRE_FULL_DURATION: '1'
+        run: npm run ops:soak
+      - name: Verify attested duration
+        run: node -e "const x=require('./dist/evidence/soak.json');if(x.status!=='pass'||!x.fullDurationSatisfied||x.elapsedMs<259200000)process.exit(1);console.log(x)"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: hush-72h-soak-${{ github.sha }}
+          path: dist/evidence/soak.json
+          if-no-files-found: error
+          retention-days: 90
