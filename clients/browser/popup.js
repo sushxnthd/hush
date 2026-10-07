@@ -23,6 +23,18 @@ function openExternal(url){
   if(globalThis.chrome?.tabs?.create) chrome.tabs.create({url:value});
   else window.open(value,'_blank','noopener,noreferrer');
 }
+function selectedGooglePermissions(){
+  return {
+    connectors:[...document.querySelectorAll('[data-google-connector]:checked')].map(input=>input.value),
+    actions:[...document.querySelectorAll('[data-google-action]:checked')].map(input=>input.value)
+  };
+}
+function preselectGooglePermissions(connection){
+  if(!connection?.connected) return;
+  const connectors=new Set(connection.connectors??[]),actions=new Set(connection.actions??[]);
+  document.querySelectorAll('[data-google-connector]').forEach(input=>{input.checked=connectors.has(input.value);});
+  document.querySelectorAll('[data-google-action]').forEach(input=>{input.checked=actions.has(input.value);});
+}
 
 async function resolvePending(id,decision){
   setError('');
@@ -49,18 +61,28 @@ async function resolveProviderAction(item,decision){
 function providerRow(name,connection,configured){
   const title=name==='google'?'Google':'GitHub';
   const connected=Boolean(connection?.connected);
-  const state=connected?(connection.needsReauth?'Re-auth required':'Connected'):(configured?'Not connected':'App setup required');
-  const actions=connected
-    ? `<div class="actions"><button data-provider-action="sync" data-provider="${name}">Sync</button><button class="ghost" data-provider-action="disconnect" data-provider="${name}">Disconnect</button></div>`
-    : `<div class="actions"><button data-provider-action="connect" data-provider="${name}" ${configured?'':'disabled'}>${connection?.needsReauth?'Reconnect':'Connect'}</button></div>`;
+  const needsReauth=Boolean(connection?.needsReauth);
+  const state=connected?(needsReauth?'Re-auth required':'Connected'):(configured?'Not connected':'App setup required');
+  let buttons='';
+  if(connected&&!needsReauth){
+    buttons=`<div class="actions"><button data-provider-action="sync" data-provider="${name}">Sync</button><button class="ghost" data-provider-action="disconnect" data-provider="${name}">Disconnect</button></div>`;
+  }else if(configured){
+    buttons=`<div class="actions"><button data-provider-action="connect" data-provider="${name}">${needsReauth?'Reconnect':'Connect'}</button>${connected?`<button class="ghost" data-provider-action="disconnect" data-provider="${name}">Disconnect</button>`:''}</div>`;
+  }else{
+    buttons='<div class="actions"><button disabled>Connect</button></div>';
+  }
   const detail=connected&&connection.connectors?.length?` · ${connection.connectors.map(esc).join(', ')}`:'';
   const authority=connected&&connection.actions?.length?` · actions: ${connection.actions.map(esc).join(', ')}`:'';
-  return `<div class="row"><div><b>${title}</b> <span class="badge ${connected&&!connection.needsReauth?'on':''}">${esc(state)}</span><div class="meta">Credentials stay local${detail}${authority}</div></div>${actions}</div>`;
+  return `<div class="row"><div><b>${title}</b> <span class="badge ${connected&&!needsReauth?'on':''}">${esc(state)}</span><div class="meta">Credentials stay local${detail}${authority}</div></div>${buttons}</div>`;
 }
 
 async function renderProviders(){
   const status=await hush.onboardingStatus();
-  $('providers').innerHTML=providerRow('google',status.providers?.google,status.configured?.google)+providerRow('github',status.providers?.github,status.configured?.github);
+  const google=status.providers?.google??{connected:false};
+  $('providers').innerHTML=providerRow('google',google,status.configured?.google)+providerRow('github',status.providers?.github,status.configured?.github);
+  const showGooglePicker=Boolean(status.configured?.google)&&(!google.connected||google.needsReauth);
+  $('googlePermissions').classList.toggle('show',showGooglePicker);
+  if(showGooglePicker&&google.connected) preselectGooglePermissions(google);
   document.querySelectorAll('[data-provider-action]').forEach(button=>button.addEventListener('click',()=>providerAction(button.dataset.provider,button.dataset.providerAction)));
 }
 
@@ -93,7 +115,9 @@ async function providerAction(provider,action){
   setError('');
   try{
     if(action==='connect'&&provider==='google'){
-      const started=await hush.startGoogle();
+      const permissions=selectedGooglePermissions();
+      if(!permissions.connectors.length&&!permissions.actions.length) throw new Error('Choose at least one Google permission before connecting.');
+      const started=await hush.startGoogle(permissions.connectors,permissions.actions);
       openExternal(started.authorizationUrl);
       $('deviceFlow').textContent='Complete Google consent in the opened tab, then return here.';
       return;
@@ -167,6 +191,7 @@ async function refresh(){
     $('pending').innerHTML='<div class="empty">Start Hush on this device to review approvals.</div>';
     $('providers').innerHTML='<div class="empty">Start Hush to manage connections.</div>';
     $('providerActions').innerHTML='<div class="empty">Start Hush to review provider actions.</div>';
+    $('googlePermissions').classList.remove('show');
     setError(error?.message||'Local Hush runtime is unavailable.');
   }
 }
