@@ -26,8 +26,16 @@ function actionRoute(pathname,suffix){
   const match=pathname.match(new RegExp(`^/api/onboarding/actions/([^/]+)/${suffix}$`));
   return match?decodeURIComponent(match[1]):null;
 }
+function safeActionTicket(onboarding,actionId){
+  const rows=typeof onboarding.actionQueue==='function'?onboarding.actionQueue():[];
+  return rows.find(item=>item.actionId===String(actionId))??null;
+}
+function assertActionBinding(ticket,agent,sink){
+  if(!ticket) return;
+  if(ticket.agent!==String(agent)||ticket.sink!==String(sink)) throw new Error('Action ticket is bound to another agent or sink');
+}
 
-export async function handleOnboardingRequest({req,res,u,onboarding}){
+export async function handleOnboardingRequest({req,res,u,onboarding,auditAction=null}){
   if(!u.pathname.startsWith('/api/onboarding/')) return false;
   try{
     if(req.method==='GET'&&u.pathname==='/api/onboarding/status'){
@@ -82,7 +90,16 @@ export async function handleOnboardingRequest({req,res,u,onboarding}){
     if(req.method==='POST'&&executeId){
       const body=await readJson(req);
       if(!body.agent||!body.sink){json(res,400,{error:'agent and sink are required to execute a bound action'});return true;}
-      json(res,200,await onboarding.executeAction({actionId:executeId,agent:String(body.agent),sink:String(body.sink)})); return true;
+      const ticket=safeActionTicket(onboarding,executeId);
+      assertActionBinding(ticket,body.agent,body.sink);
+      if(ticket?.decision==='allow'&&typeof auditAction==='function') auditAction({phase:'attempt',ticket});
+      const out=await onboarding.executeAction({actionId:executeId,agent:String(body.agent),sink:String(body.sink)});
+      let auditPersisted=null;
+      if(ticket?.decision==='allow'&&typeof auditAction==='function'){
+        try{ auditAction({phase:'outcome',ticket,outcome:out}); auditPersisted=true; }
+        catch{ auditPersisted=false; }
+      }
+      json(res,200,auditPersisted===null?out:{...out,auditPersisted}); return true;
     }
 
     json(res,404,{error:'Onboarding/action route not found'}); return true;
