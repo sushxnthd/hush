@@ -24,19 +24,25 @@ function readLegacy(file){
   const key=fs.readFileSync(file);
   return validKey(key)?key:null;
 }
+function commandFailure(label,run){
+  const raw=String(run?.stderr||'').trim().replace(/\s+/g,' ').slice(0,400);
+  return new Error(raw?`${label}: ${raw}`:label);
+}
 
 function windowsDpapi(dir,legacy){
   if(process.platform!=='win32'||!commandExists('powershell.exe',['-NoProfile','-NonInteractive','-Command','$PSVersionTable.PSVersion.ToString()'])) return null;
+  fs.mkdirSync(dir,{recursive:true});
   const blob=path.join(dir,'root-key.dpapi');
-  const protect=`$ErrorActionPreference='Stop';$b=[Convert]::FromBase64String($env:HUSH_KEY_INPUT);$p=[Security.Cryptography.ProtectedData]::Protect($b,$null,[Security.Cryptography.DataProtectionScope]::CurrentUser);[IO.File]::WriteAllText($env:HUSH_KEY_PATH,[Convert]::ToBase64String($p))`;
-  const unprotect=`$ErrorActionPreference='Stop';$p=[Convert]::FromBase64String([IO.File]::ReadAllText($env:HUSH_KEY_PATH));$b=[Security.Cryptography.ProtectedData]::Unprotect($p,$null,[Security.Cryptography.DataProtectionScope]::CurrentUser);[Console]::Out.Write([Convert]::ToBase64String($b))`;
+  const common=`$ErrorActionPreference='Stop';Add-Type -AssemblyName System.Security;`;
+  const protect=`${common}$b=[Convert]::FromBase64String($env:HUSH_KEY_INPUT);$p=[System.Security.Cryptography.ProtectedData]::Protect($b,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser);[IO.File]::WriteAllText($env:HUSH_KEY_PATH,[Convert]::ToBase64String($p),[Text.Encoding]::ASCII)`;
+  const unprotect=`${common}$p=[Convert]::FromBase64String([IO.File]::ReadAllText($env:HUSH_KEY_PATH,[Text.Encoding]::ASCII));$b=[System.Security.Cryptography.ProtectedData]::Unprotect($p,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser);[Console]::Out.Write([Convert]::ToBase64String($b))`;
   const seal=key=>{
-    const run=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',protect],{env:{...process.env,HUSH_KEY_INPUT:key.toString('base64'),HUSH_KEY_PATH:blob},encoding:'utf8',timeout:5000,windowsHide:true});
-    if(run.status!==0) throw new Error('Windows DPAPI failed to seal Hush root key');
+    const run=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-Command',protect],{env:{...process.env,HUSH_KEY_INPUT:key.toString('base64'),HUSH_KEY_PATH:blob},encoding:'utf8',timeout:10000,windowsHide:true});
+    if(run.error||run.status!==0||!fs.existsSync(blob)) throw commandFailure('Windows DPAPI failed to seal Hush root key',run);
   };
   if(!fs.existsSync(blob)) seal(legacy??crypto.randomBytes(KEY_BYTES));
-  const run=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',unprotect],{env:{...process.env,HUSH_KEY_PATH:blob},encoding:'utf8',timeout:5000,windowsHide:true});
-  if(run.status!==0) throw new Error('Windows DPAPI failed to unlock Hush root key');
+  const run=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-Command',unprotect],{env:{...process.env,HUSH_KEY_PATH:blob},encoding:'utf8',timeout:10000,windowsHide:true});
+  if(run.error||run.status!==0) throw commandFailure('Windows DPAPI failed to unlock Hush root key',run);
   const key=Buffer.from(String(run.stdout||'').trim(),'base64');
   if(!validKey(key)) throw new Error('Windows DPAPI returned an invalid Hush root key');
   return {key,backend:'windows-dpapi',sealedPath:blob};
