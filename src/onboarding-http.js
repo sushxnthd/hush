@@ -23,12 +23,12 @@ function providerFromPath(pathname,suffix){
   return match?.[1]??null;
 }
 function actionRoute(pathname,suffix){
-  const match=pathname.match(new RegExp(`^/api/actions/([^/]+)/${suffix}$`));
+  const match=pathname.match(new RegExp(`^/api/onboarding/actions/([^/]+)/${suffix}$`));
   return match?decodeURIComponent(match[1]):null;
 }
 
 export async function handleOnboardingRequest({req,res,u,onboarding}){
-  if(!u.pathname.startsWith('/api/onboarding/')&&!u.pathname.startsWith('/api/actions')) return false;
+  if(!u.pathname.startsWith('/api/onboarding/')) return false;
   try{
     if(req.method==='GET'&&u.pathname==='/api/onboarding/status'){
       json(res,200,onboarding.status()); return true;
@@ -59,13 +59,13 @@ export async function handleOnboardingRequest({req,res,u,onboarding}){
       json(res,200,await onboarding.disconnect(disconnectProvider,{remote:true})); return true;
     }
 
-    if(req.method==='GET'&&u.pathname==='/api/actions'){
+    if(req.method==='GET'&&u.pathname==='/api/onboarding/actions'){
       json(res,200,{actions:onboarding.actionQueue()}); return true;
     }
-    if(req.method==='GET'&&u.pathname==='/api/actions/receipts'){
+    if(req.method==='GET'&&u.pathname==='/api/onboarding/actions/receipts'){
       json(res,200,{receipts:onboarding.actionReceipts()}); return true;
     }
-    if(req.method==='POST'&&u.pathname==='/api/actions/request'){
+    if(req.method==='POST'&&u.pathname==='/api/onboarding/actions/request'){
       const body=await readJson(req);
       if(!body.action){json(res,400,{error:'action is required'});return true;}
       const out=onboarding.requestAction({
