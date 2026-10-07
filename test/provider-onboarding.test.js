@@ -68,6 +68,33 @@ test('expired Google access token refreshes from encrypted vault without exposin
   assert.equal(JSON.stringify(status).includes('R1'),false);
 });
 
+test('incremental Google action consent preserves the existing refresh token and connector authority',async()=>{
+  const vault=new MemoryVault();
+  let now=1000;
+  const replies=[
+    {access_token:'READ-A',refresh_token:'KEEP-R',expires_in:3600,scope:'openid email https://www.googleapis.com/auth/gmail.readonly'},
+    {access_token:'SEND-A',expires_in:1,scope:'openid email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send'},
+    {access_token:'REFRESHED-A',expires_in:3600,scope:'openid email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send'}
+  ];
+  const bodies=[];
+  const fetchImpl=async(_url,init)=>{bodies.push(String(init?.body??''));return jsonResponse(replies.shift());};
+  const onboarding=new ProviderOnboarding({vault,fetchImpl,env,port:8787,now:()=>now});
+  const initial=onboarding.startGoogle({connectors:['gmail']});
+  await onboarding.completeGoogle({state:new URL(initial.authorizationUrl).searchParams.get('state'),code:'read'});
+
+  const upgrade=onboarding.requestAction({action:'send_email',agent:'assistant',sink:'gmail',arguments:{to:'person@example.com',subject:'x',body:'y'}});
+  assert.equal(upgrade.decision,'reauthorize');
+  await onboarding.completeGoogle({state:new URL(upgrade.authorization.authorizationUrl).searchParams.get('state'),code:'send'});
+  const status=onboarding.status().providers.google;
+  assert.deepEqual(status.connectors,['gmail']);
+  assert.deepEqual(status.actions,['send_email']);
+
+  now=70_000;
+  assert.equal(await onboarding.accessToken('google'),'REFRESHED-A');
+  assert.equal(bodies.some(body=>body.includes('refresh_token=KEEP-R')),true);
+  assert.equal(JSON.stringify(onboarding.status()).includes('KEEP-R'),false);
+});
+
 test('GitHub device flow enforces provider polling interval and stores token only after authorization',async()=>{
   const vault=new MemoryVault();
   let now=10_000;
