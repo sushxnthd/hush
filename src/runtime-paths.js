@@ -10,9 +10,13 @@ function ensurePrivateDir(dir){
 
 export function defaultHushDataDir({env=process.env,platform=process.platform,home=os.homedir()}={}){
   if(env.HUSH_DATA_DIR) return path.resolve(String(env.HUSH_DATA_DIR));
-  if(platform==='win32') return path.join(env.LOCALAPPDATA||path.join(home,'AppData','Local'),'Hush');
-  if(platform==='darwin') return path.join(home,'Library','Application Support','Hush');
-  return path.join(env.XDG_DATA_HOME||path.join(home,'.local','share'),'hush');
+  if(platform==='win32'){
+    const p=path.win32;
+    return p.join(env.LOCALAPPDATA||p.join(home,'AppData','Local'),'Hush');
+  }
+  const p=path.posix;
+  if(platform==='darwin') return p.join(home,'Library','Application Support','Hush');
+  return p.join(env.XDG_DATA_HOME||p.join(home,'.local','share'),'hush');
 }
 
 function moveDirectory(source,target){
