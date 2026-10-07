@@ -23,6 +23,14 @@ const provider=value=>{
   return name;
 };
 
+async function requestAction(input){
+  try{return await request('/api/onboarding/actions/request',{method:'POST',body:input});}
+  catch(error){
+    if(error?.status===409&&error?.payload?.decision==='reauthorize') return error.payload;
+    throw error;
+  }
+}
+
 export const hush={
   status:()=>request('/api/status'),
   pending:()=>request('/api/pending'),
@@ -38,7 +46,7 @@ export const hush={
   disconnectProvider:name=>request(`/api/onboarding/${provider(name)}/disconnect`,{method:'POST',body:{}}),
   actions:()=>request('/api/onboarding/actions'),
   actionReceipts:()=>request('/api/onboarding/actions/receipts'),
-  requestAction:input=>request('/api/onboarding/actions/request',{method:'POST',body:input}),
+  requestAction,
   approveAction:id=>request(`/api/onboarding/actions/${encodeURIComponent(id)}/approve`,{method:'POST',body:{}}),
   denyAction:id=>request(`/api/onboarding/actions/${encodeURIComponent(id)}/deny`,{method:'POST',body:{}}),
   executeAction:(id,{agent,sink})=>request(`/api/onboarding/actions/${encodeURIComponent(id)}/execute`,{method:'POST',body:{agent,sink}})
