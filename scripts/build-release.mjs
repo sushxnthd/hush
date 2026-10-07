@@ -39,6 +39,29 @@ function sourceEpoch(){
   const raw=Number(process.env.SOURCE_DATE_EPOCH||0);
   return Number.isFinite(raw)&&raw>0?new Date(raw*1000).toISOString():null;
 }
+function writeExecutable(file,content){
+  fs.mkdirSync(path.dirname(file),{recursive:true});
+  fs.writeFileSync(file,content,{mode:0o755});
+  try{fs.chmodSync(file,0o755);}catch{}
+}
+function bundleRuntime(){
+  const runtimeDir=path.join(bundle,'runtime');
+  fs.mkdirSync(runtimeDir,{recursive:true});
+  const runtimeName=process.platform==='win32'?'node.exe':'node';
+  const target=path.join(runtimeDir,runtimeName);
+  fs.copyFileSync(process.execPath,target);
+  try{fs.chmodSync(target,0o755);}catch{}
+  const launcherDir=path.join(bundle,'launchers');
+  fs.mkdirSync(launcherDir,{recursive:true});
+  if(process.platform==='win32'){
+    fs.writeFileSync(path.join(launcherDir,'hush.cmd'),'@echo off\r\nsetlocal\r\n"%~dp0..\\runtime\\node.exe" "%~dp0..\\src\\server.js" %*\r\n');
+    fs.writeFileSync(path.join(launcherDir,'hush-dashboard.cmd'),'@echo off\r\nsetlocal\r\n"%~dp0..\\runtime\\node.exe" "%~dp0..\\clients\\desktop\\hush-desktop.mjs" dashboard\r\n');
+  }else{
+    writeExecutable(path.join(launcherDir,'hush'),'#!/bin/sh\nset -eu\nROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"\nexec "$ROOT/runtime/node" "$ROOT/src/server.js" "$@"\n');
+    writeExecutable(path.join(launcherDir,'hush-dashboard'),'#!/bin/sh\nset -eu\nROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"\nexec "$ROOT/runtime/node" "$ROOT/clients/desktop/hush-desktop.mjs" dashboard\n');
+  }
+  return {path:normalizedRel(target),sha256:sha256(target),bytes:fs.statSync(target).size,nodeVersion:process.version,platform:process.platform,arch:process.arch};
+}
 
 fs.rmSync(dist,{recursive:true,force:true});
 fs.mkdirSync(bundle,{recursive:true});
@@ -51,6 +74,7 @@ for(const file of includeFiles){
   const source=path.join(root,file);
   if(fs.existsSync(source)) fs.copyFileSync(source,path.join(bundle,file));
 }
+const bundledRuntime=bundleRuntime();
 
 const initialFiles=walk(bundle);
 const inventory=initialFiles.map(file=>({path:normalizedRel(file),sha256:sha256(file),bytes:fs.statSync(file).size}));
@@ -61,6 +85,7 @@ const releaseManifest={
   commit:gitSha(),
   sourceDate:sourceEpoch(),
   nodeEngine:pkg.engines?.node??null,
+  bundledRuntime,
   dependencyCount:Object.keys(pkg.dependencies??{}).length+Object.keys(pkg.optionalDependencies??{}).length,
   files:inventory
 };
@@ -77,7 +102,7 @@ const sbom={
   dataLicense:'CC0-1.0',
   SPDXID:'SPDXRef-DOCUMENT',
   name:`Hush ${pkg.version} portable release`,
-  documentNamespace:`https://hush.local/spdx/${pkg.version}/${releaseManifest.commit||'unknown'}`,
+  documentNamespace:`https://hush.local/spdx/${pkg.version}/${releaseManifest.commit||'unknown'}/${process.platform}-${process.arch}`,
   creationInfo:{created:sourceEpoch()||'1970-01-01T00:00:00.000Z',creators:['Tool: Hush release builder']},
   packages:[{
     SPDXID:'SPDXRef-Package-Hush',name:'hush',versionInfo:pkg.version,downloadLocation:'NOASSERTION',filesAnalyzed:true,
@@ -99,6 +124,6 @@ for(const line of sums.trim().split('\n')){
   if(actual!==expected) throw new Error(`Release checksum verification failed: ${rel}`);
 }
 
-const summary={bundle:path.relative(root,bundle),version:pkg.version,commit:releaseManifest.commit,files:walk(bundle).length,sbom:'sbom.spdx.json',checksums:'SHA256SUMS'};
+const summary={bundle:path.relative(root,bundle),version:pkg.version,commit:releaseManifest.commit,platform:process.platform,arch:process.arch,bundledNodeVersion:process.version,bundledRuntime:bundledRuntime.path,files:walk(bundle).length,sbom:'sbom.spdx.json',checksums:'SHA256SUMS'};
 fs.writeFileSync(path.join(dist,'release-summary.json'),JSON.stringify(summary,null,2)+'\n');
 console.log(JSON.stringify(summary,null,2));
