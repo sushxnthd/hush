@@ -99,6 +99,31 @@ function receipt(request, decision, grantId=null, result=null){
   return r;
 }
 
+function providerActionAudit({phase,ticket,outcome=null}={}){
+  if(!ticket?.requestHash) throw new Error('Provider action audit requires a safe action ticket');
+  if(!['attempt','outcome'].includes(String(phase))) throw new Error('Unsupported provider action audit phase');
+  const request={
+    agent:ticket.agent,
+    purpose:ticket.purpose,
+    category:'provider-action',
+    action:ticket.action,
+    resource:ticket.resource,
+    provider:ticket.adapter,
+    sink:ticket.sink,
+    requestHash:ticket.requestHash
+  };
+  const status=phase==='attempt'?'approved':String(outcome?.decision??'error');
+  const decision=status==='allow'?'allow':status==='error'?'error':'approved';
+  return receipt(request,decision,null,{
+    providerAction:true,
+    phase,
+    status,
+    requestHash:ticket.requestHash,
+    brokerReceiptHash:phase==='outcome'?(outcome?.receipt?.hash??null):null,
+    rawCredentialIncluded:false
+  });
+}
+
 function persistTrust(){
   const out={};
   for (const [agent, profile] of trustRegistry.profiles.entries()) out[agent]=profile;
@@ -250,7 +275,7 @@ async function mcp(req,res,u){
 
 async function api(req,res,u){
   if(u.pathname.startsWith('/api/onboarding/')){
-    const handled=await handleOnboardingRequest({req,res,u,onboarding:providerOnboarding});
+    const handled=await handleOnboardingRequest({req,res,u,onboarding:providerOnboarding,auditAction:providerActionAudit});
     if(handled) return;
   }
   if(req.method==='POST'&&u.pathname==='/api/dashboard/launch'){
@@ -389,6 +414,8 @@ function staticFile(res,u){
   try{requested=u.pathname==='/'?'index.html':decodeURIComponent(u.pathname).replace(/^\/+/, '');}
   catch{return false;}
   const candidate=path.resolve(pub,requested);
+  const lexical=path.relative(pub,candidate);
+  if(lexical==='..'||lexical.startsWith(`..${path.sep}`)||path.isAbsolute(lexical)) return false;
   if(!fs.existsSync(candidate)||fs.statSync(candidate).isDirectory()) return false;
   const real=fs.realpathSync(candidate);
   const relative=path.relative(pub,real);
