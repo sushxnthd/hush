@@ -7,7 +7,7 @@ async function request(path,{method='GET',body}={}){
   const options={method,headers:{accept:'application/json'}};
   if(body!==undefined){options.headers['content-type']='application/json';options.body=JSON.stringify(body);}
   const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),5000);
+  const timer=setTimeout(()=>controller.abort(),10000);
   options.signal=controller.signal;
   try{
     const response=await fetch(url,options);
@@ -17,11 +17,23 @@ async function request(path,{method='GET',body}={}){
   } finally { clearTimeout(timer); }
 }
 
+const provider=value=>{
+  const name=String(value||'').toLowerCase();
+  if(!['google','github'].includes(name)) throw new Error('Unsupported provider');
+  return name;
+};
+
 export const hush={
   status:()=>request('/api/status'),
   pending:()=>request('/api/pending'),
   footprint:()=>request('/api/privacy/footprint'),
   redact:text=>request('/api/redact',{method:'POST',body:{text:String(text??'')}}),
   approve:id=>request(`/api/pending/${encodeURIComponent(id)}/approve`,{method:'POST',body:{}}),
-  deny:id=>request(`/api/pending/${encodeURIComponent(id)}/deny`,{method:'POST',body:{}})
+  deny:id=>request(`/api/pending/${encodeURIComponent(id)}/deny`,{method:'POST',body:{}}),
+  onboardingStatus:()=>request('/api/onboarding/status'),
+  startGoogle:(connectors=['gmail','calendar','drive','contacts'])=>request('/api/onboarding/google/start',{method:'POST',body:{connectors}}),
+  startGithub:()=>request('/api/onboarding/github/start',{method:'POST',body:{}}),
+  pollGithub:sessionId=>request('/api/onboarding/github/poll',{method:'POST',body:{sessionId}}),
+  syncProvider:(name,connectors)=>request(`/api/onboarding/${provider(name)}/sync`,{method:'POST',body:{connectors,limit:50}}),
+  disconnectProvider:name=>request(`/api/onboarding/${provider(name)}/disconnect`,{method:'POST',body:{}})
 };
