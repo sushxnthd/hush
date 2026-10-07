@@ -99,6 +99,7 @@ export class HushClient {
   onboardingStatus(){ return this.request('/api/onboarding/status'); }
   actions(){ return this.request('/api/onboarding/actions'); }
   actionReceipts(){ return this.request('/api/onboarding/actions/receipts'); }
+  dashboardLaunch(){ return this.request('/api/dashboard/launch',{method:'POST',body:{}}); }
 
   redact(text){
     const value=String(text??'');
