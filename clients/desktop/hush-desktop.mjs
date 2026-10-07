@@ -14,12 +14,13 @@ const client=new HushClient({authToken:deriveLocalControlToken(rootKeyInfo.key)}
 const [command='status',...args]=process.argv.slice(2);
 
 function print(value){ process.stdout.write(JSON.stringify(value,null,2)+'\n'); }
-function openDashboard(){
-  const url='http://127.0.0.1:8787/';
+async function openDashboard(){
+  const launch=await client.dashboardLaunch();
+  const url=new URL(String(launch.path||'/'),'http://127.0.0.1:8787').toString();
   const spec=process.platform==='win32'?['cmd',['/c','start','',url]]:process.platform==='darwin'?['open',[url]]:['xdg-open',[url]];
   const child=spawn(spec[0],spec[1],{detached:true,stdio:'ignore'});
   child.unref();
-  return {opened:url,note:'Production dashboard sessions require the authenticated launcher flow before release.'};
+  return {opened:true,expiresAt:launch.expiresAt};
 }
 
 try{
@@ -45,7 +46,7 @@ try{
   else if(command==='mcp-token'){
     process.stdout.write(deriveMcpTransportToken(rootKeyInfo.key)+'\n');
   }
-  else if(command==='dashboard') print(openDashboard());
+  else if(command==='dashboard') print(await openDashboard());
   else throw new Error('Commands: status, pending, footprint, receipts, approve <id>, deny <id>, redact, mcp-token, dashboard');
 }catch(error){
   process.stderr.write(`Hush: ${error?.message||'command failed'}\n`);
