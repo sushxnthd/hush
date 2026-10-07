@@ -22,15 +22,19 @@ function providerFromPath(pathname,suffix){
   const match=pathname.match(new RegExp(`^/api/onboarding/(google|github)/${suffix}$`));
   return match?.[1]??null;
 }
+function actionRoute(pathname,suffix){
+  const match=pathname.match(new RegExp(`^/api/actions/([^/]+)/${suffix}$`));
+  return match?decodeURIComponent(match[1]):null;
+}
 
 export async function handleOnboardingRequest({req,res,u,onboarding}){
-  if(!u.pathname.startsWith('/api/onboarding/')) return false;
+  if(!u.pathname.startsWith('/api/onboarding/')&&!u.pathname.startsWith('/api/actions')) return false;
   try{
     if(req.method==='GET'&&u.pathname==='/api/onboarding/status'){
       json(res,200,onboarding.status()); return true;
     }
     if(req.method==='POST'&&u.pathname==='/api/onboarding/google/start'){
-      const body=await readJson(req); json(res,201,onboarding.startGoogle({connectors:body.connectors})); return true;
+      const body=await readJson(req); json(res,201,onboarding.startGoogle({connectors:body.connectors,actions:body.actions})); return true;
     }
     if(req.method==='GET'&&u.pathname==='/api/onboarding/callback/google'){
       try{
@@ -54,9 +58,36 @@ export async function handleOnboardingRequest({req,res,u,onboarding}){
     if(req.method==='POST'&&disconnectProvider){
       json(res,200,await onboarding.disconnect(disconnectProvider,{remote:true})); return true;
     }
-    json(res,404,{error:'Onboarding route not found'}); return true;
+
+    if(req.method==='GET'&&u.pathname==='/api/actions'){
+      json(res,200,{actions:onboarding.actionQueue()}); return true;
+    }
+    if(req.method==='GET'&&u.pathname==='/api/actions/receipts'){
+      json(res,200,{receipts:onboarding.actionReceipts()}); return true;
+    }
+    if(req.method==='POST'&&u.pathname==='/api/actions/request'){
+      const body=await readJson(req);
+      if(!body.action){json(res,400,{error:'action is required'});return true;}
+      const out=onboarding.requestAction({
+        provider:body.provider??'google',action:body.action,agent:body.agent??'unknown-agent',sink:body.sink??null,
+        purpose:body.purpose??'unspecified',category:body.category??null,resource:body.resource??'me',arguments:body.arguments??{}
+      });
+      json(res,out.decision==='reauthorize'?409:201,out); return true;
+    }
+    const approveId=actionRoute(u.pathname,'approve');
+    if(req.method==='POST'&&approveId){ json(res,200,onboarding.approveAction(approveId)); return true; }
+    const denyId=actionRoute(u.pathname,'deny');
+    if(req.method==='POST'&&denyId){ json(res,200,onboarding.denyAction(denyId)); return true; }
+    const executeId=actionRoute(u.pathname,'execute');
+    if(req.method==='POST'&&executeId){
+      const body=await readJson(req);
+      if(!body.agent||!body.sink){json(res,400,{error:'agent and sink are required to execute a bound action'});return true;}
+      json(res,200,await onboarding.executeAction({actionId:executeId,agent:String(body.agent),sink:String(body.sink)})); return true;
+    }
+
+    json(res,404,{error:'Onboarding/action route not found'}); return true;
   }catch(error){
     const status=Number(error?.status)||(/not configured|not connected|reauth/i.test(String(error?.message))?409:400);
-    json(res,status,{error:error?.message||'Onboarding request failed'}); return true;
+    json(res,status,{error:error?.message||'Onboarding/action request failed'}); return true;
   }
 }
