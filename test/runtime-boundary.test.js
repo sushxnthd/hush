@@ -35,13 +35,15 @@ test('stale runtime lock is replaced',()=>{
   }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 
-test('loopback hosts and exact configured extension origins are accepted',()=>{
+test('loopback same-origin and exact configured extension origins are accepted',()=>{
   assert.equal(assertLocalHttpRequest({url:'/',headers:{host:'127.0.0.1:8787'}}),true);
   assert.equal(assertLocalHttpRequest(request('/api/status',{origin:trustedExtension}),{allowedExtensionOrigins:[trustedExtension],auth}),true);
-  assert.equal(assertLocalHttpRequest({url:'/',headers:{host:'[::1]:8787',origin:'http://127.0.0.1:8787'}}),true);
+  assert.equal(assertLocalHttpRequest({url:'/',headers:{host:'[::1]:8787',origin:'http://[::1]:8787'}}),true);
+  assert.equal(assertLocalHttpRequest(request('/',{origin:'http://127.0.0.1:8787'})),true);
 });
 
-test('arbitrary extension origins, DNS rebinding and ordinary web origins are rejected',()=>{
+test('cross-port loopback, arbitrary extensions, DNS rebinding and web origins are rejected',()=>{
+  assert.throws(()=>assertLocalHttpRequest(request('/',{origin:'http://127.0.0.1:9999'})),/not allowed/i);
   assert.throws(()=>assertLocalHttpRequest(request('/api/status',{origin:'chrome-extension://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'}),{allowedExtensionOrigins:[trustedExtension],auth}),/not allowed/i);
   assert.throws(()=>assertLocalHttpRequest({url:'/',headers:{host:'evil.example:8787'}}),/loopback/i);
   assert.throws(()=>assertLocalHttpRequest({url:'/',headers:{host:'127.0.0.1:8787',origin:'https://evil.example'}}),/not allowed/i);
@@ -51,6 +53,20 @@ test('sensitive API routes require local client auth but static files remain pub
   assert.equal(assertLocalHttpRequest(request('/'),{auth}),true);
   assert.throws(()=>assertLocalHttpRequest(request('/api/status'),{auth}),/authentication is required/i);
   assert.equal(assertLocalHttpRequest(request('/api/status',{authorization:`Hush ${deriveLocalControlToken(rootKey)}`}),{auth}),true);
+});
+
+test('dashboard bootstrap tokens are one-shot and sessions authorize protected API calls',()=>{
+  let now=10_000;
+  const isolated=new LocalClientAuth({rootKey:crypto.randomBytes(32),required:true,now:()=>now,launchTtlMs:10_000,sessionTtlMs:60_000});
+  const launch=isolated.issueDashboardLaunch();
+  assert.match(launch.path,/^\/dashboard\/bootstrap\//);
+  const session=isolated.consumeDashboardLaunch(launch.launchToken);
+  assert.match(session.cookie,/HttpOnly/);
+  assert.match(session.cookie,/SameSite=Strict/);
+  assert.throws(()=>isolated.consumeDashboardLaunch(launch.launchToken),/invalid or expired/i);
+  assert.equal(isolated.authorizeApi(request('/api/status',{cookie:`hush_session=${encodeURIComponent(session.sessionId)}`})).authorized,true);
+  now=session.expiresAt;
+  assert.throws(()=>isolated.authorizeApi(request('/api/status',{cookie:`hush_session=${encodeURIComponent(session.sessionId)}`})),/authentication is required/i);
 });
 
 test('OAuth callback stays state-PKCE reachable while other onboarding APIs require auth',()=>{
