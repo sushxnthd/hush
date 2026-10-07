@@ -8,7 +8,7 @@ import { defaultHushDataDir, resolveHushDataDir } from '../src/runtime-paths.js'
 function temp(prefix){return fs.mkdtempSync(path.join(os.tmpdir(),prefix));}
 
 test('default data paths live in per-user application storage',()=>{
-  assert.equal(defaultHushDataDir({platform:'win32',home:'C:\\Users\\A',env:{LOCALAPPDATA:'C:\\Users\\A\\AppData\\Local'}}),'C:\\Users\\A\\AppData\\Local/Hush');
+  assert.equal(defaultHushDataDir({platform:'win32',home:'C:\\Users\\A',env:{LOCALAPPDATA:'C:\\Users\\A\\AppData\\Local'}}),'C:\\Users\\A\\AppData\\Local\\Hush');
   assert.equal(defaultHushDataDir({platform:'darwin',home:'/Users/a',env:{}}),'/Users/a/Library/Application Support/Hush');
   assert.equal(defaultHushDataDir({platform:'linux',home:'/home/a',env:{XDG_DATA_HOME:'/home/a/.xdg'}}),'/home/a/.xdg/hush');
 });
