@@ -4,9 +4,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { acquireRuntimeLock } from '../src/runtime-lock.js';
-import { assertLocalHttpRequest, securityHeaders } from '../src/local-http-security.js';
+import { assertLocalHttpRequest, parseTrustedExtensionOrigins, securityHeaders } from '../src/local-http-security.js';
 
 function temp(){return fs.mkdtempSync(path.join(os.tmpdir(),'hush-lock-'));}
+const trustedExtension='chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
 test('runtime lock prevents a second live process claim and releases cleanly',()=>{
   const dir=temp();
@@ -29,15 +30,22 @@ test('stale runtime lock is replaced',()=>{
   }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 
-test('loopback host and extension origins are accepted',()=>{
+test('loopback hosts and exact configured extension origins are accepted',()=>{
   assert.equal(assertLocalHttpRequest({headers:{host:'127.0.0.1:8787'}}),true);
-  assert.equal(assertLocalHttpRequest({headers:{host:'localhost:8787',origin:'chrome-extension://abc'}}),true);
+  assert.equal(assertLocalHttpRequest({headers:{host:'localhost:8787',origin:trustedExtension}},{allowedExtensionOrigins:[trustedExtension]}),true);
   assert.equal(assertLocalHttpRequest({headers:{host:'[::1]:8787',origin:'http://127.0.0.1:8787'}}),true);
 });
 
-test('DNS-rebinding hosts and ordinary web origins are rejected',()=>{
+test('arbitrary extension origins, DNS rebinding and ordinary web origins are rejected',()=>{
+  assert.throws(()=>assertLocalHttpRequest({headers:{host:'127.0.0.1:8787',origin:'chrome-extension://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'}},{allowedExtensionOrigins:[trustedExtension]}),/not allowed/i);
   assert.throws(()=>assertLocalHttpRequest({headers:{host:'evil.example:8787'}}),/loopback/i);
   assert.throws(()=>assertLocalHttpRequest({headers:{host:'127.0.0.1:8787',origin:'https://evil.example'}}),/not allowed/i);
+});
+
+test('trusted extension origin parser rejects wildcard or malformed origins',()=>{
+  assert.deepEqual(parseTrustedExtensionOrigins(`${trustedExtension}, ${trustedExtension}`),[trustedExtension]);
+  assert.throws(()=>parseTrustedExtensionOrigins('chrome-extension://*'),/Invalid trusted extension origin/);
+  assert.throws(()=>parseTrustedExtensionOrigins('https://example.com'),/Invalid trusted extension origin/);
 });
 
 test('local security headers disable embedding and sensitive browser capabilities',()=>{
