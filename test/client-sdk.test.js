@@ -34,6 +34,17 @@ test('status and pending use the expected local API routes',async()=>{
   assert.deepEqual(seen,[['/api/status','GET'],['/api/pending','GET']]);
 });
 
+test('dashboard launch uses an authenticated POST and returns only the bootstrap path',async()=>{
+  let seen;
+  const client=new HushClient({authToken:'local-control-secret',fetchImpl:fake(async(url,options)=>{seen={url,options};return {status:201,body:{path:'/dashboard/bootstrap/opaque',expiresAt:1234}};})});
+  const out=await client.dashboardLaunch();
+  assert.equal(out.path,'/dashboard/bootstrap/opaque');
+  assert.equal(seen.url.pathname,'/api/dashboard/launch');
+  assert.equal(seen.options.method,'POST');
+  assert.equal(seen.options.headers.authorization,'Hush local-control-secret');
+  assert.equal(seen.options.body,'{}');
+});
+
 test('202 ask responses are returned instead of treated as transport failures',async()=>{
   const client=new HushClient({fetchImpl:fake(async()=>({status:202,body:{decision:'ask',pending:{id:'p1'}}}))});
   const out=await client.request('/api/evaluate',{method:'POST',body:{request:{action:'send'}}});
