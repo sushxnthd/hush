@@ -1,4 +1,12 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { getOrCreatePlatformRootKey } from './platform-key-store.js';
+import { resolveHushDataDir } from './runtime-paths.js';
+import { LocalClientAuth } from './local-client-auth.js';
+
 const LOOPBACK_HOSTS=new Set(['127.0.0.1','localhost','[::1]','::1']);
+let cachedRuntimeAuth=null;
+let cachedRuntimeAuthKey='';
 
 function hostOnly(value){
   const raw=String(value||'').trim();
@@ -25,18 +33,44 @@ function allowedOrigin(value,{allowedExtensionOrigins=[]}={}){
     return ['http:','https:'].includes(url.protocol)&&LOOPBACK_HOSTS.has(url.hostname.toLowerCase());
   }catch{return false;}
 }
+function runtimeAuth({allowedExtensionOrigins=[]}={}){
+  const required=process.env.NODE_ENV==='production'||process.env.HUSH_REQUIRE_LOCAL_AUTH==='1';
+  if(!required) return null;
+  const originKey=allowedExtensionOrigins.slice().sort().join(',');
+  const cacheKey=`${process.env.NODE_ENV||''}|${process.env.HUSH_DATA_DIR||''}|${originKey}`;
+  if(cachedRuntimeAuth&&cachedRuntimeAuthKey===cacheKey) return cachedRuntimeAuth;
+  const appRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+  const {dataDir}=resolveHushDataDir({appRoot});
+  const rootKeyInfo=getOrCreatePlatformRootKey(dataDir);
+  cachedRuntimeAuth=new LocalClientAuth({rootKey:rootKeyInfo.key,required:true,allowedExtensionOrigins});
+  cachedRuntimeAuthKey=cacheKey;
+  return cachedRuntimeAuth;
+}
+function pathname(req){
+  try{return new URL(String(req?.url||'/'),'http://127.0.0.1').pathname;}
+  catch{return '/';}
+}
+function authorizeRoute(req,auth){
+  if(!auth) return;
+  const p=pathname(req);
+  if(p==='/api/onboarding/callback/google') return;
+  if(p==='/mcp'){ auth.authorizeMcp(req); return; }
+  if(p.startsWith('/api/')) auth.authorizeApi(req);
+}
 
 /**
  * The Hush HTTP API is a same-device control surface, not a network service.
- * Reject DNS-rebinding Host headers and non-approved browser origins before
- * parsing a request body. Browser extensions must match an exact configured
- * origin; wildcard extension trust is intentionally unsupported.
+ * Reject DNS-rebinding Host headers, non-approved browser origins, and anonymous
+ * local API/MCP callers before parsing a request body. The Google loopback OAuth
+ * callback is state+PKCE bound and is the only unauthenticated API exception.
  */
-export function assertLocalHttpRequest(req,{allowedExtensionOrigins=[]}={}){
+export function assertLocalHttpRequest(req,{allowedExtensionOrigins=null,auth=null}={}){
+  const trusted=allowedExtensionOrigins??parseTrustedExtensionOrigins(process.env.HUSH_ALLOWED_EXTENSION_ORIGINS||'');
   const host=hostOnly(req?.headers?.host);
   if(!LOOPBACK_HOSTS.has(host)) throw Object.assign(new Error('Hush only accepts loopback Host headers.'),{status:403,code:'NON_LOOPBACK_HOST'});
   const origin=req?.headers?.origin;
-  if(!allowedOrigin(origin,{allowedExtensionOrigins})) throw Object.assign(new Error('This web origin is not allowed to control Hush.'),{status:403,code:'UNTRUSTED_ORIGIN'});
+  if(!allowedOrigin(origin,{allowedExtensionOrigins:trusted})) throw Object.assign(new Error('This web origin is not allowed to control Hush.'),{status:403,code:'UNTRUSTED_ORIGIN'});
+  authorizeRoute(req,auth??runtimeAuth({allowedExtensionOrigins:trusted}));
   return true;
 }
 
