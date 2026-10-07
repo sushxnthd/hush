@@ -15,6 +15,8 @@ import { McpToolCatalog, evaluateMcpCall, jsonRpcError, sanitizeForwardHeaders }
 import { scanMcpCatalog } from './scanner.js';
 import { ContextKernel } from './context-kernel.js';
 import { NATIVE_MCP_TOOLS, callNativeMcpTool, isNativeMcpTool } from './native-mcp.js';
+import { ProviderOnboarding } from './provider-onboarding.js';
+import { handleOnboardingRequest } from './onboarding-http.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = path.join(root, 'data');
@@ -32,6 +34,7 @@ disclosureLedger.events = store.load('disclosures.json', []);
 
 const contextPassphrase = process.env.HUSH_CONTEXT_PASSPHRASE || null;
 const contextKernel = contextPassphrase ? new ContextKernel({dir:path.join(dataDir,'context'),passphrase:contextPassphrase}) : null;
+const providerOnboarding = new ProviderOnboarding({vault,kernel:contextKernel,port});
 
 const mcpCatalog = new McpToolCatalog();
 const mcpApprovals = new Map();
@@ -224,7 +227,11 @@ async function mcp(req,res,u){
 }
 
 async function api(req,res,u){
-  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Hush',version:'0.9.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:contextKernel?{enabled:true,...contextKernel.stats()}:{enabled:false},mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});
+  if(u.pathname.startsWith('/api/onboarding/')){
+    const handled=await handleOnboardingRequest({req,res,u,onboarding:providerOnboarding});
+    if(handled) return;
+  }
+  if(req.method==='GET'&&u.pathname==='/api/status') return send(res,200,{product:'Hush',version:'0.9.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:contextKernel?{enabled:true,...contextKernel.stats()}:{enabled:false},onboarding:providerOnboarding.status(),mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:verifyReceiptChain(store.receipts)});
   if(req.method==='GET'&&u.pathname==='/api/vault') return send(res,200,{items:vault.list()});
   if(req.method==='GET'&&u.pathname==='/api/pending') return send(res,200,{requests:[...store.pending.values()].filter(x=>x.status==='pending')});
   if(req.method==='GET'&&u.pathname==='/api/receipts') return send(res,200,{receipts:store.receipts.slice(-50).reverse(),chainValid:verifyReceiptChain(store.receipts)});
