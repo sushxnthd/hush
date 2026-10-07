@@ -67,7 +67,7 @@ $('#copy-context').addEventListener('click',()=>run(async()=>{
   if(!await confirmAction(`Copy context for ${p.destination}?`,`This places ${p.text.length.toLocaleString()} characters on your clipboard, including ${p.selected.length} approved ${p.selected.length===1?'memory':'memories'}. You decide when and where to paste it. Nothing is sent by Hush.`, 'Approve & copy'))return;
   if(!sample&&(await storage.read())?.revision!==envelope.revision)throw Error('Workspace changed while you were reviewing. Lock and unlock before sharing.');
   await navigator.clipboard.writeText(p.text);
-  try{await commit(()=>{},`Context copied for ${p.destination} · ${p.selected.length} memories`);status('Copied once. Hush did not send it to a provider.');}catch{status('Copied, but the activity record could not be saved. Your existing workspace is unchanged.',true);}
+  try{await commit(()=>{},`Context copied for ${p.destination} · ${p.selected.length} ${p.selected.length===1?'memory':'memories'}`);status('Copied once. Hush did not send it to a provider.');}catch{status('Copied, but the activity record could not be saved. Your existing workspace is unchanged.',true);}
   const urls={ChatGPT:'https://chatgpt.com/',Claude:'https://claude.ai/',Gemini:'https://gemini.google.com/'};
   $('#open-provider').hidden=!urls[p.destination];$('#open-provider').href=urls[p.destination]||'#';$('#open-provider').textContent=`Open ${p.destination} ↗`;$('#copy-context').disabled=true;preview=null;
 }));
@@ -83,6 +83,6 @@ function idleLock(){
   else if(!busy)run(async()=>{await lock();status('Workspace locked after 15 minutes of inactivity.');});
 }
 setInterval(idleLock,15000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)idleLock();});
-window.addEventListener('pagehide',()=>{data=null;keys=null;preview=null;});
+window.addEventListener('pagehide',()=>{session++;data=null;keys=null;preview=null;});
 window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
 if(!globalThis.crypto?.subtle||!globalThis.indexedDB){$('#unlock-button').disabled=true;status('Use a modern browser over HTTPS. Sample mode requires Web Crypto.',true);$('#sample-button').disabled=!globalThis.crypto?.subtle;}else run(async()=>{await gate();if(location.hash==='#sample'){data=sampleWorkspace();sample=true;enter();}});
