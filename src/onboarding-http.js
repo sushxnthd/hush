@@ -34,6 +34,7 @@ function assertActionBinding(ticket,agent,sink){
   if(!ticket) return;
   if(ticket.agent!==String(agent)||ticket.sink!==String(sink)) throw new Error('Action ticket is bound to another agent or sink');
 }
+function list(value){ return Array.isArray(value)?value:[]; }
 
 export async function handleOnboardingRequest({req,res,u,onboarding,auditAction=null}){
   if(!u.pathname.startsWith('/api/onboarding/')) return false;
@@ -42,7 +43,10 @@ export async function handleOnboardingRequest({req,res,u,onboarding,auditAction=
       json(res,200,onboarding.status()); return true;
     }
     if(req.method==='POST'&&u.pathname==='/api/onboarding/google/start'){
-      const body=await readJson(req); json(res,201,onboarding.startGoogle({connectors:body.connectors,actions:body.actions})); return true;
+      const body=await readJson(req);
+      const connectors=list(body.connectors),actions=list(body.actions);
+      if(!connectors.length&&!actions.length){json(res,400,{error:'Select at least one Google connector or action.'});return true;}
+      json(res,201,onboarding.startGoogle({connectors,actions})); return true;
     }
     if(req.method==='GET'&&u.pathname==='/api/onboarding/callback/google'){
       try{
