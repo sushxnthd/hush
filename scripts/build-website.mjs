@@ -1,6 +1,7 @@
 import { readdir, readFile, writeFile, mkdir, cp, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import {versionWebsiteAssets} from './version-website-assets.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 await import('./write-product-site.mjs');
@@ -35,4 +36,5 @@ for(const filename of groups.keys())await cp(path.join(media,filename),path.join
 for (const filename of ['index.html','index.md','sitemap.xml','robots.txt','.nojekyll']) {
   await cp(path.join(root, filename), path.join(output, filename));
 }
-console.log(`Website built: ${routes.length + 1} routes, ${groups.size} preserved media files.`);
+await versionWebsiteAssets(output);
+console.log(`Website built: ${routes.length + 1} routes, ${groups.size} preserved media files; assets versioned by content.`);
