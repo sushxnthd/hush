@@ -1,0 +1,7 @@
+{
+  "status": "pass",
+  "issuedAt": "2026-10-07T15:56:00Z",
+  "evidence": "Release-candidate workflow run 37647761404 passed the update rollback drill independently on Ubuntu, Windows and macOS for commit d03a9addfd46b9ce4f91a7d377b3bfb20e11fbaf. The drill snapshots user state outside the live data directory, excludes runtime.lock, mutates/deletes/adds post-update state, restores atomically, verifies the exact pre-update state digest, and rejects a tampered snapshot before restore.",
+  "workflowRun": 37647761404,
+  "commit": "d03a9addfd46b9ce4f91a7d377b3bfb20e11fbaf"
+}
