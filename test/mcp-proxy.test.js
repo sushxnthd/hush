@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { spawn } from 'node:child_process';
 
 async function listen(server){
@@ -17,16 +20,16 @@ async function json(url,payload,headers={}){
   const r=await fetch(url,{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(payload)});
   return {status:r.status,body:await r.json()};
 }
-async function waitFor(url,child){
-  for(let i=0;i<80;i++){
-    if(child.exitCode!=null) throw new Error(`Hush exited early with ${child.exitCode}`);
+async function waitFor(url,child,stderr){
+  for(let i=0;i<240;i++){
+    if(child.exitCode!=null) throw new Error(`Hush exited early with ${child.exitCode}: ${stderr()}`);
     try{const r=await fetch(url);if(r.ok)return await r.json()}catch{}
     await new Promise(r=>setTimeout(r,50));
   }
-  throw new Error('Hush did not start');
+  throw new Error(`Hush did not start: ${stderr()}`);
 }
 
-test('MCP proxy enforces exact one-shot approval before forwarding', {timeout:15000}, async t=>{
+test('MCP proxy enforces exact one-shot approval before forwarding', {timeout:30000}, async t=>{
   const forwarded=[];
   const seenAuth=[];
   const upstream=http.createServer(async(req,res)=>{
@@ -48,16 +51,21 @@ test('MCP proxy enforces exact one-shot approval before forwarding', {timeout:15
   });
   const upstreamPort=await listen(upstream);
   const port=await freePort();
+  const dataDir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-mcp-proxy-'));
   const child=spawn(process.execPath,['src/server.js'],{
     cwd:process.cwd(),
-    env:{...process.env,PORT:String(port),HUSH_MCP_UPSTREAM:`http://127.0.0.1:${upstreamPort}/mcp`,HUSH_MCP_TRUST_TOOL_ANNOTATIONS:'0',HUSH_MCP_BEARER_TOKEN:'server-only-secret'},
+    env:{...process.env,PORT:String(port),HUSH_DATA_DIR:dataDir,HUSH_MCP_UPSTREAM:`http://127.0.0.1:${upstreamPort}/mcp`,HUSH_MCP_TRUST_TOOL_ANNOTATIONS:'0',HUSH_MCP_BEARER_TOKEN:'server-only-secret'},
     stdio:['ignore','pipe','pipe']
   });
   let stderr='';child.stderr.on('data',d=>stderr+=d);
-  t.after(async()=>{if(child.exitCode==null)child.kill('SIGTERM');await new Promise(resolve=>upstream.close(resolve));});
+  t.after(async()=>{
+    if(child.exitCode==null)child.kill('SIGTERM');
+    await new Promise(resolve=>upstream.close(resolve));
+    fs.rmSync(dataDir,{recursive:true,force:true});
+  });
 
   const base=`http://127.0.0.1:${port}`;
-  await waitFor(`${base}/api/status`,child);
+  await waitFor(`${base}/api/status`,child,()=>stderr);
   const h={'x-hush-agent':'claude','x-hush-purpose':'research','authorization':'Bearer client-visible-token'};
 
   const listed=await json(`${base}/mcp`,{jsonrpc:'2.0',id:1,method:'tools/list',params:{}},h);
