@@ -36,18 +36,19 @@ export class HushClientError extends Error {
 
 /**
  * Dependency-free client shared by browser-extension, desktop and mobile shells.
- * It defaults to loopback only: provider credentials and private context must not
- * be exposed through a remotely reachable local API without a separate secure
- * authenticated transport.
+ * It defaults to loopback only. Native production clients should provide the
+ * OS-root-derived authToken; browser extensions use the exact registered origin
+ * or Native Messaging boundary instead of storing this control credential.
  */
 export class HushClient {
-  constructor({baseUrl=DEFAULT_BASE_URL,fetchImpl=globalThis.fetch,allowRemote=false,timeoutMs=5000}={}){
+  constructor({baseUrl=DEFAULT_BASE_URL,fetchImpl=globalThis.fetch,allowRemote=false,timeoutMs=5000,authToken=null}={}){
     if(typeof fetchImpl!=='function') throw new Error('HushClient requires fetch');
     const timeout=Number(timeoutMs);
     if(!Number.isFinite(timeout)||timeout<100||timeout>120000) throw new Error('timeoutMs must be between 100 and 120000');
     this.baseUrl=cleanBaseUrl(baseUrl,{allowRemote});
     this.fetchImpl=fetchImpl;
     this.timeoutMs=timeout;
+    this.authToken=authToken==null?null:String(authToken).trim();
   }
 
   async request(path,{method='GET',body=undefined,signal=undefined}={}){
@@ -59,7 +60,9 @@ export class HushClient {
       else signal.addEventListener('abort',relayAbort,{once:true});
     }
     try{
-      const options={method:String(method).toUpperCase(),signal:controller.signal,headers:{accept:'application/json'}};
+      const headers={accept:'application/json'};
+      if(this.authToken) headers.authorization=`Hush ${this.authToken}`;
+      const options={method:String(method).toUpperCase(),signal:controller.signal,headers};
       if(body!==undefined){
         options.headers['content-type']='application/json';
         options.body=JSON.stringify(body);
@@ -117,7 +120,8 @@ export class HushClient {
     return this.request('/api/privacy/trust',{method:'POST',body:{agent:String(agent),level:String(level)}});
   }
 
-  startGoogle(connectors=['gmail','calendar','drive','contacts'],actions=[]){
+  startGoogle(connectors=[],actions=[]){
+    if(!(connectors?.length||actions?.length)) throw new HushClientError('Select at least one Google connector or action before requesting consent');
     return this.request('/api/onboarding/google/start',{method:'POST',body:{connectors:[...connectors],actions:[...actions]}});
   }
 
