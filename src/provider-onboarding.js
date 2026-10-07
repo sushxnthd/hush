@@ -46,6 +46,14 @@ function publicTokenMetadata(bundle){
   };
 }
 function unique(values=[]){return [...new Set((values??[]).map(x=>String(x).toLowerCase()).filter(Boolean))];}
+function scopesFromToken(value){return String(value??'').split(/\s+/).map(x=>x.trim()).filter(Boolean);}
+function capabilitiesForScopes(scopes){
+  const granted=new Set(scopes??[]);
+  return {
+    connectors:Object.entries(GOOGLE_CONNECTOR_SCOPES).filter(([,scope])=>granted.has(scope)).map(([connector])=>connector),
+    actions:Object.entries(GOOGLE_ACTION_SCOPES).filter(([,scope])=>granted.has(scope)).map(([action])=>action)
+  };
+}
 
 export function createPkcePair(){
   const verifier=randomToken(48);
@@ -121,13 +129,29 @@ export class ProviderOnboarding {
     if(!session) throw new Error('OAuth state mismatch or expired authorization');
     this.sessions.delete(session.id);
     if(!code) throw new Error('Google authorization code is missing');
+    const previous=this._load('google');
     const {clientId}=this._config('google');
     const token=await providerJson(this.fetchImpl,GOOGLE_TOKEN,{values:{client_id:clientId,code,code_verifier:session.verifier,redirect_uri:session.redirectUri,grant_type:'authorization_code'}});
     if(!token.access_token) throw new Error('Google token exchange returned no access token');
-    const connectedAt=this.now();
-    const grantedScopes=String(token.scope||session.scopes.join(' ')).split(/\s+/).filter(Boolean);
-    const actions=session.actions.filter(action=>grantedScopes.includes(GOOGLE_ACTION_SCOPES[action]));
-    const bundle={provider:'google',access_token:token.access_token,refresh_token:token.refresh_token??null,token_type:token.token_type??'Bearer',connectedAt,expiresAt:token.expires_in?connectedAt+Number(token.expires_in)*1000:null,refreshExpiresAt:null,connectors:session.connectors,actions,scopes:grantedScopes};
+    const authorizedAt=this.now();
+    const reportedScopes=scopesFromToken(token.scope);
+    const grantedScopes=reportedScopes.length?reportedScopes:[...new Set([...(previous?.scopes??[]),...session.scopes])];
+    const capabilities=capabilitiesForScopes(grantedScopes);
+    const bundle={
+      provider:'google',
+      access_token:token.access_token,
+      refresh_token:token.refresh_token??previous?.refresh_token??null,
+      token_type:token.token_type??previous?.token_type??'Bearer',
+      connectedAt:previous?.connectedAt??authorizedAt,
+      authorizedAt,
+      expiresAt:token.expires_in?authorizedAt+Number(token.expires_in)*1000:null,
+      refreshExpiresAt:token.refresh_token_expires_in?authorizedAt+Number(token.refresh_token_expires_in)*1000:(previous?.refreshExpiresAt??null),
+      connectors:capabilities.connectors,
+      actions:capabilities.actions,
+      scopes:grantedScopes,
+      identity:previous?.identity??null,
+      needsReauth:false
+    };
     return this._save('google',bundle);
   }
 
@@ -167,8 +191,10 @@ export class ProviderOnboarding {
     const payload=await providerJson(this.fetchImpl,GOOGLE_TOKEN,{values:{client_id:clientId,refresh_token:bundle.refresh_token,grant_type:'refresh_token'}});
     if(!payload.access_token) throw new Error('Google refresh returned no access token');
     const now=this.now();
-    const next={...bundle,access_token:payload.access_token,refresh_token:payload.refresh_token??bundle.refresh_token,token_type:payload.token_type??bundle.token_type,expiresAt:payload.expires_in?now+Number(payload.expires_in)*1000:null,scopes:payload.scope?String(payload.scope).split(/\s+/).filter(Boolean):bundle.scopes,needsReauth:false};
-    next.actions=Object.entries(GOOGLE_ACTION_SCOPES).filter(([,scope])=>next.scopes.includes(scope)).map(([action])=>action);
+    const next={...bundle,access_token:payload.access_token,refresh_token:payload.refresh_token??bundle.refresh_token,token_type:payload.token_type??bundle.token_type,expiresAt:payload.expires_in?now+Number(payload.expires_in)*1000:null,scopes:payload.scope?scopesFromToken(payload.scope):bundle.scopes,needsReauth:false};
+    const capabilities=capabilitiesForScopes(next.scopes);
+    next.connectors=capabilities.connectors;
+    next.actions=capabilities.actions;
     this._save('google',next);
     return next;
   }
