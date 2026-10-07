@@ -15,13 +15,24 @@ async function call(onboarding,method,path,body,{auditAction=null}={}){
   return {handled,status:res.status,payload:res.body?JSON.parse(res.body):{}};
 }
 
-test('Google start forwards requested action scopes through the local HTTP boundary',async()=>{
+test('Google start forwards only explicitly requested scopes through the local HTTP boundary',async()=>{
   let input=null;
   const onboarding={startGoogle:value=>{input=value;return {provider:'google',authorizationUrl:'https://accounts.google.com/test'};}};
   const out=await call(onboarding,'POST','/api/onboarding/google/start',{connectors:['gmail'],actions:['send_email']});
   assert.equal(out.handled,true);
   assert.equal(out.status,201);
   assert.deepEqual(input,{connectors:['gmail'],actions:['send_email']});
+});
+
+test('Google start with omitted permissions fails closed instead of expanding to default scopes',async()=>{
+  let called=false;
+  const onboarding={startGoogle:()=>{called=true;return {};}};
+  for(const body of [{},{connectors:null,actions:null},{connectors:'gmail'}]){
+    const out=await call(onboarding,'POST','/api/onboarding/google/start',body);
+    assert.equal(out.status,400);
+    assert.match(out.payload.error,/Select at least one Google connector or action/i);
+  }
+  assert.equal(called,false);
 });
 
 test('provider action request approval and execution are explicit separate routes',async()=>{
