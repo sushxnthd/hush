@@ -5,7 +5,7 @@ window.initHushNavPixel=()=>{
   if(!rail)return;
 
   const brand=rail.querySelector('.hush-brand');
-  if(brand){brand.innerHTML='<img class="hush-brand-logo" src="assets/hush-logo.svg" alt="" aria-hidden="true"><span class="hush-brand-word">hush</span>'}
+  if(brand)brand.innerHTML='<img class="hush-brand-logo" src="assets/hush-logo.svg" alt="" aria-hidden="true"><span class="hush-brand-word">hush</span>';
 
   const human=rail.querySelector('[data-format-human]'),agent=rail.querySelector('[data-format-agent]');
   if(human){human.href='./';human.setAttribute('aria-current','page')}
@@ -14,29 +14,42 @@ window.initHushNavPixel=()=>{
   const docs=[...rail.querySelectorAll('.nav-doors a')].find(a=>a.textContent.trim()==='Docs');
   docs?.classList.add('nav-mobile-keep');
 
-  const oldMenu=rail.querySelector('[data-menu]');
-  let menu=oldMenu;
+  const oldMenu=rail.querySelector('[data-menu]');let menu=oldMenu;
   if(oldMenu){menu=oldMenu.cloneNode(true);oldMenu.replaceWith(menu)}
-
-  const oldMark=document.querySelector('.nav-mark');
-  let mark=oldMark;
+  const oldMark=document.querySelector('.nav-mark');let mark=oldMark;
   if(oldMark){mark=oldMark.cloneNode(true);oldMark.replaceWith(mark)}
-
-  const oldToc=rail.querySelector('.nav-here[data-toc]');
-  let toc=oldToc;
+  const oldToc=rail.querySelector('.nav-here[data-toc]');let toc=oldToc;
   if(oldToc){toc=oldToc.cloneNode(true);oldToc.replaceWith(toc)}
 
   const doors=[...rail.querySelectorAll('.nav-doors a')];
   const currentDoor=doors.find(a=>a.hasAttribute('aria-current'));
-  const positionMark=()=>{
-    if(!mark||!currentDoor)return;
-    const rr=rail.getBoundingClientRect(),ar=currentDoor.getBoundingClientRect();
-    const y=ar.top-rr.top+ar.height/2-mark.offsetHeight/2;
-    mark.style.setProperty('--y',`${y.toFixed(1)}px`);
-    mark.style.setProperty('--r',`${doors.indexOf(currentDoor)*90}deg`);
-    mark.classList.remove('is-off');
+  const placeMark=(door,rotation)=>{
+    if(!mark||!door)return;
+    const rr=rail.getBoundingClientRect(),ar=door.getBoundingClientRect();
+    mark.style.setProperty('--y',`${(ar.top-rr.top+ar.height/2-mark.offsetHeight/2).toFixed(1)}px`);
+    mark.style.setProperty('--r',`${rotation}deg`);
   };
-  if(mark){currentDoor?positionMark():mark.classList.add('is-off');document.fonts?.ready.then(positionMark);addEventListener('resize',positionMark)}
+  const moveMark=fn=>{
+    if(!mark)return;
+    if(!(mark.style.getPropertyValue('--y')&&!reduce)){
+      mark.style.transition=reduce?'none':'';
+      fn();
+      if(reduce){mark.offsetWidth;mark.style.transition=''}
+      return;
+    }
+    mark.style.transition='transform 700ms var(--spring-36), opacity var(--dur-hover) var(--ease-hover)';
+    fn();
+    setTimeout(()=>{mark.style.transition=''},720);
+  };
+  if(mark){
+    if(currentDoor){
+      const rotation=doors.indexOf(currentDoor)*90;
+      mark.classList.remove('is-off');
+      moveMark(()=>placeMark(currentDoor,rotation));
+      document.fonts?.ready.then(()=>moveMark(()=>placeMark(currentDoor,rotation)));
+      addEventListener('resize',()=>placeMark(currentDoor,rotation));
+    }else mark.classList.add('is-off');
+  }
 
   if(menu){
     const desktop=matchMedia('(min-width: 521px)');
@@ -54,7 +67,7 @@ window.initHushNavPixel=()=>{
     const sections=links.map(a=>document.getElementById(decodeURIComponent(a.getAttribute('href').slice(1))));
     const ruler=toc.querySelector('.nav-ruler');
     const centerOffset=10.5;
-    let active=-2,lockUntil=0,ready=true,raf=0;
+    let active=-2,lockUntil=0,progressLocked=true,raf=false;
     const buildRuler=()=>{
       if(!ruler||links.length<2)return;
       links.forEach((a,i)=>a.style.setProperty('--t',String(i*5)));
@@ -67,7 +80,7 @@ window.initHushNavPixel=()=>{
     };
     const setActive=i=>{
       if(i===active)return;active=i;
-      links.forEach((a,j)=>j===i?a.setAttribute('aria-current','location'):a.removeAttribute('aria-current'))
+      links.forEach((a,j)=>j===i?a.setAttribute('aria-current','location'):a.removeAttribute('aria-current'));
     };
     const sync=()=>{
       if(performance.now()<lockUntil)return;
@@ -77,20 +90,28 @@ window.initHushNavPixel=()=>{
       const atBottom=links.length&&scrollY+innerHeight>=document.documentElement.scrollHeight-2;
       if(atBottom)idx=links.length-1;
       setActive(idx);
-      if(!ready)return;
+      if(progressLocked)return;
       const top=sections[idx]?.getBoundingClientRect().top??line;
       const next=sections[idx+1]?.getBoundingClientRect().top;
       const frac=atBottom||next===undefined?0:Math.min(1,Math.max(0,(line-top)/Math.max(next-top,1)));
       toc.style.setProperty('--y',((idx+frac)*5).toFixed(2));
     };
-    addEventListener('scroll',()=>{if(!raf){raf=requestAnimationFrame(()=>{sync();raf=0})}},{passive:true});
+    addEventListener('scroll',()=>{if(!raf){raf=true;requestAnimationFrame(()=>{sync();raf=false})}},{passive:true});
     addEventListener('scrollend',()=>{lockUntil=0;sync()});
     addEventListener('resize',()=>{buildRuler();sync()});
     document.fonts?.ready.then(buildRuler);
     buildRuler();
     links.forEach((a,i)=>a.addEventListener('click',()=>{lockUntil=performance.now()+1200;setActive(i)}));
     sync();
-    const revealDelay=parseFloat(getComputedStyle(rail).getPropertyValue('--h'))||0;
-    ready=false;setTimeout(()=>{ready=true;sync()},reduce?0:revealDelay+460+Math.max(active,0)*60)
+    const unlock=()=>{
+      const h=parseFloat(getComputedStyle(rail).getPropertyValue('--h'))||0;
+      const delay=reduce?0:h*1000+460+Math.max(active,0)*60;
+      setTimeout(()=>{progressLocked=false;sync()},delay);
+    };
+    if(rail.classList.contains('is-visible'))unlock();
+    else{
+      const mo=new MutationObserver(()=>{if(rail.classList.contains('is-visible')){mo.disconnect();unlock()}});
+      mo.observe(rail,{attributes:true,attributeFilter:['class']});
+    }
   }
 };
