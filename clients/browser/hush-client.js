@@ -22,6 +22,12 @@ const provider=value=>{
   if(!['google','github'].includes(name)) throw new Error('Unsupported provider');
   return name;
 };
+const selectedGoogle=(connectors=[],actions=[])=>{
+  const c=[...new Set((connectors??[]).map(String).filter(Boolean))];
+  const a=[...new Set((actions??[]).map(String).filter(Boolean))];
+  if(!c.length&&!a.length) throw new Error('Choose at least one Google permission before connecting.');
+  return {connectors:c,actions:a};
+};
 
 async function requestAction(input){
   try{return await request('/api/onboarding/actions/request',{method:'POST',body:input});}
@@ -39,7 +45,7 @@ export const hush={
   approve:id=>request(`/api/pending/${encodeURIComponent(id)}/approve`,{method:'POST',body:{}}),
   deny:id=>request(`/api/pending/${encodeURIComponent(id)}/deny`,{method:'POST',body:{}}),
   onboardingStatus:()=>request('/api/onboarding/status'),
-  startGoogle:(connectors=['gmail','calendar','drive','contacts'],actions=[])=>request('/api/onboarding/google/start',{method:'POST',body:{connectors,actions}}),
+  startGoogle:(connectors=[],actions=[])=>request('/api/onboarding/google/start',{method:'POST',body:selectedGoogle(connectors,actions)}),
   startGithub:()=>request('/api/onboarding/github/start',{method:'POST',body:{}}),
   pollGithub:sessionId=>request('/api/onboarding/github/poll',{method:'POST',body:{sessionId}}),
   syncProvider:(name,connectors)=>request(`/api/onboarding/${provider(name)}/sync`,{method:'POST',body:{connectors,limit:50}}),
