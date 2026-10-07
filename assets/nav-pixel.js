@@ -22,6 +22,7 @@ window.initHushNavPixel=()=>{
   if(oldToc){toc=oldToc.cloneNode(true);oldToc.replaceWith(toc)}
 
   const doors=[...rail.querySelectorAll('.nav-doors a')];
+  doors.forEach((a,i)=>a.style.setProperty('--k',String(i)));
   const currentDoor=doors.find(a=>a.hasAttribute('aria-current'));
   const placeMark=(door,rotation)=>{
     if(!mark||!door)return;
@@ -70,7 +71,7 @@ window.initHushNavPixel=()=>{
     let active=-2,lockUntil=0,progressLocked=true,raf=false;
     const buildRuler=()=>{
       if(!ruler||links.length<2)return;
-      links.forEach((a,i)=>a.style.setProperty('--t',String(i*5)));
+      links.forEach((a,i)=>{a.style.setProperty('--k',String(doors.length+i));a.style.setProperty('--j',String(i));a.style.setProperty('--t',String(i*5))});
       const ticks=[];
       for(let i=0;i<links.length-1;i++){
         const y0=links[i].offsetTop+centerOffset,y1=links[i+1].offsetTop+centerOffset;
@@ -105,7 +106,7 @@ window.initHushNavPixel=()=>{
     sync();
     const unlock=()=>{
       const h=parseFloat(getComputedStyle(rail).getPropertyValue('--h'))||0;
-      const delay=reduce?0:h*1000+460+Math.max(active,0)*60;
+      const delay=reduce?0:h+460+Math.max(active,0)*60;
       setTimeout(()=>{progressLocked=false;sync()},delay);
     };
     if(rail.classList.contains('is-visible'))unlock();
