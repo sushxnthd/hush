@@ -20,7 +20,8 @@ import { handleOnboardingRequest } from './onboarding-http.js';
 import { getOrCreatePlatformRootKey, deriveContextPassphrase } from './platform-key-store.js';
 import { resolveHushDataDir } from './runtime-paths.js';
 import { acquireRuntimeLock } from './runtime-lock.js';
-import { assertLocalHttpRequest, securityHeaders } from './local-http-security.js';
+import { assertLocalHttpRequest, parseTrustedExtensionOrigins, securityHeaders } from './local-http-security.js';
+import { LocalClientAuth } from './local-client-auth.js';
 import { signReceipt, verifySignedReceiptChain } from './receipt-security.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -32,6 +33,12 @@ const rootKeyInfo = getOrCreatePlatformRootKey(dataDir);
 const vault = new Vault(dataDir, rootKeyInfo.key);
 const store = new Store(dataDir);
 const port = Number(process.env.PORT || 8787);
+const trustedExtensionOrigins=parseTrustedExtensionOrigins(process.env.HUSH_ALLOWED_EXTENSION_ORIGINS||'');
+const localAuth=new LocalClientAuth({
+  rootKey:rootKeyInfo.key,
+  required:process.env.NODE_ENV==='production'||process.env.HUSH_REQUIRE_LOCAL_AUTH==='1',
+  allowedExtensionOrigins:trustedExtensionOrigins
+});
 
 const trustRegistry = new TrustRegistry('limited');
 for (const [agent, profile] of Object.entries(store.load('trust.json', {}))) trustRegistry.set(agent, profile.level ?? profile);
@@ -246,9 +253,13 @@ async function api(req,res,u){
     const handled=await handleOnboardingRequest({req,res,u,onboarding:providerOnboarding});
     if(handled) return;
   }
+  if(req.method==='POST'&&u.pathname==='/api/dashboard/launch'){
+    const launch=localAuth.issueDashboardLaunch();
+    return send(res,201,{path:launch.path,expiresAt:launch.expiresAt});
+  }
   if(req.method==='GET'&&u.pathname==='/api/status'){
     const audit=auditStatus();
-    return send(res,200,{product:'Hush',version:'0.9.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:{enabled:true,...contextKernel.stats()},runtime:{stateLocation:'user-data',legacyMigrated:Boolean(dataMigration),singleInstance:true},security:{rootKeyBackend:rootKeyInfo.backend,productionKeyStore:rootKeyInfo.backend!=='restricted-file',signedAudit:audit.anchored,auditValid:audit.valid,signedReceipts:audit.signed,legacyUnsignedReceipts:audit.legacyUnsigned},onboarding:providerOnboarding.status(),mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:audit.valid});
+    return send(res,200,{product:'Hush',version:'0.9.0',vaultItems:vault.list().length,pending:[...store.pending.values()].filter(x=>x.status==='pending').length,receipts:store.receipts.length,disclosures:disclosureLedger.events.length,footprintAgents:disclosureLedger.footprint().length,context:{enabled:true,...contextKernel.stats()},runtime:{stateLocation:'user-data',legacyMigrated:Boolean(dataMigration),singleInstance:true},security:{rootKeyBackend:rootKeyInfo.backend,productionKeyStore:rootKeyInfo.backend!=='restricted-file',localClientAuth:localAuth.required,signedAudit:audit.anchored,auditValid:audit.valid,signedReceipts:audit.signed,legacyUnsignedReceipts:audit.legacyUnsigned},onboarding:providerOnboarding.status(),mcp:{configured:Boolean(mcpUpstream),observedTools:mcpCatalog.list().length,trustToolAnnotations:trustMcpAnnotations,credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)},chainValid:audit.valid});
   }
   if(req.method==='GET'&&u.pathname==='/api/vault') return send(res,200,{items:vault.list()});
   if(req.method==='GET'&&u.pathname==='/api/pending') return send(res,200,{requests:[...store.pending.values()].filter(x=>x.status==='pending')});
@@ -363,18 +374,35 @@ async function api(req,res,u){
   return send(res,404,{error:'Not found'});
 }
 
+function dashboardBootstrap(res,u){
+  const match=u.pathname.match(/^\/dashboard\/bootstrap\/([^/]+)$/);
+  if(!match) return false;
+  const session=localAuth.consumeDashboardLaunch(decodeURIComponent(match[1]));
+  res.writeHead(303,securityHeaders({'location':'/','set-cookie':session.cookie}));
+  res.end();
+  return true;
+}
+
 function staticFile(res,u){
-  const pub=path.join(root,'public'),p=path.resolve(pub,u.pathname==='/'?'index.html':u.pathname.slice(1));
-  if(!p.startsWith(pub)||!fs.existsSync(p)||fs.statSync(p).isDirectory()) return false;
-  const type={'.html':'text/html; charset=utf-8'}[path.extname(p)]??'application/octet-stream';
-  res.writeHead(200,securityHeaders({'content-type':type}));fs.createReadStream(p).pipe(res);return true;
+  const pub=fs.realpathSync(path.join(root,'public'));
+  let requested;
+  try{requested=u.pathname==='/'?'index.html':decodeURIComponent(u.pathname).replace(/^\/+/, '');}
+  catch{return false;}
+  const candidate=path.resolve(pub,requested);
+  if(!fs.existsSync(candidate)||fs.statSync(candidate).isDirectory()) return false;
+  const real=fs.realpathSync(candidate);
+  const relative=path.relative(pub,real);
+  if(relative==='..'||relative.startsWith(`..${path.sep}`)||path.isAbsolute(relative)) return false;
+  const type={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml'}[path.extname(real).toLowerCase()]??'application/octet-stream';
+  res.writeHead(200,securityHeaders({'content-type':type}));fs.createReadStream(real).pipe(res);return true;
 }
 
 const server=http.createServer(async(req,res)=>{
   let u=null;
   try{
-    assertLocalHttpRequest(req);
+    assertLocalHttpRequest(req,{allowedExtensionOrigins:trustedExtensionOrigins,auth:localAuth});
     u=new URL(req.url,'http://127.0.0.1');
+    if(dashboardBootstrap(res,u)) return;
     if(u.pathname==='/mcp') return await mcp(req,res,u);
     if(u.pathname.startsWith('/api/')) return await api(req,res,u);
     if(staticFile(res,u)) return;
