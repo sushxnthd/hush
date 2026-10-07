@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { getOrCreatePlatformRootKey } from './platform-key-store.js';
 
 export const DEFAULT_POLICY={version:1,rules:[
 {id:'deny-secret-export',match:{category:'secrets',action:'export_raw'},decision:'deny',reason:'Raw secrets never leave Hush.'},
@@ -14,7 +15,7 @@ export const sha256=s=>crypto.createHash('sha256').update(s).digest('hex');
 const b64=x=>Buffer.from(x).toString('base64url'); const unb64=x=>Buffer.from(x,'base64url');
 
 export function getOrCreateKeys(dir){fs.mkdirSync(dir,{recursive:true});const priv=path.join(dir,'grant-private.pem'),pub=path.join(dir,'grant-public.pem');if(!fs.existsSync(priv)||!fs.existsSync(pub)){const k=crypto.generateKeyPairSync('ed25519');fs.writeFileSync(priv,k.privateKey.export({type:'pkcs8',format:'pem'}),{mode:0o600});fs.writeFileSync(pub,k.publicKey.export({type:'spki',format:'pem'}),{mode:0o644});}return{privateKey:fs.readFileSync(priv,'utf8'),publicKey:fs.readFileSync(pub,'utf8')}}
-export function getOrCreateMasterKey(dir){fs.mkdirSync(dir,{recursive:true});const p=path.join(dir,'master.key');if(!fs.existsSync(p))fs.writeFileSync(p,crypto.randomBytes(32),{mode:0o600});return fs.readFileSync(p)}
+export function getOrCreateMasterKey(dir){return getOrCreatePlatformRootKey(dir).key}
 export function encryptJson(v,key){const iv=crypto.randomBytes(12),c=crypto.createCipheriv('aes-256-gcm',key,iv),ct=Buffer.concat([c.update(Buffer.from(JSON.stringify(v))),c.final()]);return{v:1,iv:iv.toString('base64url'),tag:c.getAuthTag().toString('base64url'),ciphertext:ct.toString('base64url')}}
 export function decryptJson(v,key){const d=crypto.createDecipheriv('aes-256-gcm',key,Buffer.from(v.iv,'base64url'));d.setAuthTag(Buffer.from(v.tag,'base64url'));return JSON.parse(Buffer.concat([d.update(Buffer.from(v.ciphertext,'base64url')),d.final()]).toString())}
 
