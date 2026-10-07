@@ -16,7 +16,7 @@ const [command='status',...args]=process.argv.slice(2);
 function print(value){ process.stdout.write(JSON.stringify(value,null,2)+'\n'); }
 async function openDashboard(){
   const launch=await client.dashboardLaunch();
-  const url=new URL(String(launch.path||'/'),'http://127.0.0.1:8787').toString();
+  const url=new URL(String(launch.path||'/'),'http://localhost:8787').toString();
   const spec=process.platform==='win32'?['cmd',['/c','start','',url]]:process.platform==='darwin'?['open',[url]]:['xdg-open',[url]];
   const child=spawn(spec[0],spec[1],{detached:true,stdio:'ignore'});
   child.unref();
