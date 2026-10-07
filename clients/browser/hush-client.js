@@ -31,9 +31,15 @@ export const hush={
   approve:id=>request(`/api/pending/${encodeURIComponent(id)}/approve`,{method:'POST',body:{}}),
   deny:id=>request(`/api/pending/${encodeURIComponent(id)}/deny`,{method:'POST',body:{}}),
   onboardingStatus:()=>request('/api/onboarding/status'),
-  startGoogle:(connectors=['gmail','calendar','drive','contacts'])=>request('/api/onboarding/google/start',{method:'POST',body:{connectors}}),
+  startGoogle:(connectors=['gmail','calendar','drive','contacts'],actions=[])=>request('/api/onboarding/google/start',{method:'POST',body:{connectors,actions}}),
   startGithub:()=>request('/api/onboarding/github/start',{method:'POST',body:{}}),
   pollGithub:sessionId=>request('/api/onboarding/github/poll',{method:'POST',body:{sessionId}}),
   syncProvider:(name,connectors)=>request(`/api/onboarding/${provider(name)}/sync`,{method:'POST',body:{connectors,limit:50}}),
-  disconnectProvider:name=>request(`/api/onboarding/${provider(name)}/disconnect`,{method:'POST',body:{}})
+  disconnectProvider:name=>request(`/api/onboarding/${provider(name)}/disconnect`,{method:'POST',body:{}}),
+  actions:()=>request('/api/onboarding/actions'),
+  actionReceipts:()=>request('/api/onboarding/actions/receipts'),
+  requestAction:input=>request('/api/onboarding/actions/request',{method:'POST',body:input}),
+  approveAction:id=>request(`/api/onboarding/actions/${encodeURIComponent(id)}/approve`,{method:'POST',body:{}}),
+  denyAction:id=>request(`/api/onboarding/actions/${encodeURIComponent(id)}/deny`,{method:'POST',body:{}}),
+  executeAction:(id,{agent,sink})=>request(`/api/onboarding/actions/${encodeURIComponent(id)}/execute`,{method:'POST',body:{agent,sink}})
 };
