@@ -141,9 +141,14 @@ export class HushClient {
     return this.request(`/api/onboarding/${name}/disconnect`,{method:'POST',body:{}});
   }
 
-  requestAction({provider='google',action,agent='unknown-agent',sink=null,purpose='unspecified',category=null,resource='me',arguments:args={}}={}){
+  async requestAction({provider='google',action,agent='unknown-agent',sink=null,purpose='unspecified',category=null,resource='me',arguments:args={}}={}){
     if(!String(action??'').trim()) throw new HushClientError('action is required');
-    return this.request('/api/onboarding/actions/request',{method:'POST',body:{provider,action,agent,sink,purpose,category,resource,arguments:args}});
+    try{
+      return await this.request('/api/onboarding/actions/request',{method:'POST',body:{provider,action,agent,sink,purpose,category,resource,arguments:args}});
+    }catch(error){
+      if(error instanceof HushClientError&&error.status===409&&error.payload?.decision==='reauthorize') return clone(error.payload);
+      throw error;
+    }
   }
 
   approveAction(actionId){
