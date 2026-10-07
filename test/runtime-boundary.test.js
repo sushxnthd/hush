@@ -1,13 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { acquireRuntimeLock } from '../src/runtime-lock.js';
+import { LocalClientAuth, deriveLocalControlToken, deriveMcpTransportToken } from '../src/local-client-auth.js';
 import { assertLocalHttpRequest, parseTrustedExtensionOrigins, securityHeaders } from '../src/local-http-security.js';
 
 function temp(){return fs.mkdtempSync(path.join(os.tmpdir(),'hush-lock-'));}
 const trustedExtension='chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+const rootKey=crypto.randomBytes(32);
+const auth=new LocalClientAuth({rootKey,required:true,allowedExtensionOrigins:[trustedExtension]});
+const request=(url,headers={})=>({url,headers:{host:'127.0.0.1:8787',...headers}});
 
 test('runtime lock prevents a second live process claim and releases cleanly',()=>{
   const dir=temp();
@@ -31,15 +36,31 @@ test('stale runtime lock is replaced',()=>{
 });
 
 test('loopback hosts and exact configured extension origins are accepted',()=>{
-  assert.equal(assertLocalHttpRequest({headers:{host:'127.0.0.1:8787'}}),true);
-  assert.equal(assertLocalHttpRequest({headers:{host:'localhost:8787',origin:trustedExtension}},{allowedExtensionOrigins:[trustedExtension]}),true);
-  assert.equal(assertLocalHttpRequest({headers:{host:'[::1]:8787',origin:'http://127.0.0.1:8787'}}),true);
+  assert.equal(assertLocalHttpRequest({url:'/',headers:{host:'127.0.0.1:8787'}}),true);
+  assert.equal(assertLocalHttpRequest(request('/api/status',{origin:trustedExtension}),{allowedExtensionOrigins:[trustedExtension],auth}),true);
+  assert.equal(assertLocalHttpRequest({url:'/',headers:{host:'[::1]:8787',origin:'http://127.0.0.1:8787'}}),true);
 });
 
 test('arbitrary extension origins, DNS rebinding and ordinary web origins are rejected',()=>{
-  assert.throws(()=>assertLocalHttpRequest({headers:{host:'127.0.0.1:8787',origin:'chrome-extension://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'}},{allowedExtensionOrigins:[trustedExtension]}),/not allowed/i);
-  assert.throws(()=>assertLocalHttpRequest({headers:{host:'evil.example:8787'}}),/loopback/i);
-  assert.throws(()=>assertLocalHttpRequest({headers:{host:'127.0.0.1:8787',origin:'https://evil.example'}}),/not allowed/i);
+  assert.throws(()=>assertLocalHttpRequest(request('/api/status',{origin:'chrome-extension://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'}),{allowedExtensionOrigins:[trustedExtension],auth}),/not allowed/i);
+  assert.throws(()=>assertLocalHttpRequest({url:'/',headers:{host:'evil.example:8787'}}),/loopback/i);
+  assert.throws(()=>assertLocalHttpRequest({url:'/',headers:{host:'127.0.0.1:8787',origin:'https://evil.example'}}),/not allowed/i);
+});
+
+test('sensitive API routes require local client auth but static files remain public',()=>{
+  assert.equal(assertLocalHttpRequest(request('/'),{auth}),true);
+  assert.throws(()=>assertLocalHttpRequest(request('/api/status'),{auth}),/authentication is required/i);
+  assert.equal(assertLocalHttpRequest(request('/api/status',{authorization:`Hush ${deriveLocalControlToken(rootKey)}`}),{auth}),true);
+});
+
+test('OAuth callback stays state-PKCE reachable while other onboarding APIs require auth',()=>{
+  assert.equal(assertLocalHttpRequest(request('/api/onboarding/callback/google?state=x&code=y'),{auth}),true);
+  assert.throws(()=>assertLocalHttpRequest(request('/api/onboarding/google/start'),{auth}),/authentication is required/i);
+});
+
+test('MCP uses separate transport auth and rejects the API control token',()=>{
+  assert.throws(()=>assertLocalHttpRequest(request('/mcp',{authorization:`Bearer ${deriveLocalControlToken(rootKey)}`}),{auth}),/MCP transport authentication/i);
+  assert.equal(assertLocalHttpRequest(request('/mcp',{authorization:`Bearer ${deriveMcpTransportToken(rootKey)}`}),{auth}),true);
 });
 
 test('trusted extension origin parser rejects wildcard or malformed origins',()=>{
