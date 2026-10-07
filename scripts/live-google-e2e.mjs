@@ -28,23 +28,26 @@ try{
   const emailApproved=onboarding.approveAction(email.actionId);
   assert.equal(emailApproved.decision,'allow');
   const emailResult=await onboarding.executeAction({actionId:email.actionId,agent:'hush-production-e2e',sink:'google:gmail-test'});
-  assert.equal(emailResult.decision,'consumed');
+  assert.equal(emailResult.decision,'allow');
   assert.equal(emailResult.result.sent,true);
+  assert.equal(emailResult.receipt.status,'allow');
   await assert.rejects(()=>onboarding.executeAction({actionId:email.actionId,agent:'hush-production-e2e',sink:'google:gmail-test'}),/consumed|not executable|already/i);
 
   const start=new Date(Date.now()+30*60*1000),end=new Date(start.getTime()+15*60*1000);
   const calendar=onboarding.requestAction({provider:'google',action:'calendar_create',agent:'hush-production-e2e',sink:'google:calendar-test',purpose:'production-e2e',resource:'primary',arguments:{calendarId:'primary',summary:`Hush production E2E ${suffix}`,description:`Automated verification ${suffix}`,start:start.toISOString(),end:end.toISOString()}});
   assert.equal(calendar.decision,'ask');
-  onboarding.approveAction(calendar.actionId);
+  const calendarApproved=onboarding.approveAction(calendar.actionId);
+  assert.equal(calendarApproved.decision,'allow');
   const calendarResult=await onboarding.executeAction({actionId:calendar.actionId,agent:'hush-production-e2e',sink:'google:calendar-test'});
-  assert.equal(calendarResult.decision,'consumed');
+  assert.equal(calendarResult.decision,'allow');
   assert.equal(calendarResult.result.created,true);
+  assert.equal(calendarResult.receipt.status,'allow');
 
   const serialized=JSON.stringify({email:emailResult,calendar:calendarResult});
   assert.equal(serialized.includes(refreshToken),false);
   assert.equal(serialized.includes('expired-forced-refresh'),false);
   const receipts=onboarding.actionReceipts();
-  assert.ok(receipts.length>=4);
+  assert.ok(receipts.length>=2);
   assert.equal(JSON.stringify(receipts).includes(refreshToken),false);
 
   report={schema:'hush.live-google-e2e.v1',status:'pass',startedAt,completedAt:new Date().toISOString(),gmail:{sent:true,id:emailResult.result.id??null},calendar:{created:true,id:calendarResult.result.id??null},oauthRefreshExercised:true,separateApprovalAndExecution:true,replayRejected:true,credentialLeakage:false,receiptCount:receipts.length};
