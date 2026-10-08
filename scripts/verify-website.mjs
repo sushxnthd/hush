@@ -11,6 +11,9 @@ for(const file of pages){
   const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,new Set(ids).size,relative+' duplicate ids');
   assert.ok(!/supermemory/i.test(html),relative+' reference branding leaked into Hush');
   assert.ok(!/<script[^>]+src="https?:/i.test(html),relative+' remote executable script');
+  assert.match(html,/name="color-scheme" content="dark"/,relative+' dark appearance metadata');
+  const styles=[...html.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*href="([^"]+)"/g)].map(m=>m[1]);
+  assert.match(styles.at(-1)??'',/\/dark-theme\.css\?v=/,relative+' shared dark theme must load after component styles');
   if(relative!=='app/index.html')assert.match(html,/class="nav-mark"[^>]*hidden/,relative+' navigation marker must not flash at an unselected position');
   for(const button of html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/gi)){
     assert.ok(button[2].replace(/<[^>]+>/g,'').trim()||/aria-label="[^"]+"/.test(button[1]),relative+' unnamed button');
