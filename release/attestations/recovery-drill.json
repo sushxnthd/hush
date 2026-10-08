@@ -1,36 +1,36 @@
 {
   "schema": "hush.release-evidence.v2",
   "status": "pass",
-  "issuedAt": "2026-10-08T17:52:45.043Z",
-  "commit": "1d1614220b1fcae74ac1ed4dc6ba22194bd28935",
+  "issuedAt": "2026-10-08T18:25:31.528Z",
+  "commit": "be0864a678e44e7d43135d0fdd07e799c5883217",
   "reviewer": null,
   "scope": "A ciphertext-only synthetic fixture produced on Linux and recovered on separate fresh Linux, Windows and macOS GitHub Actions runners for this candidate.",
   "limitations": "Automated synthetic fresh-runner recovery, not a physical-device or first-run usability audit. Retained consumer evidence expires 22 October 2026; the source fixture has shorter retention. Provider/account recovery and independent review remain separate.",
   "evidence": "All three consumers recovered the same expected content digest and rejected wrong recovery phrases and tampering. The producer and all consumer jobs completed successfully.",
   "evidenceUrls": [
-    "https://github.com/sushxnthd/hush/actions/runs/37819317481"
+    "https://github.com/sushxnthd/hush/actions/runs/37822501184"
   ],
   "artifacts": [
     {
-      "id": 11568587634,
-      "name": "hush-cross-machine-recovery-evidence-Linux-1d1614220b1fcae74ac1ed4dc6ba22194bd28935",
-      "digest": "sha256:0e4653ec8a8b1ace0ba45a8fa6778a17f6561148d1ccca1279bcb8353676bb24",
-      "url": "https://api.github.com/repos/sushxnthd/hush/actions/artifacts/11568587634",
-      "expiresAt": "2026-10-22T17:49:46Z"
+      "id": 11570066478,
+      "name": "hush-cross-machine-recovery-evidence-Linux-be0864a678e44e7d43135d0fdd07e799c5883217",
+      "digest": "sha256:68ac5f1ce67ee338d91803074109994f3400ebfadfac5e2af9a65766c8124dc0",
+      "url": "https://api.github.com/repos/sushxnthd/hush/actions/artifacts/11570066478",
+      "expiresAt": "2026-10-22T18:12:59Z"
     },
     {
-      "id": 11568532455,
-      "name": "hush-cross-machine-recovery-evidence-Windows-1d1614220b1fcae74ac1ed4dc6ba22194bd28935",
-      "digest": "sha256:c11c6c2364050cb5dd42e7122edf142716139f051f990ae4efc071cda8ea7a72",
-      "url": "https://api.github.com/repos/sushxnthd/hush/actions/artifacts/11568532455",
-      "expiresAt": "2026-10-22T17:50:09Z"
+      "id": 11570041387,
+      "name": "hush-cross-machine-recovery-evidence-Windows-be0864a678e44e7d43135d0fdd07e799c5883217",
+      "digest": "sha256:32e17d0ec4c83a45df7c65004c79e9a7b1bca57ca64e46c078d33a286cb029b3",
+      "url": "https://api.github.com/repos/sushxnthd/hush/actions/artifacts/11570041387",
+      "expiresAt": "2026-10-22T18:13:13Z"
     },
     {
-      "id": 11567799266,
-      "name": "hush-cross-machine-recovery-evidence-macOS-1d1614220b1fcae74ac1ed4dc6ba22194bd28935",
-      "digest": "sha256:8214b94ad522f88da69a4d55ba530b14b1032235cc55658609c82e1710fa17ca",
-      "url": "https://api.github.com/repos/sushxnthd/hush/actions/artifacts/11567799266",
-      "expiresAt": "2026-10-22T17:49:51Z"
+      "id": 11569433453,
+      "name": "hush-cross-machine-recovery-evidence-macOS-be0864a678e44e7d43135d0fdd07e799c5883217",
+      "digest": "sha256:fefde8c6549674ba84dc3ade0c760cb2e9479bbbebca4097c73f6c70e076d00e",
+      "url": "https://api.github.com/repos/sushxnthd/hush/actions/artifacts/11569433453",
+      "expiresAt": "2026-10-22T18:13:11Z"
     }
   ],
   "validation": {
@@ -38,11 +38,22 @@
       {
         "schema": "hush.cross-machine-recovery-consumer.v1",
         "status": "pass",
+        "platform": "linux",
+        "arch": "x64",
+        "completedAt": "2026-10-08T18:12:59.469Z",
+        "expectedDigest": "30fc9766db38ae5ff3e8ceb58696a113bed701c1937dc4df610348e189773390",
+        "recoveredDigest": "30fc9766db38ae5ff3e8ceb58696a113bed701c1937dc4df610348e189773390",
+        "wrongPhraseRejected": true,
+        "tamperRejected": true
+      },
+      {
+        "schema": "hush.cross-machine-recovery-consumer.v1",
+        "status": "pass",
         "platform": "win32",
         "arch": "x64",
-        "completedAt": "2026-10-08T17:50:08.891Z",
-        "expectedDigest": "7dacc889fb519b4dd9186c41284243bd0ca171afa692b53193f728e9a24b0edc",
-        "recoveredDigest": "7dacc889fb519b4dd9186c41284243bd0ca171afa692b53193f728e9a24b0edc",
+        "completedAt": "2026-10-08T18:13:13.424Z",
+        "expectedDigest": "30fc9766db38ae5ff3e8ceb58696a113bed701c1937dc4df610348e189773390",
+        "recoveredDigest": "30fc9766db38ae5ff3e8ceb58696a113bed701c1937dc4df610348e189773390",
         "wrongPhraseRejected": true,
         "tamperRejected": true
       },
@@ -51,20 +62,9 @@
         "status": "pass",
         "platform": "darwin",
         "arch": "arm64",
-        "completedAt": "2026-10-08T17:49:51.256Z",
-        "expectedDigest": "7dacc889fb519b4dd9186c41284243bd0ca171afa692b53193f728e9a24b0edc",
-        "recoveredDigest": "7dacc889fb519b4dd9186c41284243bd0ca171afa692b53193f728e9a24b0edc",
-        "wrongPhraseRejected": true,
-        "tamperRejected": true
-      },
-      {
-        "schema": "hush.cross-machine-recovery-consumer.v1",
-        "status": "pass",
-        "platform": "linux",
-        "arch": "x64",
-        "completedAt": "2026-10-08T17:49:46.448Z",
-        "expectedDigest": "7dacc889fb519b4dd9186c41284243bd0ca171afa692b53193f728e9a24b0edc",
-        "recoveredDigest": "7dacc889fb519b4dd9186c41284243bd0ca171afa692b53193f728e9a24b0edc",
+        "completedAt": "2026-10-08T18:13:11.433Z",
+        "expectedDigest": "30fc9766db38ae5ff3e8ceb58696a113bed701c1937dc4df610348e189773390",
+        "recoveredDigest": "30fc9766db38ae5ff3e8ceb58696a113bed701c1937dc4df610348e189773390",
         "wrongPhraseRejected": true,
         "tamperRejected": true
       }
