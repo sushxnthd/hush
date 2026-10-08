@@ -20,7 +20,7 @@ for(const file of pages){
     assert.ok(target===root||target.startsWith(root+path.sep),`${relative}: path escape ${value}`);
     if((await stat(target)).isDirectory())target=path.join(target,'index.html');
     await stat(target);checked++;
-    if(/\.(?:js|css)$/.test(target)){
+    if(/\.(?:js|css|svg)$/.test(target)){
       const version=createHash('sha256').update(await readFile(target)).digest('hex').slice(0,16);
       assert.ok(value.endsWith('?v='+version),`${relative}: stale or missing asset version ${value}`);
     }

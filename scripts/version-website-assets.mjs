@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 import path from 'node:path';
 
 // Pages caches static resources. Content versions prevent an older script or
-// stylesheet from being reused with a new release's HTML.
+// stylesheet or vector asset from being reused with a new release's HTML.
 export async function versionWebsiteAssets(root){
   const hash=async file=>createHash('sha256').update(await readFile(file)).digest('hex').slice(0,16);
   const core=await hash(path.join(root,'assets/workspace-core.js'));
@@ -15,7 +15,7 @@ export async function versionWebsiteAssets(root){
       if(item.isDirectory()){await walk(file);continue;}
       if(!item.name.endsWith('.html'))continue;
       let html=await readFile(file,'utf8');
-      const urls=new Set([...html.matchAll(/\b(?:href|src)="([^"#]+\.(?:js|css)(?:\?[^"#]*)?)"/g)].map(m=>m[1]));
+      const urls=new Set([...html.matchAll(/\b(?:href|src)="([^"#]+\.(?:js|css|svg)(?:\?[^"#]*)?)"/g)].map(m=>m[1]));
       for(const url of urls){
         if(/^(?:https?:|data:)/.test(url))continue;
         const clean=url.split('?')[0],target=path.resolve(path.dirname(file),clean);
