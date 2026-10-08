@@ -1,5 +1,7 @@
 # Hush incident response
 
+The operational shape of this runbook follows the current [NIST SP 800-61 Rev. 3](https://csrc.nist.gov/pubs/sp/800/61/r3/final) incident-response guidance (April 2025), which supersedes Revision 2. The runbook remains Hush-specific and is not evidence that an owner-led drill or staffed response function exists.
+
 This is an operational runbook for early access. It is not evidence that an incident drill, independent review, or staffed support SLA has been completed. Before broad production launch, designate an incident lead and backup, verify a private reporting channel, and exercise this runbook with recorded results.
 
 ## Intake and ownership
