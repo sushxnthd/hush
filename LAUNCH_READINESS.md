@@ -29,6 +29,10 @@ Updated 8 October 2026. Browser workspace: early access. Native runtime: release
 | Independent assurance | An independent reviewer reproduces the published privacy protocol and frozen research results and conducts a security/red-team review. Retain reviewer identity, exact source/version, scope, findings, remediation and retest evidence. Agent-authored assertions do not satisfy independence. |
 | Operations and support | Assign an accountable incident owner and a staffed private security/support contact, review published notices, and complete the owner-led drill in `INCIDENT_RESPONSE.md`. Retain actual incident/rollback exercise evidence. Publishing documents alone does not establish response capacity. |
 
+## Research basis
+
+[RESEARCH_READINESS.md](RESEARCH_READINESS.md) records the 9 October 2026 primary-source review. It refines the open gates with Google's public-app OAuth verification and scope-classification requirements, GitHub's PKCE-versus-device-flow guidance, platform signing/notarization requirements, WCAG 2.2 first-run criteria, OWASP ASVS 5.0 scoping, NIST SP 800-61r3 incident-response guidance, and the currently maintained Supermemory product surface. These findings clarify completion evidence but do not convert any blocked domain to a pass.
+
 ## Provider references
 
 - [Google installed-app OAuth](https://developers.google.com/identity/protocols/oauth2/native-app): desktop client type and loopback PKCE flow. Client secret is documented as optional for this flow.
