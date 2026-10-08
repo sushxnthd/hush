@@ -27,14 +27,14 @@ jobs:
           package-manager-cache: false
       - name: Syntax gate
         run: npm run check:syntax
-      - name: Accessibility semantics gate
-        run: npm run check:accessibility
       - name: Unit and security tests
         run: npm test
       - name: Build self-contained release candidate
         env:
           SOURCE_DATE_EPOCH: '1791331200'
         run: npm run release:build
+      - name: Accessibility semantics gate
+        run: npm run check:accessibility
       - name: Independently verify runtime, manifest, SBOM and checksums
         run: npm run release:verify
       - name: Boot exact bundled runtime
@@ -48,7 +48,7 @@ jobs:
           HUSH_SOAK_DURATION_MS: '15000'
         run: npm run ops:soak
       - name: Inspect release summary and drill evidence
-        run: node -e "const fs=require('fs');for(const f of ['dist/release-summary.json','dist/evidence/release-integrity.json','dist/evidence/release-runtime-smoke.json','dist/evidence/accessibility-static.json','dist/evidence/recovery-drill.json','dist/evidence/rollback-drill.json','dist/evidence/soak.json']){const x=JSON.parse(fs.readFileSync(f,'utf8'));if(f.includes('evidence')&&x.status!=='pass')process.exit(1);console.log(f,x.status||x.version||x)}"
+        run: node -e "const fs=require('fs');for(const f of ['dist/release-summary.json','dist/evidence/release-integrity.json','dist/evidence/release-runtime-smoke.json','dist/evidence/accessibility-static.json','dist/evidence/recovery-drill.json','dist/evidence/rollback-drill.json','dist/evidence/soak.json']){const x=JSON.parse(fs.readFileSync(f,'utf8'));if(f.includes('evidence')&&x.status!=='pass')process.exit(1);if(f.endsWith('soak.json')&&!x.coverageComplete)process.exit(1);console.log(f,x.status||x.version||x)}"
       - uses: actions/upload-artifact@v7
         with:
           name: hush-portable-${{ runner.os }}-${{ github.sha }}
