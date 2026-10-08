@@ -4,14 +4,17 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-await import('./build-dashboard.mjs');
-
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 const dist=path.join(root,'dist');
 const bundle=path.join(dist,`hush-${pkg.version}-portable`);
 const includeDirs=['src','public','clients'];
 const includeFiles=['package.json','README.md','SECURITY.md','SUPPORT.md','PRIVACY.md','TERMS.md','INCIDENT_RESPONSE.md','THREAT_MODEL.md','ARCHITECTURE.md','V1_2_ACCEPTANCE.md'];
+// Inspect checkout inputs before generators produce platform-normalized output.
+let sourceDirty=true;
+try{sourceDirty=Boolean(execFileSync('git',['status','--porcelain','--',...includeDirs,...includeFiles,'scripts/build-release.mjs','scripts/build-dashboard.mjs'],{cwd:root,encoding:'utf8'}).trim());}catch{}
+if(process.env.GITHUB_ACTIONS==='true'&&sourceDirty)throw new Error('Hosted release packaging requires clean candidate source');
+await import('./build-dashboard.mjs');
 
 function sha256(file){return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');}
 function normalizedRel(file){return path.relative(bundle,file).split(path.sep).join('/');}
@@ -92,9 +95,6 @@ for(const name of fs.readdirSync(path.join(bundle,'launchers'))){
 
 const initialFiles=walk(bundle);
 const inventory=initialFiles.map(file=>({path:normalizedRel(file),sha256:sha256(file),bytes:fs.statSync(file).size}));
-let sourceDirty=true;
-try{sourceDirty=Boolean(execFileSync('git',['status','--porcelain','--',...includeDirs,...includeFiles,'scripts/build-release.mjs'],{cwd:root,encoding:'utf8'}).trim());}catch{}
-if(process.env.GITHUB_ACTIONS==='true'&&sourceDirty)throw new Error('Hosted release packaging requires clean candidate source');
 const releaseManifest={
   schema:'hush.release-manifest.v1',
   product:'Hush',
