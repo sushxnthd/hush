@@ -50,3 +50,8 @@
 .change-filters button.filter-chip{cursor:pointer;font-family:var(--font-mono);background:transparent}.change-filters button.filter-chip.is-active{background:#fff}.change-filters .filter-icon{font-size:16px}.change-card[hidden]{display:none!important}.change-version{white-space:nowrap}
 @media(width<=600px){.writing-search input{width:150px}.cost-curve-head{gap:12px}.cost-curve-title{font-size:15px}.cost-curve-legend{font-size:10px;gap:12px}.rank-labels{font-size:7px}.hush-pass{font-size:18px!important}.cost-curve-caption{font-size:12px}.section[data-astro-cid-sk4gmmoz] .pair code{overflow-wrap:anywhere;white-space:normal}}
 @media(prefers-reduced-motion:reduce){.cc-line,.cc-marker,.cc-annot-layer{transition:none}.stat-blocks g{transition:none!important}.cost-curve [data-chart-series]{animation:none!important}}
+
+/* Discrete policy labels sit beneath the source chart, without the source token-axis lift. */
+.cost-wrap[data-astro-cid-lcdefpme] .cc-axis-title:not([transform]){translate:0}.cost-wrap[data-astro-cid-lcdefpme] .chart-data{grid-column:1/-1}
+
+.change-filters button.filter-chip{border:0;border-radius:0;font-family:var(--font);background:transparent}.change-filters button.filter-chip.is-active{background:transparent}
