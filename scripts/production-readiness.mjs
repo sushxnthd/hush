@@ -1,17 +1,23 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {validateReleaseEvidence} from '../src/release-evidence.js';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const exists=p=>fs.existsSync(path.join(root,p));
 const text=p=>exists(p)?fs.readFileSync(path.join(root,p),'utf8'):'';
 const contains=(p,needle)=>text(p).includes(needle);
+const evidenceResults=new Map();
 function attestation(file){
-  if(!exists(file)) return false;
-  try{
-    const value=JSON.parse(text(file));
-    return value.status==='pass'&&typeof value.evidence==='string'&&value.evidence.trim().length>0&&typeof value.issuedAt==='string';
-  }catch{return false;}
+  const name=path.basename(file,'.json');
+  const legal=name==='legal-support-surface';
+  const requireIndependent=['privacy-reproduction','independent-reproduction','security-review'].includes(name);
+  const requireArtifacts=['platform-keystore','real-actions-e2e','reliability-soak','recovery-drill','distribution-signing','update-rollback','sbom-checksums'].includes(name);
+  const paths=legal?['scripts/write-product-site.mjs','scripts/reference-pages.mjs','PRIVACY.md','TERMS.md','SUPPORT.md','SECURITY.md']:['src','clients','public','package.json','scripts/build-release.mjs','scripts/release-verify.mjs','scripts/release-runtime-smoke.mjs',...(requireIndependent?['research','bench']:[])];
+  let result={pass:false,reason:'evidence file missing'};
+  if(exists(file)){try{result=validateReleaseEvidence(JSON.parse(text(file)),{root,paths,requireIndependent,requireArtifacts,requirement:name});}catch{result={pass:false,reason:'invalid evidence JSON'};}}
+  evidenceResults.set(file,result);
+  return result.pass;
 }
 
 const dimensions=[
@@ -30,7 +36,9 @@ const dimensions=[
       ['OS-backed root-key implementation',()=>exists('src/platform-key-store.js')],
       ['Context Kernel auto-unlock from derived root key',()=>contains('src/server.js','deriveContextPassphrase(rootKeyInfo.key)')],
       ['signed receipt chain',()=>exists('src/receipt-security.js')&&contains('src/server.js','signReceipt')],
-      ['loopback host/origin defense',()=>exists('src/local-http-security.js')]
+      ['loopback host/origin defense',()=>exists('src/local-http-security.js')],
+      ['authenticated normal startup',()=>contains('src/server.js','required:policy.localClientAuth')&&contains('src/runtime-policy.js',"env.HUSH_REQUIRE_LOCAL_AUTH!=='0'")],
+      ['bounded request/response handling',()=>exists('src/http-io.js')&&contains('src/client-sdk.js','readResponseText(response,MAX_TEXT_BYTES)')]
     ],
     release:[['packaged-build keystore verification',()=>attestation('release/attestations/platform-keystore.json')]]
   },
@@ -40,7 +48,8 @@ const dimensions=[
       ['Google PKCE onboarding',()=>contains('src/provider-onboarding.js',"pkce:'S256'")],
       ['GitHub device authorization',()=>contains('src/provider-onboarding.js','GITHUB_DEVICE')],
       ['browser connection lifecycle UI',()=>contains('clients/browser/popup.js','providerAction')],
-      ['one-click bounded sync',()=>contains('src/provider-onboarding.js','syncConnectorToKernel')]
+      ['one-click bounded sync',()=>contains('src/provider-onboarding.js','syncConnectorToKernel')],
+      ['credential-free local MCP configuration',()=>exists('clients/desktop/hush-mcp.mjs')&&contains('clients/desktop/hush-desktop.mjs',"command==='mcp-config'")]
     ],
     release:[
       ['Google production OAuth registration',()=>attestation('release/attestations/google-oauth-production.json')],
@@ -88,7 +97,7 @@ const dimensions=[
     name:'Distribution, updates & supply chain',
     engineering:[
       ['CodeQL workflow',()=>exists('.github/workflows/codeql.yml')&&contains('.github/workflows/codeql.yml','github/codeql-action/analyze@v4')],
-      ['dependency-free core runtime',()=>!exists('node_modules')&&JSON.parse(text('package.json')).private===true]
+      ['dependency-free core runtime',()=>{const p=JSON.parse(text('package.json'));return !Object.keys(p.dependencies||{}).length&&!Object.keys(p.optionalDependencies||{}).length;}]
     ],
     release:[
       ['signed/notarized installers',()=>attestation('release/attestations/distribution-signing.json')],
@@ -120,6 +129,8 @@ const dimensions=[
 ];
 
 let engineeringPassed=0,engineeringTotal=0,releaseDomains=0;
+const report=[];
+const jsonMode=process.argv.includes('--json');
 for(const dimension of dimensions){
   const e=dimension.engineering.map(([label,fn])=>[label,Boolean(fn())]);
   const r=dimension.release.map(([label,fn])=>[label,Boolean(fn())]);
@@ -127,13 +138,17 @@ for(const dimension of dimensions){
   engineeringTotal+=e.length;
   const domainPass=e.every(([,ok])=>ok)&&r.every(([,ok])=>ok);
   if(domainPass) releaseDomains++;
-  console.log(`\n${domainPass?'PASS':'BLOCK'}  ${dimension.name}`);
-  for(const [label,ok] of [...e,...r]) console.log(`  ${ok?'✓':'✗'} ${label}`);
+  report.push({name:dimension.name,status:domainPass?'pass':'block',engineering:e.map(([label,pass])=>({label,pass})),release:r.map(([label,pass])=>({label,pass}))});
+  if(!jsonMode){console.log(`\n${domainPass?'PASS':'BLOCK'}  ${dimension.name}`);for(const [label,ok] of [...e,...r])console.log(`  ${ok?'✓':'✗'} ${label}`);}
 }
 const engineeringPct=Math.round((engineeringPassed/engineeringTotal)*1000)/10;
+if(jsonMode)console.log(JSON.stringify({schema:'hush.production-readiness.v2',checkedAt:new Date().toISOString(),status:releaseDomains===10?'pass':'block',engineering:{passed:engineeringPassed,total:engineeringTotal,percent:engineeringPct},releaseDomains,totalDomains:10,domains:report,evidence:[...evidenceResults].map(([file,result])=>({file,...result})),scope:'Local source and evidence checks. External evidence authenticity and release authorization require accountable review.'},null,2));
+else{
 console.log(`\nEngineering checks: ${engineeringPassed}/${engineeringTotal} (${engineeringPct}%)`);
 console.log(`Strict production score: ${releaseDomains}/10`);
+for(const [file,result]of evidenceResults)if(!result.pass)console.log(`  ${path.basename(file)}: ${result.reason}`);
+}
 if(releaseDomains!==10){
-  console.error('\nNOT PRODUCTION READY: every domain must PASS with evidence.');
+  if(!jsonMode)console.error('\nNOT PRODUCTION READY: every domain must PASS with scoped evidence.');
   process.exitCode=1;
-}else console.log('\nPRODUCTION READY: 10/10 release domains passed.');
+}else if(!jsonMode)console.log('\n10/10 evidence domains passed. Verify external evidence authenticity before authorizing the release.');

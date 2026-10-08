@@ -2,6 +2,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {HushClient,HushClientError,HUSH_DEFAULT_BASE_URL,isLoopbackHushUrl} from '../src/client-sdk.js';
 
+test('request paths and redirects cannot send control credentials to another origin',async()=>{
+  let calls=0;
+  const client=new HushClient({authToken:'CONTROL-SECRET',fetchImpl:fake(async(_url,options)=>{calls++;assert.equal(options.redirect,'error');return {body:{ok:true}};})});
+  await assert.rejects(client.request('https://example.com/steal'),/configured endpoint/);
+  assert.equal(calls,0);
+  assert.throws(()=>new HushClient({baseUrl:'http://user:secret@localhost:8787'}),/embedded/);
+  await client.status();assert.equal(calls,1);
+});
+test('SDK cancels oversized streamed responses before buffering all bytes',async()=>{
+  let cancelled=false;
+  const client=new HushClient({fetchImpl:async()=>new Response(new ReadableStream({pull(c){c.enqueue(new Uint8Array(100000));},cancel(){cancelled=true;}}))});
+  await assert.rejects(client.status(),/safety limit/);
+  assert.equal(cancelled,true);
+});
+
 function fake(handler){
   return async(url,options={})=>{
     const out=await handler(new URL(url),options);

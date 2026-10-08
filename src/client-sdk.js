@@ -1,3 +1,4 @@
+import {readResponseText} from './response-io.js';
 const DEFAULT_BASE_URL='http://127.0.0.1:8787';
 const LOOPBACK_HOSTS=new Set(['127.0.0.1','localhost','[::1]','::1']);
 const MAX_TEXT_BYTES=256*1024;
@@ -6,13 +7,18 @@ function byteLength(value){ return new TextEncoder().encode(String(value??'')).b
 function cleanBaseUrl(value,{allowRemote=false}={}){
   const url=new URL(String(value||DEFAULT_BASE_URL));
   if(!['http:','https:'].includes(url.protocol)) throw new Error('Hush client endpoint must use http or https');
+  if(url.username||url.password)throw new Error('Hush credentials must not be embedded in endpoint URLs');
   if(!allowRemote&&!LOOPBACK_HOSTS.has(url.hostname)) throw new Error('Remote Hush endpoints are disabled by default; use an authenticated transport before enabling them');
   url.pathname='/';
   url.search='';
   url.hash='';
   return url;
 }
-function pathUrl(base,path){ return new URL(String(path).replace(/^\//,''),base); }
+function pathUrl(base,path){
+  const url=new URL(String(path).replace(/^\//,''),base);
+  if(url.origin!==base.origin||url.username||url.password)throw new HushClientError('Hush request paths must stay on the configured endpoint');
+  return url;
+}
 function clone(value){ return structuredClone(value); }
 function providerName(value){
   const provider=String(value??'').toLowerCase();
@@ -62,14 +68,14 @@ export class HushClient {
     try{
       const headers={accept:'application/json'};
       if(this.authToken) headers.authorization=`Hush ${this.authToken}`;
-      const options={method:String(method).toUpperCase(),signal:controller.signal,headers};
+      const options={method:String(method).toUpperCase(),signal:controller.signal,headers,redirect:'error'};
       if(body!==undefined){
         options.headers['content-type']='application/json';
         options.body=JSON.stringify(body);
+        if(byteLength(options.body)>1_000_000)throw new HushClientError('Hush request exceeded the client safety limit');
       }
       const response=await this.fetchImpl(pathUrl(this.baseUrl,path),options);
-      const raw=await response.text();
-      if(byteLength(raw)>MAX_TEXT_BYTES) throw new HushClientError('Hush response exceeded the client safety limit',{status:response.status});
+      const raw=await readResponseText(response,MAX_TEXT_BYTES);
       let payload={};
       if(raw){
         try{ payload=JSON.parse(raw); }

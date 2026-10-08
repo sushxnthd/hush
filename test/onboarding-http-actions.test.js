@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {Readable} from 'node:stream';
 import { handleOnboardingRequest } from '../src/onboarding-http.js';
 
 function makeReq(method,body){
   const payload=body===undefined?null:Buffer.from(JSON.stringify(body));
-  return {method,async *[Symbol.asyncIterator](){if(payload)yield payload;}};
+  const req=Readable.from(payload?[payload]:[]);req.method=method;return req;
 }
 function makeRes(){
   return {status:null,headers:null,body:'',writeHead(status,headers){this.status=status;this.headers=headers;},end(value=''){this.body=String(value);}};

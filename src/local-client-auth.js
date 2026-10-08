@@ -24,7 +24,8 @@ function cookies(value){
   for(const part of String(value??'').split(';')){
     const at=part.indexOf('=');
     if(at<=0) continue;
-    out[part.slice(0,at).trim()]=decodeURIComponent(part.slice(at+1).trim());
+    // Malformed third-party cookies must not turn an anonymous request into 500.
+    try{out[part.slice(0,at).trim()]=decodeURIComponent(part.slice(at+1).trim());}catch{}
   }
   return out;
 }

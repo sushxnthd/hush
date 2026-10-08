@@ -54,6 +54,9 @@ test('sensitive API routes require local client auth but static files remain pub
   assert.throws(()=>assertLocalHttpRequest(request('/api/status'),{auth}),/authentication is required/i);
   assert.equal(assertLocalHttpRequest(request('/api/status',{authorization:`Hush ${deriveLocalControlToken(rootKey)}`}),{auth}),true);
 });
+test('malformed unrelated cookies fail as anonymous requests, not internal errors',()=>{
+  assert.throws(()=>auth.authorizeApi(request('/api/status',{cookie:'unrelated=%E0%A4%A; hush_session=%'})),e=>e.status===401);
+});
 
 test('dashboard bootstrap tokens are one-shot and sessions authorize protected API calls',()=>{
   let now=10_000;

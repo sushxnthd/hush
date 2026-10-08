@@ -58,9 +58,15 @@ function bundleRuntime(){
   if(process.platform==='win32'){
     fs.writeFileSync(path.join(launcherDir,'hush.cmd'),'@echo off\r\nsetlocal\r\n"%~dp0..\\runtime\\node.exe" "%~dp0..\\src\\server.js" %*\r\n');
     fs.writeFileSync(path.join(launcherDir,'hush-dashboard.cmd'),'@echo off\r\nsetlocal\r\n"%~dp0..\\runtime\\node.exe" "%~dp0..\\clients\\desktop\\hush-desktop.mjs" dashboard\r\n');
+    fs.writeFileSync(path.join(launcherDir,'hush-mcp.cmd'),'@echo off\r\nsetlocal\r\n"%~dp0..\\runtime\\node.exe" "%~dp0..\\clients\\desktop\\hush-mcp.mjs" %*\r\n');
+    fs.writeFileSync(path.join(launcherDir,'hush-doctor.cmd'),'@echo off\r\nsetlocal\r\n"%~dp0..\\runtime\\node.exe" "%~dp0..\\clients\\desktop\\hush-desktop.mjs" doctor\r\n');
+    fs.writeFileSync(path.join(launcherDir,'hush-open.cmd'),'@echo off\r\nsetlocal\r\n"%~dp0..\\runtime\\node.exe" "%~dp0..\\clients\\desktop\\hush-open.mjs"\r\nif errorlevel 1 pause\r\n');
   }else{
     writeExecutable(path.join(launcherDir,'hush'),'#!/bin/sh\nset -eu\nROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"\nexec "$ROOT/runtime/node" "$ROOT/src/server.js" "$@"\n');
     writeExecutable(path.join(launcherDir,'hush-dashboard'),'#!/bin/sh\nset -eu\nROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"\nexec "$ROOT/runtime/node" "$ROOT/clients/desktop/hush-desktop.mjs" dashboard\n');
+    writeExecutable(path.join(launcherDir,'hush-mcp'),'#!/bin/sh\nset -eu\nROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"\nexec "$ROOT/runtime/node" "$ROOT/clients/desktop/hush-mcp.mjs" "$@"\n');
+    writeExecutable(path.join(launcherDir,'hush-doctor'),'#!/bin/sh\nset -eu\nROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"\nexec "$ROOT/runtime/node" "$ROOT/clients/desktop/hush-desktop.mjs" doctor\n');
+    writeExecutable(path.join(launcherDir,'hush-open'),'#!/bin/sh\nset -eu\nROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"\nexec "$ROOT/runtime/node" "$ROOT/clients/desktop/hush-open.mjs"\n');
   }
   return {path:normalizedRel(target),sha256:sha256(target),bytes:fs.statSync(target).size,nodeVersion:process.version,platform:process.platform,arch:process.arch};
 }
@@ -77,14 +83,25 @@ for(const file of includeFiles){
   if(fs.existsSync(source)) fs.copyFileSync(source,path.join(bundle,file));
 }
 const bundledRuntime=bundleRuntime();
+// Shipped launchers must not accidentally inherit a development-mode bypass.
+for(const name of fs.readdirSync(path.join(bundle,'launchers'))){
+  const file=path.join(bundle,'launchers',name);
+  const content=fs.readFileSync(file,'utf8');
+  fs.writeFileSync(file,name.endsWith('.cmd')?content.replace('setlocal\r\n','setlocal\r\nset NODE_ENV=production\r\n'):content.replace('set -eu\n','set -eu\nexport NODE_ENV=production\n'));
+}
 
 const initialFiles=walk(bundle);
 const inventory=initialFiles.map(file=>({path:normalizedRel(file),sha256:sha256(file),bytes:fs.statSync(file).size}));
+let sourceDirty=true;
+try{sourceDirty=Boolean(execFileSync('git',['status','--porcelain','--',...includeDirs,...includeFiles,'scripts/build-release.mjs'],{cwd:root,encoding:'utf8'}).trim());}catch{}
+if(process.env.GITHUB_ACTIONS==='true'&&sourceDirty)throw new Error('Hosted release packaging requires clean candidate source');
 const releaseManifest={
   schema:'hush.release-manifest.v1',
   product:'Hush',
   version:pkg.version,
   commit:gitSha(),
+  sourceDirty,
+  contentDigest:crypto.createHash('sha256').update(JSON.stringify(inventory)).digest('hex'),
   sourceDate:sourceEpoch(),
   nodeEngine:pkg.engines?.node??null,
   bundledRuntime,

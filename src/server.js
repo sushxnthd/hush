@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { Readable } from 'node:stream';
+import {pipeline} from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
 import {
   getOrCreateKeys, Vault, Store,
@@ -24,20 +25,23 @@ import { assertLocalHttpRequest, parseTrustedExtensionOrigins, securityHeaders }
 import { LocalClientAuth } from './local-client-auth.js';
 import { signReceipt, verifySignedReceiptChain } from './receipt-security.js';
 import { handleOwnerContextRequest } from './owner-context-http.js';
+import {runtimePolicy} from './runtime-policy.js';
+import {readRequestBody,readJsonObject,readResponseText,sendJson} from './http-io.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const policy=runtimePolicy();
 const { dataDir, migration:dataMigration } = resolveHushDataDir({appRoot:root});
 process.chdir(root);
 const runtimeLock = acquireRuntimeLock(dataDir);
 const { privateKey, publicKey } = getOrCreateKeys(dataDir);
-const rootKeyInfo = getOrCreatePlatformRootKey(dataDir);
+const rootKeyInfo = getOrCreatePlatformRootKey(dataDir,{production:policy.production});
 const vault = new Vault(dataDir, rootKeyInfo.key);
 const store = new Store(dataDir);
-const port = Number(process.env.PORT || 8787);
+const port = policy.port;
 const trustedExtensionOrigins=parseTrustedExtensionOrigins(process.env.HUSH_ALLOWED_EXTENSION_ORIGINS||'');
 const localAuth=new LocalClientAuth({
   rootKey:rootKeyInfo.key,
-  required:process.env.NODE_ENV==='production'||process.env.HUSH_REQUIRE_LOCAL_AUTH==='1',
+  required:policy.localClientAuth,
   allowedExtensionOrigins:trustedExtensionOrigins
 });
 
@@ -51,7 +55,7 @@ const contextKernel = new ContextKernel({dir:path.join(dataDir,'context'),passph
 const providerOnboarding = new ProviderOnboarding({vault,kernel:contextKernel,port});
 
 let startupAudit=verifySignedReceiptChain(store.receipts,publicKey);
-if(!startupAudit.valid&&process.env.NODE_ENV==='production') throw new Error(`Hush audit chain failed verification: ${startupAudit.reason}`);
+if(!startupAudit.valid&&policy.production) throw new Error(`Hush audit chain failed verification: ${startupAudit.reason}`);
 if(startupAudit.valid&&store.receipts.length&&!startupAudit.anchored){
   const anchor=signReceipt(createReceipt({previousHash:store.receipts.at(-1)?.hash??null,request:{agent:'hush-runtime',purpose:'audit-migration',category:'system',action:'receipt_anchor',resource:'local'},decision:'allow',result:{legacyReceiptCount:store.receipts.length}}),privateKey);
   store.addReceipt(anchor);
@@ -71,27 +75,11 @@ if (mcpUpstream) {
   if (!['http:','https:'].includes(protocol)) throw new Error('HUSH_MCP_UPSTREAM must use http or https');
 }
 
-const send = (res, status, payload) => {
-  const x = JSON.stringify(payload);
-  res.writeHead(status, securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(x)}));
-  res.end(x);
-};
+const send = sendJson;
 const sendRpc = (res, payload) => send(res, 200, payload);
 
-async function rawBody(req, max=2e6){
-  const chunks=[];
-  let total=0;
-  for await (const c of req) {
-    total += c.length;
-    if (total>max) throw Error('Request body too large');
-    chunks.push(c);
-  }
-  return Buffer.concat(chunks);
-}
-async function body(req){
-  const b=await rawBody(req,1e6);
-  return b.length ? JSON.parse(b.toString()) : {};
-}
+const rawBody=req=>readRequestBody(req,{maxBytes:2_000_000});
+const body=req=>readJsonObject(req);
 
 function receipt(request, decision, grantId=null, result=null){
   const unsigned=createReceipt({previousHash:store.receipts.at(-1)?.hash??null,request,decision,grantId,result});
@@ -181,13 +169,14 @@ async function fetchMcpUpstream(req,u,raw){
     method:req.method,
     headers,
     body:['GET','HEAD'].includes(req.method)?undefined:(raw?.length?raw:undefined),
-    redirect:'manual'
+    redirect:'manual',
+    signal:AbortSignal.timeout(30_000)
   });
 }
 async function pipeMcpResponse(res,upstream){
   res.writeHead(upstream.status,responseHeaders(upstream.headers));
   if(!upstream.body){res.end();return;}
-  Readable.fromWeb(upstream.body).pipe(res);
+  await pipeline(Readable.fromWeb(upstream.body),res);
 }
 
 async function mcp(req,res,u){
@@ -204,7 +193,12 @@ async function mcp(req,res,u){
   let rpc;
   try{rpc=raw.length?JSON.parse(raw.toString()):null}catch{return sendRpc(res,jsonRpcError(null,-32700,'Invalid JSON.'));}
   if(Array.isArray(rpc)) return sendRpc(res,jsonRpcError(null,-32040,'JSON-RPC batches are not supported by the Hush alpha proxy.'));
-  if(!rpc||typeof rpc!=='object') return sendRpc(res,jsonRpcError(null,-32600,'Invalid JSON-RPC request.'));
+  if(!rpc||typeof rpc!=='object'||rpc.jsonrpc!=='2.0'||typeof rpc.method!=='string'||(rpc.params!==undefined&&(!rpc.params||typeof rpc.params!=='object'||Array.isArray(rpc.params)))||(Object.hasOwn(rpc,'id')&&typeof rpc.id!=='string'&&(typeof rpc.id!=='number'||!Number.isFinite(rpc.id)))) return sendRpc(res,jsonRpcError(null,-32600,'Invalid JSON-RPC request.'));
+  if(!Object.hasOwn(rpc,'id')){
+    // Notifications never invoke tools or mutate private state.
+    if(rpc.method==='notifications/initialized'||rpc.method==='notifications/cancelled'){res.writeHead(202,securityHeaders());res.end();return;}
+    return send(res,400,jsonRpcError(null,-32600,'Unsupported notification.'));
+  }
 
   const envelope=rpc.params?._meta??{};
   const clientInfo=envelope['io.modelcontextprotocol/clientInfo'];
@@ -218,7 +212,6 @@ async function mcp(req,res,u){
 
   if(rpc.method==='server/discover') return rpcResult({supportedVersions:['2026-07-28','2025-11-25'],capabilities:{tools:{listChanged:false}},instructions:'Hush provides bounded private computation. Private values are not exposed as MCP tools.'});
   if(rpc.method==='initialize'&&!mcpUpstream) return sendRpc(res,{jsonrpc:'2.0',id:rpc.id,result:{protocolVersion:'2025-11-25',capabilities:{tools:{listChanged:false}},serverInfo:{name:'hush',version:'0.9.0'},instructions:'Hush provides bounded private computation. Private values are not exposed as MCP tools.'}});
-  if(rpc.method==='notifications/initialized'){res.writeHead(204,securityHeaders());res.end();return;}
   if(rpc.method==='ping') return rpcResult({});
   if(rpc.method==='tools/list'&&!mcpUpstream) return rpcResult({tools:NATIVE_MCP_TOOLS});
 
@@ -261,7 +254,7 @@ async function mcp(req,res,u){
   if(rpc.method==='tools/list'&&upstream.ok){
     const contentType=upstream.headers.get('content-type')||'';
     if(contentType.includes('json')){
-      const text=await upstream.text();
+      const text=await readResponseText(upstream,2_000_000);
       try{
         const payload=JSON.parse(text);
         mcpCatalog.ingestListResult(payload);
@@ -438,11 +431,20 @@ const server=http.createServer(async(req,res)=>{
     res.writeHead(404,securityHeaders());res.end('Not found');
   }
   catch(e){
-    console.error(e);
+    // Never log request bodies, private paths, credentials or provider payloads.
+    console.error(`Hush request failed: ${e?.code||'INTERNAL_ERROR'}`);
+    if(res.headersSent||res.destroyed){if(!res.destroyed)res.destroy();return;}
     if(u?.pathname==='/mcp') return sendRpc(res,jsonRpcError(null,-32603,e.code==='NO_MCP_UPSTREAM'?e.message:'Hush MCP proxy error.'));
-    send(res,Number(e?.status)||500,{error:e.message||'Internal error'});
+    const status=Number(e?.status)||500;
+    send(res,status,{error:status<500?e.message:'Internal error',code:e?.code||'INTERNAL_ERROR'});
   }
 });
+server.headersTimeout=15_000;
+server.requestTimeout=30_000;
+server.keepAliveTimeout=5_000;
+server.maxRequestsPerSocket=100;
+server.maxConnections=128;
+server.on('error',error=>{console.error(`Hush could not start: ${error.code==='EADDRINUSE'?'port is already in use':error.code||'listener error'}`);runtimeLock.release();process.exitCode=1;});
 server.listen(port,'127.0.0.1',()=>console.log(`Hush running at http://127.0.0.1:${port}`));
 
 let shuttingDown=false;

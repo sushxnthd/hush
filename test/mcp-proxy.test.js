@@ -54,7 +54,7 @@ test('MCP proxy enforces exact one-shot approval before forwarding', {timeout:30
   const dataDir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-mcp-proxy-'));
   const child=spawn(process.execPath,['src/server.js'],{
     cwd:process.cwd(),
-    env:{...process.env,PORT:String(port),HUSH_DATA_DIR:dataDir,HUSH_MCP_UPSTREAM:`http://127.0.0.1:${upstreamPort}/mcp`,HUSH_MCP_TRUST_TOOL_ANNOTATIONS:'0',HUSH_MCP_BEARER_TOKEN:'server-only-secret'},
+    env:{...process.env,NODE_ENV:'test',HUSH_ALLOW_FILE_KEY_FALLBACK:'1',HUSH_REQUIRE_LOCAL_AUTH:'0',PORT:String(port),HUSH_DATA_DIR:dataDir,HUSH_MCP_UPSTREAM:`http://127.0.0.1:${upstreamPort}/mcp`,HUSH_MCP_TRUST_TOOL_ANNOTATIONS:'0',HUSH_MCP_BEARER_TOKEN:'server-only-secret'},
     stdio:['ignore','pipe','pipe']
   });
   let stderr='';child.stderr.on('data',d=>stderr+=d);

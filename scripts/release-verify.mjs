@@ -20,6 +20,9 @@ try{
 
   assert.equal(manifest.schema,'hush.release-manifest.v1');
   assert.equal(manifest.version,pkg.version);
+  assert.equal(typeof manifest.sourceDirty,'boolean','Candidate source cleanliness must be recorded');
+  if(process.env.GITHUB_ACTIONS==='true')assert.equal(manifest.sourceDirty,false,'Hosted release candidate must be built from clean source');
+  assert.equal(manifest.contentDigest,crypto.createHash('sha256').update(JSON.stringify(manifest.files)).digest('hex'),'Candidate inventory digest mismatch');
   assert.equal(sbom.spdxVersion,'SPDX-2.3');
   assert.equal(sbom.packages?.[0]?.versionInfo,pkg.version);
   assert.ok(manifest.bundledRuntime?.path,'Bundled runtime metadata is required');
@@ -31,8 +34,12 @@ try{
   assert.equal(sha256(runtime),manifest.bundledRuntime.sha256,'Bundled runtime hash mismatch');
   const bundledVersion=execFileSync(runtime,['--version'],{encoding:'utf8',timeout:10000,windowsHide:true}).trim();
   assert.equal(bundledVersion,manifest.bundledRuntime.nodeVersion,'Bundled Node runtime failed executable/version verification');
-  const launcherNames=process.platform==='win32'?['launchers/hush.cmd','launchers/hush-dashboard.cmd']:['launchers/hush','launchers/hush-dashboard'];
-  for(const rel of launcherNames) assert.equal(fs.existsSync(path.join(bundle,...rel.split('/'))),true,`Required launcher missing: ${rel}`);
+  const launcherNames=process.platform==='win32'?['launchers/hush.cmd','launchers/hush-dashboard.cmd','launchers/hush-mcp.cmd','launchers/hush-doctor.cmd','launchers/hush-open.cmd']:['launchers/hush','launchers/hush-dashboard','launchers/hush-mcp','launchers/hush-doctor','launchers/hush-open'];
+  for(const rel of launcherNames){
+    const file=path.join(bundle,...rel.split('/'));
+    assert.equal(fs.existsSync(file),true,`Required launcher missing: ${rel}`);
+    assert.match(fs.readFileSync(file,'utf8'),/NODE_ENV=production/,`Launcher must enforce production security: ${rel}`);
+  }
 
   let checked=0;
   for(const line of sums){

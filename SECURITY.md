@@ -1,7 +1,7 @@
 # Security
-This is an alpha research implementation, not a certified password manager or payment control. Do not store production secrets yet.
+The browser workspace is early access and the native runtime is a release candidate. Hush is not a certified password manager or payment control. Signed distribution and independent security assurance remain release requirements.
 
-Implemented: AES-256-GCM local vault, Ed25519 Grants, scope/expiry/use limits, exact-action one-use approvals, structured secret redaction, and hash-chained receipts.
+Implemented: AES-256-GCM local vault/context, OS-backed root keys, authenticated loopback APIs, separate MCP transport credentials, Ed25519 Grants, scope/expiry/use limits, exact-action one-use approvals, structured secret redaction, and signed hash-chained receipts. Normal startup requires authentication; anonymous access requires explicit development configuration and cannot disable production authentication. Request bodies, streamed SDK responses, MCP messages/queues and memory proposals are bounded. Failed authority calls are not automatically retried. Resolved proposals discard duplicate plaintext values.
 
 Not solved yet: hostile local malware, arbitrary GUI agents that bypass Hush, perfect semantic secret detection, side-channel leakage, hardware-backed keys, and third-party security audit.
 

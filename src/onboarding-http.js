@@ -1,17 +1,6 @@
-const MAX_BODY=64*1024;
-
-async function readJson(req){
-  const chunks=[]; let total=0;
-  for await(const chunk of req){ total+=chunk.length; if(total>MAX_BODY) throw Object.assign(new Error('Request body too large'),{status:413}); chunks.push(chunk); }
-  if(!chunks.length) return {};
-  try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}
-  catch{throw Object.assign(new Error('Invalid JSON'),{status:400});}
-}
-function json(res,status,payload){
-  const value=JSON.stringify(payload);
-  res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','content-length':Buffer.byteLength(value)});
-  res.end(value);
-}
+import {readJsonObject,sendJson} from './http-io.js';
+const readJson=req=>readJsonObject(req,{maxBytes:64*1024});
+const json=sendJson;
 function html(res,status,title,message){
   const escape=value=>String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const value=`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>${escape(title)}</title><style>body{font:16px system-ui;background:#0b0b0c;color:#f5f5f5;display:grid;place-items:center;min-height:100vh;margin:0}.card{max-width:520px;padding:32px;border:1px solid #2a2a2d;border-radius:18px;background:#141416}h1{font-size:22px}p{color:#b5b5bb;line-height:1.5}</style></head><body><main class="card"><h1>${escape(title)}</h1><p>${escape(message)}</p></main></body></html>`;

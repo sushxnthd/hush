@@ -2,7 +2,7 @@ name: release-candidate
 
 on:
   push:
-    branches: [production/v1.0-hardening]
+    branches: [production/v1.0-hardening, main]
     tags: ['v*']
   workflow_dispatch:
 

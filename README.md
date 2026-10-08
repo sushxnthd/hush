@@ -2,7 +2,7 @@
 
 **Private Mode for every AI.**
 
-Hush is an experimental local trust layer for **deep AI personalization without handing every AI a copy of your private profile**.
+Hush is a local trust layer for **deep AI personalization without handing every AI a copy of your private profile**. The browser workspace is early access; the native runtime is a release candidate with explicit release gates.
 
 > **AI should query you, not copy you.**
 
@@ -12,7 +12,9 @@ Instead of moving your calendar, finances, identity, preferences, credentials an
 
 - **Browser workspace:** https://sushxnthd.github.io/hush/app/ — encrypted private notes, approved memory, exact context preview and encrypted backups. No Hush account or API key required.
 - **Sample workspace:** https://sushxnthd.github.io/hush/app/#sample — temporary data for a quick product walkthrough.
-- **Local runtime:** run `npm start`, then open the authenticated dashboard with `node clients/desktop/hush-desktop.mjs dashboard` in another terminal. Requires Node.js 22+ and a supported OS keystore for production mode.
+- **Local runtime:** run `node clients/desktop/hush-open.mjs` to start Hush and open its authenticated dashboard. Requires Node.js 22+ and a supported OS keystore. Portable candidates include `launchers/hush-open` (`hush-open.cmd` on Windows) and their own Node runtime.
+- **Diagnostics:** `npm run doctor` checks local authentication, keystore, audit integrity, private context and single-instance storage. It reports no record values or credentials.
+- **MCP:** `node clients/desktop/hush-desktop.mjs mcp-config` generates a local stdio client configuration without embedded bearer tokens. Keep Hush running while the client uses its six native tools.
 
 The browser workspace makes no AI calls and does not enforce permissions in another app. It prepares manually reviewed context for copy and paste. Its encrypted browser store is separate from the native Context Kernel. The local runtime is a release candidate; external registrations, signed installers and independent assurance remain release gates.
 
@@ -50,7 +52,7 @@ Hush has a persistent encrypted Context Kernel rather than an in-memory-only pro
 - exported sync bundles contain ciphertext and opaque identifiers, not readable context;
 - restarting Hush restores private context and cumulative reconstruction state.
 
-The alpha currently unlocks this local store from `HUSH_CONTEXT_PASSPHRASE`. A consumer build should move key handling into the operating-system keychain / secure hardware rather than asking users to manage an environment variable.
+The runtime derives its Context Kernel wrapping secret from an OS-backed root key: Windows DPAPI, macOS Keychain or Linux Secret Service. No passphrase environment variable is needed for normal startup. `HUSH_CONTEXT_PASSPHRASE` remains an explicit compatibility override; retain it if an existing store was created with that override. OS keystores do not protect against a compromised unlocked host or promise hardware isolation.
 
 ## Private Decision Programs
 
@@ -203,13 +205,35 @@ Current native tools are:
 
 ```text
 hush_begin_private_task
+hush_private_query
 hush_private_decision
+hush_route_task
+hush_propose_memory
 hush_revoke_private_task
 ```
 
 Protected decisions are computed locally and privacy-assessed before their result enters the MCP response. Hush can also sit in front of another MCP server; upstream tools retain their existing order and Hush's private-computation tools are appended locally.
 
 The implementation includes the current discovery shape plus a legacy initialization path, but protocol interoperability still needs broader testing against production clients before claiming full MCP conformance.
+
+For local stdio clients, generate configuration rather than copying credentials:
+
+```bash
+node clients/desktop/hush-desktop.mjs mcp-config claude-desktop
+```
+
+Paste the JSON into the client's MCP settings. The bridge uses the installation's Node executable and absolute script path, derives only the separate MCP transport credential from the keystore, and forwards requests solely to local `/mcp`. Set the same `PORT` for the runtime and configuration generator when using a custom port. Source launches require Node.js on the machine; portable bundles use their included runtime.
+
+The bridge supports Hush's native JSON tools. Streaming upstream proxies use the authenticated HTTP endpoint directly. Queue, message, response and request-time limits fail closed; failed authority requests are never automatically retried. A proposed memory requires explicit approval in the owner dashboard before it changes canonical context. Approved and rejected proposals erase their duplicate plaintext values; pending history expires and the queue is capped at 256 entries.
+
+Start Hush first. On a standard source checkout:
+
+```bash
+node clients/desktop/hush-open.mjs
+npm run doctor
+```
+
+For HTTP clients, use `http://127.0.0.1:8787/mcp` and the separately derived transport credential. MCP credentials cannot authorize owner APIs. Do not put control tokens in URLs or public client configuration.
 
 ## Existing security and authority layer
 
@@ -253,16 +277,17 @@ The implementation includes the current discovery shape plus a legacy initializa
 - heuristic exposure scanner;
 - vault-backed authorization brokerage.
 
-## Run the alpha
+## Run the local release candidate
 
 Requires Node.js 22+.
 
 ```bash
-export HUSH_CONTEXT_PASSPHRASE='use-a-long-local-passphrase'
 npm start
 ```
 
-Then open `http://127.0.0.1:8787` for the local dashboard. The local MCP endpoint is `/mcp`.
+Then run `node clients/desktop/hush-desktop.mjs dashboard` in another terminal to open a one-shot authenticated dashboard session. Alternatively use the `hush-open.mjs` entry point above. Authentication and strict keystore behavior are on by default; portable launchers force production mode. Linux requires a working Secret Service and `secret-tool`.
+
+Only isolated development fixtures should use `NODE_ENV=development` with an explicit `HUSH_ALLOW_FILE_KEY_FALLBACK=1`. Anonymous local API access additionally requires `HUSH_REQUIRE_LOCAL_AUTH=0`; production ignores that bypass. A restrictive file key is not an OS-backed security substitute. The dashboard and doctor report the actual backend.
 
 A finite-domain context field can be created through the local API with domain metadata such as:
 
@@ -285,25 +310,19 @@ npm run bench
 npm run check
 ```
 
-The v0.8 suite contains **84 automated tests** plus **seven benchmark programs**.
+Run the suite for the current test count. CI verifies the runtime on Ubuntu, Windows and macOS and packages each platform separately. `npm run prod:gate` inspects all release domains; `npm run prod:report` emits a machine-readable report and returns a failing exit code while release gates remain blocked.
 
 ## What is not finished
 
-Hush has a functional private-context research core, but it is not yet a finished consumer security product. Production/research work still includes:
+Hush has implemented OS-backed keys, encrypted recovery/device revocation, bounded connectors, semantic capability resolution, symbolic joint-choice accounting, scoped actions and local companions. Implementations and synthetic checks alone do not finish the release.
 
-- OS keychain / Secure Enclave-style key handling and recovery;
-- encrypted multi-device sync and device revocation;
-- real connectors for calendar, mail, files, accounts and other context sources;
-- browser / desktop / mobile onboarding;
-- one-click authorization flows for popular AI clients;
-- richer capability schemas so agents do not need to know private field paths;
-- full protocol interoperability testing;
-- timing, crash, network-metadata and bypass defenses;
-- real end-to-end task benchmarks and stronger collusion attacks;
-- scalable joint inference beyond the current 100,000-state exact enumeration limit;
-- categorical, structured, continuous and correlated private domains;
-- privacy-vs-task-success evaluation against strong baselines;
-- unifying private-context disclosure and real-world authority into one task ledger.
+- Signed Windows distribution and Apple Developer ID/notarization need the account owner's signing infrastructure.
+- Production Google/GitHub registrations and live provider validation need approved provider identities and test credentials. Email/calendar tests perform real external actions and require a named test scope.
+- Independent security review and scientific reproduction need identified external reviewers, retained findings and remediation/retest evidence.
+- Full 72-hour fault/restart evidence, physical-device and assistive-technology validation, production-client interoperability and an owner-led incident drill remain acceptance requirements.
+- Hosted OAuth, managed semantic/graph memory, team administration and enterprise service guarantees are not shipped Hush capabilities. The comparison in [COMPETITIVE_READINESS.md](COMPETITIVE_READINESS.md) identifies the actual product differences and the evaluation needed before claiming superiority.
+
+See [LAUNCH_READINESS.md](LAUNCH_READINESS.md) for the evidence and the exact owner handoff. Historical evidence is retained but cannot certify changed candidate source.
 
 ## Research boundary
 
@@ -311,6 +330,6 @@ Personal data stores, local recommendation, preference elicitation, information-
 
 The hypothesis worth testing is the system-level combination: a provider-neutral personal-AI runtime where agents send bounded computations toward user-owned context, exact values remain sealed until necessary execution boundaries, and cumulative information / authority is governed across agents and providers.
 
-Hush is an alpha/reference implementation, not a certified production security product.
+Hush's native runtime remains a release candidate, not a certified production security product.
 
 See `ARCHITECTURE.md`, `THREAT_MODEL.md`, `ROADMAP.md`, `research/PRODUCT_THESIS.md`, `research/CONTEXT_KERNEL.md`, `research/BLIND_PERSONALIZATION.md`, `research/RECONSTRUCTION_FIREWALL.md`, `research/PARTITION_AWARE_PRIVACY.md`, and `research/JOINT_CHOICE_PRIVACY.md`.
