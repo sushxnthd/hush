@@ -32,7 +32,8 @@ await mkdir(path.join(output,'assets/source/media'),{recursive:true});
 for(const item of ['fonts','vendor','hush-logo.svg','favicon.svg','product-site.css','reference-site.css','product-site.js','workspace.css','workspace.js','workspace-core.js'])
   await cp(path.join(root,'assets',item),path.join(output,'assets',item),{recursive:true});
 await cp(path.join(root,'assets/source/brand/deploy'),path.join(output,'assets/source/brand/deploy'),{recursive:true});
-await cp(path.join(root,'assets/source/brand/media/field-still.webp'),path.join(output,'assets/source/brand/media/field-still.webp'));
+for(const file of ['field-still.webp','hush-dawn.webp'])
+  await cp(path.join(root,'assets/source/brand/media',file),path.join(output,'assets/source/brand/media',file));
 for(const filename of groups.keys())await cp(path.join(media,filename),path.join(output,'assets/source/media',filename));
 for (const filename of ['index.html','index.md','sitemap.xml','robots.txt','.nojekyll']) {
   await cp(path.join(root, filename), path.join(output, filename));

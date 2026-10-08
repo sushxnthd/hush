@@ -6,7 +6,9 @@ The desktop grid is 208px / 108px / 640px, with 64px top spacing and a vertical 
 
 `scripts/reference-components.mjs` owns Hush's home page and shared controls, rail and footer. `scripts/reference-loop.html` holds the adapted technical diagram. The generator preserves the working encrypted browser app as its own route.
 
-Hush content replaces every reference claim, customer quote, brand mark and outgoing product destination. Evidence distinguishes bounded internal research from independent assurance. No vendor analytics, cookies or remote executable scripts are imported. The branded dawn image is excluded; the CTA uses the unbranded blue field.
+Hush content replaces every reference claim, customer quote, brand mark and outgoing product destination. Evidence distinguishes bounded internal research from independent assurance. No vendor analytics, cookies or remote executable scripts are imported. The CTA uses `assets/source/brand/media/hush-dawn.webp`, adapted from the supplied dawn photograph by removing its embedded dotted brain mark. The original asset is preserved separately. The built-in image editor used this instruction: remove only the dotted mark and continue the existing sky, sunset, trees and grain; preserve composition and colors, with no replacement text or logo. The edited output is encoded as WebP for delivery.
+
+The supplied assets used in the published site are the blue meadow film and still, the learn/carry/scale feature clips and posters, all three deployment SVGs, the provider icons, Geist fonts, and the adapted dawn banner. The CTA retains the reference's image framing, gradient scrim, bleed and button motion. Every asset stays self-hosted.
 
 Motion pauses offscreen and in background tabs, respects reduced-motion preferences and has explicit controls. Diagram stages can be selected without autoplay. The setup strip copies a Hush prompt and links to actual setup routes. No JavaScript is required to read the content or follow product links.
 
