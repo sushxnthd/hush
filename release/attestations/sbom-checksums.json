@@ -1,25 +1,127 @@
 {
+  "schema": "hush.release-evidence.v2",
   "status": "pass",
-  "issuedAt": "2026-10-08T01:10:00Z",
-  "evidence": "Release-candidate run 37710140951 completed successfully on fresh Ubuntu, Windows and macOS runners at commit 9f1fdd58804d4436d8c6835aff0c77d8e304f0ca. release:verify checked SPDX inventory, manifest file hashes/sizes, SHA256SUMS, symlink absence and runtime-secret exclusion. These are unsigned portable release candidates; no installer signing or production deployment is implied. Artifact metadata and completed job steps were rechecked through GitHub Actions.",
-  "workflowRun": 37710140951,
-  "workflowUrl": "https://github.com/sushxnthd/hush/actions/runs/37710140951",
-  "commit": "9f1fdd58804d4436d8c6835aff0c77d8e304f0ca",
+  "issuedAt": "2026-10-08T17:52:45.043Z",
+  "commit": "1d1614220b1fcae74ac1ed4dc6ba22194bd28935",
+  "reviewer": null,
+  "scope": "Portable 0.9.0 candidate package inventories, SHA256 checksums, SPDX SBOMs and bundled Node runtimes verified on Linux x64, Windows x64 and macOS arm64.",
+  "limitations": "Unsigned portable candidates. Package integrity and a dependency inventory do not establish code signing, notarization, absence of vulnerabilities, independent supply-chain review or signed updater correctness. Evidence retention ends 22 October 2026.",
+  "evidence": "All three completed release-integrity reports verify 82 checksum entries, 80 manifest entries, 81 SBOM entries, 83 files, no runtime secrets, no symlinks and a self-contained bundled Node runtime.",
+  "evidenceUrls": [
+    "https://github.com/sushxnthd/hush/actions/runs/37819317497"
+  ],
   "artifacts": [
     {
-      "platform": "Linux",
-      "id": 11521840950,
-      "digest": "sha256:7bf052affcda384ebfa29c07e75b99d83ab56291c1b00df9b3070b2f85442e3c"
+      "id": 11568965897,
+      "name": "hush-portable-macOS-1d1614220b1fcae74ac1ed4dc6ba22194bd28935",
+      "digest": "sha256:4c87ef537ee215d36dcbce8c4523f8e2c83db166d9d060b2e2280f5695068370",
+      "url": "https://api.github.com/repos/sushxnthd/hush/actions/artifacts/11568965897",
+      "expiresAt": "2026-10-22T17:48:35Z"
     },
     {
-      "platform": "macOS",
-      "id": 11521037686,
-      "digest": "sha256:828066198411f9afaa8a53fcd3c0eca5187aa28eca47fe43634328ac0a0f2ac2"
+      "id": 11568098113,
+      "name": "hush-portable-Windows-1d1614220b1fcae74ac1ed4dc6ba22194bd28935",
+      "digest": "sha256:c2274c3e1866bfe3e241b14b749ac016f2b4f22fee7d4bb050afe970dc9dafed",
+      "url": "https://api.github.com/repos/sushxnthd/hush/actions/artifacts/11568098113",
+      "expiresAt": "2026-10-22T17:49:05Z"
     },
     {
-      "platform": "Windows",
-      "id": 11520924459,
-      "digest": "sha256:8a113c4cf39e87737acd4bd3224f3cfcf84280286126a65a4a5baffeb6629617"
+      "id": 11567963691,
+      "name": "hush-portable-Linux-1d1614220b1fcae74ac1ed4dc6ba22194bd28935",
+      "digest": "sha256:bc179093f39fb1e8de234a2a2698abc866efb8d1f5444e9f4297a21597dae98e",
+      "url": "https://api.github.com/repos/sushxnthd/hush/actions/artifacts/11567963691",
+      "expiresAt": "2026-10-22T17:48:22Z"
     }
-  ]
+  ],
+  "validation": {
+    "reports": [
+      {
+        "schema": "hush.release-integrity.v1",
+        "status": "pass",
+        "startedAt": "2026-10-08T17:48:17.161Z",
+        "completedAt": "2026-10-08T17:48:17.527Z",
+        "version": "0.9.0",
+        "commit": "1d1614220b1fcae74ac1ed4dc6ba22194bd28935",
+        "platform": "darwin",
+        "arch": "arm64",
+        "bundledRuntime": {
+          "path": "runtime/node",
+          "nodeVersion": "v22.23.2",
+          "sha256": "18e387c90ab8a8400183e8bdd396376e1e875b91b4c874b894dcade7b35bf572"
+        },
+        "launchers": [
+          "launchers/hush",
+          "launchers/hush-dashboard",
+          "launchers/hush-mcp",
+          "launchers/hush-doctor",
+          "launchers/hush-open"
+        ],
+        "checksumEntries": 82,
+        "manifestEntries": 80,
+        "sbomEntries": 81,
+        "files": 83,
+        "noSymlinks": true,
+        "noRuntimeSecrets": true,
+        "selfContainedRuntime": true
+      },
+      {
+        "schema": "hush.release-integrity.v1",
+        "status": "pass",
+        "startedAt": "2026-10-08T17:48:05.219Z",
+        "completedAt": "2026-10-08T17:48:05.777Z",
+        "version": "0.9.0",
+        "commit": "1d1614220b1fcae74ac1ed4dc6ba22194bd28935",
+        "platform": "linux",
+        "arch": "x64",
+        "bundledRuntime": {
+          "path": "runtime/node",
+          "nodeVersion": "v22.23.3",
+          "sha256": "fde6a4bf8d0562f7751d1a2d6cb9b417c4cfe107bbcb0aa3e9a24e125e348f48"
+        },
+        "launchers": [
+          "launchers/hush",
+          "launchers/hush-dashboard",
+          "launchers/hush-mcp",
+          "launchers/hush-doctor",
+          "launchers/hush-open"
+        ],
+        "checksumEntries": 82,
+        "manifestEntries": 80,
+        "sbomEntries": 81,
+        "files": 83,
+        "noSymlinks": true,
+        "noRuntimeSecrets": true,
+        "selfContainedRuntime": true
+      },
+      {
+        "schema": "hush.release-integrity.v1",
+        "status": "pass",
+        "startedAt": "2026-10-08T17:48:41.022Z",
+        "completedAt": "2026-10-08T17:48:41.432Z",
+        "version": "0.9.0",
+        "commit": "1d1614220b1fcae74ac1ed4dc6ba22194bd28935",
+        "platform": "win32",
+        "arch": "x64",
+        "bundledRuntime": {
+          "path": "runtime/node.exe",
+          "nodeVersion": "v22.23.3",
+          "sha256": "9c9245166b4a8e182e0b797da9c20136117ff24368eaff1fec8343a123c8db0e"
+        },
+        "launchers": [
+          "launchers/hush.cmd",
+          "launchers/hush-dashboard.cmd",
+          "launchers/hush-mcp.cmd",
+          "launchers/hush-doctor.cmd",
+          "launchers/hush-open.cmd"
+        ],
+        "checksumEntries": 82,
+        "manifestEntries": 80,
+        "sbomEntries": 81,
+        "files": 83,
+        "noSymlinks": true,
+        "noRuntimeSecrets": true,
+        "selfContainedRuntime": true
+      }
+    ]
+  }
 }

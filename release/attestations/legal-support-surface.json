@@ -1,11 +1,18 @@
 {
+  "schema": "hush.release-evidence.v2",
   "status": "pass",
-  "issuedAt": "2026-10-08T01:19:00Z",
-  "evidence": "Published GitHub Pages privacy, early-access terms and support pages were opened and inspected in a browser after the reference-led redesign. Privacy covers website hosting metadata, encrypted browser storage, clipboard, backups, deletion and local-runtime connections. Terms describe current early access, responsibilities and scope. Support provides a guide, FAQ, GitHub issue route and link to SECURITY.md. Footer destinations and internal routes pass site:verify. This attests public surface availability only; it is not legal review, staffed support, an SLA, independent compliance validation or incident readiness.",
-  "commit": "833a3d40d58e8759cdc9a52e595b2d7eebf8bebf",
-  "urls": [
+  "issuedAt": "2026-10-08T17:52:45.043Z",
+  "commit": "1d1614220b1fcae74ac1ed4dc6ba22194bd28935",
+  "reviewer": null,
+  "scope": "Publication and browser inspection of the Hush privacy, early-access terms, security, support and responsible-disclosure routes.",
+  "limitations": "Verifies published information and community issue/reporting paths only. Does not establish legal compliance, legal review, staffed support, an accountable incident owner or completion of an operational drill.",
+  "evidence": "The published Hush website presents product availability and limitations, privacy/deletion/revocation instructions, early-access terms, security scope and support/reporting routes. All 20 routes passed the static reference verifier; these five pages were also inspected in the browser.",
+  "evidenceUrls": [
     "https://sushxnthd.github.io/hush/privacy/",
     "https://sushxnthd.github.io/hush/terms/",
-    "https://sushxnthd.github.io/hush/support/"
-  ]
+    "https://sushxnthd.github.io/hush/security/",
+    "https://sushxnthd.github.io/hush/support/",
+    "https://sushxnthd.github.io/hush/responsible-disclosure/"
+  ],
+  "artifacts": []
 }
