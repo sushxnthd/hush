@@ -86,3 +86,41 @@ if(toc&&links.length){
  const schedule=()=>{if(!pending){pending=true;requestAnimationFrame(update);}};
  addEventListener('scroll',schedule,{passive:true});addEventListener('resize',schedule);document.fonts?.ready.then(schedule);update();
 }else if(mark){const active=document.querySelector('.nav-doors a[aria-current]');if(active)mark.style.setProperty('--y',`${active.offsetTop+active.offsetHeight/2-3}px`);}
+
+// Source-style pixel stream: decorative, deterministic and pausable. It never
+// represents live users or changing benchmark values.
+document.querySelectorAll('[data-stream]').forEach(stream=>{
+ const section=stream.closest('#production'),button=section?.querySelector('[data-stats-motion]');
+ if(!section||!button)return;
+ const cells=[...stream.querySelectorAll('rect')],heights=stream.dataset.heights.split(',').map(Number);
+ let timer,step=0,inView=false,paused=false,explicit=false,running=false;
+ const paint=()=>heights.forEach((height,c)=>{for(let r=0;r<8;r++){const cell=cells[c*8+r],level=8-r,on=level<=height;cell.classList.toggle('on',on);cell.style.setProperty('--o',on?(.4+.6*(1-(level-1)/Math.max(height,1))).toFixed(2):'');}});
+ const label=()=>{button.textContent=running?'Pause pixel animation':'Play pixel animation';button.setAttribute('aria-pressed',String(running));};
+ const tick=()=>{stream.style.translate='-7px 0';timer=setTimeout(()=>{heights.shift();heights.push(1+(step++*7)%6);section.classList.add('is-stepping');stream.style.translate='0 0';paint();stream.getBoundingClientRect();section.classList.remove('is-stepping');if(running)timer=setTimeout(tick,1280);},340);};
+ const pause=()=>{running=false;clearTimeout(timer);stream.style.translate='0 0';label();};
+ const sync=()=>{if(inView&&!document.hidden&&!paused&&(!motion.matches||explicit)){if(!running){running=true;section.classList.add('is-settled');label();timer=setTimeout(tick,1600);}}else pause();};
+ button.addEventListener('click',()=>{if(running){paused=true;explicit=false;pause();}else{paused=false;explicit=true;inView=visible(section);sync();}});
+ if(hasObserver)new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;sync();},{threshold:.1}).observe(stream);else{inView=true;sync();}
+ animations.push({sync,pause,preference:()=>{explicit=false;sync();}});
+});
+
+// The chart values are read from its static, accessible data table, which the
+// build generates directly from the frozen Hush evaluation JSON.
+document.querySelectorAll('[data-evidence-chart]').forEach(chart=>{
+ const svg=chart.querySelector('svg'),tooltip=chart.querySelector('[data-chart-tooltip]'),guide=chart.querySelector('[data-chart-guide]'),plot=chart.querySelector('.cost-curve-plot');
+ const points=[...chart.querySelectorAll('[data-chart-point]')],tabs=[...chart.querySelectorAll('[data-chart-view]')],thumb=chart.querySelector('.token-view-thumb'),switcher=chart.querySelector('.token-view-switch');
+ const data=[...chart.querySelectorAll('.chart-data tbody tr')].map(row=>[...row.children].map(cell=>cell.textContent.trim()));
+ const positionThumb=()=>{const active=tabs.find(t=>t.classList.contains('is-active'));if(!active)return;thumb.style.setProperty('--x',active.offsetLeft+'px');thumb.style.setProperty('--w',active.offsetWidth+'px');thumb.classList.add('is-placed');switcher.classList.add('has-thumb');};
+ tabs.forEach(tab=>tab.addEventListener('click',()=>{const view=tab.dataset.chartView;tabs.forEach(t=>{t.classList.toggle('is-active',t===tab);t.setAttribute('aria-pressed',String(t===tab));});chart.querySelectorAll('[data-chart-series]').forEach(el=>{el.style.opacity=view==='all'||el.dataset.chartSeries===view?'1':'.08';});chart.dataset.view=view;positionThumb();}));
+ const hide=()=>{tooltip.hidden=true;guide.classList.remove('is-on');chart.querySelectorAll('.cc-marker').forEach(el=>el.classList.remove('is-active'));};
+ const show=index=>{const row=data[index];if(!row)return;tooltip.replaceChildren();const title=document.createElement('div');title.className='cc-tt-size';title.textContent=row[0];tooltip.append(title);['Completeness','Violation','Leak-free cases'].forEach((label,i)=>{const line=document.createElement('div');line.className='cc-tt-row';line.textContent=label+' · '+row[i+1];tooltip.append(line);});tooltip.hidden=false;const x=[100,300,500,700][index],width=plot.clientWidth,left=x/760*width;tooltip.style.left=Math.max(8,Math.min(width-tooltip.offsetWidth-8,left-45))+'px';tooltip.style.top='56px';guide.setAttribute('x1',String(x));guide.setAttribute('x2',String(x));guide.classList.add('is-on');chart.querySelectorAll('[data-chart-marker]').forEach(el=>el.classList.toggle('is-active',Number(el.dataset.chartMarker)===index));};
+ points.forEach((point,index)=>{point.addEventListener('pointerenter',()=>show(index));point.addEventListener('focus',()=>show(index));point.addEventListener('click',()=>show(index));point.addEventListener('blur',hide);point.addEventListener('keydown',event=>{if(event.key==='Escape'){hide();return;}if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const next=event.key==='Home'?0:event.key==='End'?points.length-1:(index+(event.key==='ArrowRight'?1:-1)+points.length)%points.length;points[next].focus();}else if(event.key==='Enter'||event.key===' '){event.preventDefault();show(index);}});});
+ plot.addEventListener('pointerleave',()=>{if(!plot.contains(document.activeElement))hide();});
+ const reveal=()=>{if(chart.dataset.drawn)return;chart.dataset.drawn='true';if(!motion.matches)chart.querySelectorAll('.cc-line').forEach(line=>{const length=line.getTotalLength();line.animate([{strokeDasharray:`${length}`,strokeDashoffset:length},{strokeDasharray:`${length}`,strokeDashoffset:0}],{duration:900,easing:'cubic-bezier(.23,1,.32,1)'});});};
+ if(hasObserver)new IntersectionObserver(entries=>{if(entries[0].isIntersecting)reveal();},{threshold:.15}).observe(svg);else reveal();
+ document.fonts?.ready.then(positionThumb);addEventListener('resize',positionThumb);positionThumb();
+});
+
+const writingSearch=document.querySelector('[data-writing-search]');
+if(writingSearch)writingSearch.addEventListener('input',()=>{const query=writingSearch.value.trim().toLowerCase();let count=0;document.querySelectorAll('[data-writing-entry]').forEach(entry=>{entry.hidden=!entry.dataset.text.includes(query);if(!entry.hidden)count++;});document.querySelector('[data-writing-empty]').hidden=count>0;});
+document.querySelectorAll('[data-change-filter]').forEach(button=>button.addEventListener('click',()=>{const type=button.dataset.changeFilter;let count=0;document.querySelectorAll('[data-change-type]').forEach(card=>{card.hidden=type!=='All'&&card.dataset.changeType!==type;if(!card.hidden)count++;});document.querySelectorAll('[data-change-filter]').forEach(b=>{b.classList.toggle('is-active',b===button);b.setAttribute('aria-pressed',String(b===button));});document.querySelector('[data-change-status]').textContent=`${count} ${count===1?'update':'updates'} shown.`;}));

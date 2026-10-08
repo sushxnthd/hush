@@ -23,14 +23,18 @@ for (const [filename, parts] of groups) {
 const output = path.join(root, '.site-dist');
 await rm(output, {recursive:true, force:true});
 await mkdir(output, {recursive:true});
-const routes = ['product','writing','changelog','demo','app','docs','company','start','support','security','privacy','terms'];
-for (const route of routes) await cp(path.join(root, route), path.join(output, route), {recursive:true});
+const routes = ['product','writing','changelog','demo','app','docs','company','start','support','security','privacy','terms','research','research/context-boundary','research/private-decisions','pricing','mcp','coding-agents','responsible-disclosure'];
+for (const route of routes) {
+  await mkdir(path.join(output,route),{recursive:true});
+  await cp(path.join(root,route,'index.html'),path.join(output,route,'index.html'));
+}
 // Only assets used by the current product site ship. Historical replica scripts
 // and encoded source packages remain in the repo, outside the published bundle.
 await mkdir(path.join(output,'assets/source/brand/media'),{recursive:true});
 await mkdir(path.join(output,'assets/source/media'),{recursive:true});
-for(const item of ['fonts','vendor','hush-logo.svg','favicon.svg','product-site.css','reference-site.css','product-site.js','workspace.css','workspace.js','workspace-core.js'])
+for(const item of ['fonts','vendor','hush-logo.svg','favicon.svg','product-site.css','reference-site.css','reference-pages.css','product-site.js','workspace.css','workspace.js','workspace-core.js'])
   await cp(path.join(root,'assets',item),path.join(output,'assets',item),{recursive:true});
+await cp(path.join(root,'assets/source/brand/plans'),path.join(output,'assets/source/brand/plans'),{recursive:true});
 await cp(path.join(root,'assets/source/brand/deploy'),path.join(output,'assets/source/brand/deploy'),{recursive:true});
 for(const file of ['field-still.webp','hush-dawn.webp'])
   await cp(path.join(root,'assets/source/brand/media',file),path.join(output,'assets/source/brand/media',file));
@@ -39,4 +43,5 @@ for (const filename of ['index.html','index.md','sitemap.xml','robots.txt','.noj
   await cp(path.join(root, filename), path.join(output, filename));
 }
 await versionWebsiteAssets(output);
-console.log(`Website built: ${routes.length + 1} routes, ${groups.size} preserved media files; assets versioned by content.`);
+const pageCount=(await readdir(output,{recursive:true})).filter(n=>n.endsWith('index.html')).length;
+console.log(`Website built: ${pageCount} routes, ${groups.size} preserved media files; assets versioned by content.`);

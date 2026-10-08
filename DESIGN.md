@@ -13,3 +13,23 @@ The supplied assets used in the published site are the blue meadow film and stil
 Motion pauses offscreen and in background tabs, respects reduced-motion preferences and has explicit controls. Diagram stages can be selected without autoplay. The setup strip copies a Hush prompt and links to actual setup routes. No JavaScript is required to read the content or follow product links.
 
 Build with `npm run site:build`, then run `npm run site:verify`. The Pages workflow performs both checks before publishing.
+
+## Extended reference audit and Hush page mapping
+
+The supplied archive's 1,000 HTML files were structurally inspected, including duplicated URLs, paginated archives and 159 documentation files. Current public home, product, pricing, research, report, blog, changelog, MCP, coding-agent and policy templates were also checked. Authenticated third-party consoles are outside the marketing-site replica.
+
+| Reference component / page family | Hush implementation |
+| --- | --- |
+| Production ledger, scrolling 6px pixel blocks, ranked grid bars | Home evidence: platform checks, synthetic task count and frozen violation rates |
+| CostCurveChart SVG, red circles / blue squares, grid, tooltip and sliding controls | Frozen AgentCIBench comparison with exact source values, keyboard details and a static data table |
+| Research score grid, comparison table, metadata cells and system cards | Research index and two local report pages, linked to full repository protocols |
+| Blog ruled entries, hierarchy, metadata and filtering | Writing index with live search over genuine Hush reports and guides |
+| ChangesArchive chips, timeline cards and dated entries | Changelog with working type filters and Hush release records |
+| Pricing board and original Pro / Max / Scale photographic tiles | Free browser, source runtime and temporary sample access; no invented subscriptions |
+| MCP / coding-agent editorial hierarchy, tables and code panels | Local MCP and coding-context pages with actual runtime tool names and scope |
+| Legal breadcrumb, metadata rule and prose typography | Hush privacy, terms, security, report and issue-reporting pages |
+| Product tables, trace blocks, shared rail, field, source footage and CTA | Existing Hush product and shared components retained |
+
+`assets/reference-pages.css` preserves the page component scopes from the supplied source. `scripts/reference-pages.mjs` adapts the markup. `scripts/reference-stats.mjs` reads the frozen evaluation JSON at build time; no benchmark values animate or change. Only the decorative pixel stream moves. Both chart lines use the same percentage axis; policy categories are discrete, and connections do not imply measurements between policies. Higher completeness and lower violation are explicitly labeled.
+
+The published research tree contains website HTML only. Research scripts, evaluation packages and encoded media sources stay out of the website artifact. The encrypted workspace remains independently isolated.
