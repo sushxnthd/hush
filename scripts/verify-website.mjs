@@ -11,6 +11,7 @@ for(const file of pages){
   const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,new Set(ids).size,relative+' duplicate ids');
   assert.ok(!/supermemory/i.test(html),relative+' reference branding leaked into Hush');
   assert.ok(!/<script[^>]+src="https?:/i.test(html),relative+' remote executable script');
+  if(relative!=='app/index.html')assert.match(html,/class="nav-mark"[^>]*hidden/,relative+' navigation marker must not flash at an unselected position');
   for(const button of html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/gi)){
     assert.ok(button[2].replace(/<[^>]+>/g,'').trim()||/aria-label="[^"]+"/.test(button[1]),relative+' unnamed button');
   }
@@ -44,6 +45,7 @@ for(const route of ['index.html','research/index.html','research/context-boundar
     assert.ok(html.includes((value.mean_violation*100).toFixed(2)+'%'),route+' violation differs from frozen evidence');
   }
   assert.match(html,/View the exact data/,route+' chart must have a non-JavaScript table');
+  assert.match(html,/role="group" aria-roledescription="interactive chart"/,route+' chart must expose its keyboard controls to assistive technology');
 }
 assert.ok((await readFile(path.join(root,'assets/workspace.js'),'utf8')).includes(`'./workspace-core.js?v=${coreVersion}'`),'Workspace module dependency must be versioned');
 assert.match(app,/connect-src 'none'/,'Workspace must have no remote connections');

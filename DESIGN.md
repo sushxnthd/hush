@@ -33,3 +33,11 @@ The supplied archive's 1,000 HTML files were structurally inspected, including d
 `assets/reference-pages.css` preserves the page component scopes from the supplied source. `scripts/reference-pages.mjs` adapts the markup. `scripts/reference-stats.mjs` reads the frozen evaluation JSON at build time; no benchmark values animate or change. Only the decorative pixel stream moves. Both chart lines use the same percentage axis; policy categories are discrete, and connections do not imply measurements between policies. Higher completeness and lower violation are explicitly labeled.
 
 The published research tree contains website HTML only. Research scripts, evaluation packages and encoded media sources stay out of the website artifact. The encrypted workspace remains independently isolated.
+
+## Final consistency pass
+
+Every public marketing route was checked live for the 640px content width, heading hierarchy, loaded images, navigation state and desktop horizontal overflow. The shared chart has a horizontally scrollable 520px plotting surface at narrow widths, wrapping legends and consistent controls on home, research and report pages. Interactive SVG points are exposed as a labeled group rather than hidden inside an image role.
+
+Secondary pages no longer render an unselected navigation square. Marker positioning is refreshed after fonts load. Media and diagrams resume correctly after back/forward-cache restoration while preserving manual pauses. Pending chart drawing and pixel-stream work stop in background tabs or on reduced-motion changes; pixel controls reflect the user's playback choice even when the stream is offscreen. The no-observer fallback also stops media after scrolling away.
+
+`test/site-motion.test.js` covers nine motion and navigation regressions using the actual enhancement script. `site:verify` additionally checks initially hidden markers and accessible chart groups. Desktop visual QA and responsive CSS review are distinct from a physical mobile-device audit.

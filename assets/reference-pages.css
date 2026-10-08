@@ -55,3 +55,18 @@
 .cost-wrap[data-astro-cid-lcdefpme] .cc-axis-title:not([transform]){translate:0}.cost-wrap[data-astro-cid-lcdefpme] .chart-data{grid-column:1/-1}
 
 .change-filters button.filter-chip{border:0;border-radius:0;font-family:var(--font);background:transparent}.change-filters button.filter-chip.is-active{background:transparent}
+
+/* Shared responsive behavior for the same chart on home and report pages. */
+[data-evidence-chart]{min-width:0}
+.cost-curve-plot{min-width:0}
+.cc-swatch{flex-shrink:0}
+@media(width<=600px){
+  .cost-curve-legend{flex-wrap:wrap;row-gap:8px}
+  .cost-curve-head>div:first-child{min-width:0}
+  [data-evidence-chart] .cost-curve-plot{overflow-x:auto;overscroll-behavior-x:contain}
+  [data-evidence-chart] .cost-curve-svg{min-width:520px}
+  .cost-wrap[data-astro-cid-lcdefpme] .cost-curve{grid-template-columns:minmax(0,1fr)}
+  .cost-wrap[data-astro-cid-lcdefpme] .cost-curve-head{grid-area:auto;justify-self:stretch}
+  .cost-wrap[data-astro-cid-lcdefpme] .cost-curve-legend{grid-area:auto}
+  .cost-wrap[data-astro-cid-lcdefpme] .cost-curve-plot{grid-area:auto;margin-bottom:0}
+}
