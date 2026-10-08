@@ -1,6 +1,6 @@
 # Hush competitive readiness
 
-Reviewed 8 October 2026 against public, first-party product documentation. This is a capability audit, not a performance comparison or independent product review. Hush's website is published; its browser workspace is early access and native runtime is a release candidate.
+Reviewed 8 October 2026 against public, first-party product documentation. The 9 October follow-up research checked the currently maintained Supermemory surface; its September 2026 product update says the company brain and Nova products were discontinued, while the API, MCP, plugins and local/self-hosted materials continue. Comparisons below should not treat discontinued Nova/company-brain behavior as a current competitor baseline. This is a capability audit, not a performance comparison or independent product review. Hush's website is published; its browser workspace is early access and native runtime is a release candidate.
 
 ## Current capability comparison
 
