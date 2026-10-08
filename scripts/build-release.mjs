@@ -11,7 +11,7 @@ const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 const dist=path.join(root,'dist');
 const bundle=path.join(dist,`hush-${pkg.version}-portable`);
 const includeDirs=['src','public','clients'];
-const includeFiles=['package.json','README.md','SECURITY.md','THREAT_MODEL.md','ARCHITECTURE.md','V1_2_ACCEPTANCE.md'];
+const includeFiles=['package.json','README.md','SECURITY.md','SUPPORT.md','PRIVACY.md','TERMS.md','INCIDENT_RESPONSE.md','THREAT_MODEL.md','ARCHITECTURE.md','V1_2_ACCEPTANCE.md'];
 
 function sha256(file){return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');}
 function normalizedRel(file){return path.relative(bundle,file).split(path.sep).join('/');}

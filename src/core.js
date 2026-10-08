@@ -28,7 +28,7 @@ function atomicWrite(file,data,{mode=0o600}={}){
     try{fs.fsyncSync(dirFd);}finally{fs.closeSync(dirFd);}
   }catch{}
 }
-function atomicWriteJson(file,value){ atomicWrite(file,JSON.stringify(value,null,2)); }
+export function atomicWriteJson(file,value){ atomicWrite(file,JSON.stringify(value,null,2)); }
 
 export function encryptJson(v,key){const iv=crypto.randomBytes(12),c=crypto.createCipheriv('aes-256-gcm',key,iv),ct=Buffer.concat([c.update(Buffer.from(JSON.stringify(v))),c.final()]);return{v:1,iv:iv.toString('base64url'),tag:c.getAuthTag().toString('base64url'),ciphertext:ct.toString('base64url')}}
 export function decryptJson(v,key){const d=crypto.createDecipheriv('aes-256-gcm',key,Buffer.from(v.iv,'base64url'));d.setAuthTag(Buffer.from(v.tag,'base64url'));return JSON.parse(Buffer.concat([d.update(Buffer.from(v.ciphertext,'base64url')),d.final()]).toString())}

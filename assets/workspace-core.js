@@ -21,6 +21,7 @@ export function validateWorkspace(data) {
   for(const [list,kind] of [[data.notes,'note'],[data.memories,'memory']]) for(const item of list) {
     if(!item || typeof item.id!=='string' || ids.has(item.id) || item.id.length>100 || typeof item.title!=='string' || item.title.length>120 ||
       typeof item.text!=='string' || item.text.length>20000 || !Number.isFinite(item.createdAt) || Math.abs(item.createdAt)>8640000000000000 ||
+      (item.updatedAt!==undefined&&(!Number.isFinite(item.updatedAt)||Math.abs(item.updatedAt)>8640000000000000)) ||
       (kind==='memory' && !['pending','approved','rejected'].includes(item.status))) throw Error('Invalid workspace record.');
     ids.add(item.id);
   }
@@ -72,6 +73,13 @@ export function inspectText(text) {
   return {redacted,count};
 }
 export function addActivity(data,label) {data.activity.unshift({label:String(label).slice(0,200),at:Date.now()});data.activity=data.activity.slice(0,500);}
+export function saveNote(data,{id=null,title,text},now=Date.now()){
+  validateWorkspace(data);
+  if(typeof title!=='string'||!title.trim()||title.trim().length>120||typeof text!=='string'||!text.trim()||text.trim().length>20000)throw Error('Add a title and text within the note limits.');
+  if(id){const note=data.notes.find(n=>n.id===id);if(!note)throw Error('This note no longer exists. Start a new note.');Object.assign(note,{title:title.trim(),text:text.trim(),updatedAt:now});return note;}
+  if(data.notes.length>=1000)throw Error('Workspace full. Remove an unneeded note before adding another.');
+  const note={id:crypto.randomUUID(),title:title.trim(),text:text.trim(),createdAt:now};data.notes.unshift(note);return note;
+}
 export function sampleWorkspace() {
   const data=emptyWorkspace(),at=Date.now();
   data.notes=[{id:'sample-note',title:'Weekend in Kyoto',text:'A sample itinerary: quiet cafés, a morning museum visit, and a late train home. Private notes stay out of AI context unless you create and approve a memory.',createdAt:at}];

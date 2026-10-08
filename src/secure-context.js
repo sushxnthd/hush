@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import {canonicalize, sha256} from './core.js';
+import {canonicalize, sha256, atomicWriteJson} from './core.js';
 
 const DEFAULT_KDF = Object.freeze({name:'scrypt',N:32768,r:8,p:1,keyLength:32});
 
@@ -40,11 +40,7 @@ function sealJson(value,key,aad){ return sealBuffer(Buffer.from(JSON.stringify(v
 function openJson(value,key,aad){ return JSON.parse(openBuffer(value,key,aad).toString('utf8')); }
 
 function atomicWrite(file, value){
-  fs.mkdirSync(path.dirname(file),{recursive:true});
-  const tmp=`${file}.${process.pid}.${crypto.randomBytes(6).toString('hex')}.tmp`;
-  fs.writeFileSync(tmp,JSON.stringify(value,null,2),{mode:0o600});
-  fs.renameSync(tmp,file);
-  try{fs.chmodSync(file,0o600)}catch{}
+  atomicWriteJson(file,value);
 }
 
 function assertCiphertextBundleShape(bundle){

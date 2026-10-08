@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {emptyWorkspace,createKeys,sealWorkspace,openWorkspace,validateEnvelope,validateWorkspace,buildContext,inspectText,sampleWorkspace} from '../assets/workspace-core.js';
+import {emptyWorkspace,createKeys,sealWorkspace,openWorkspace,validateEnvelope,validateWorkspace,buildContext,inspectText,sampleWorkspace,saveNote} from '../assets/workspace-core.js';
 
 test('browser workspace round-trip saves ciphertext only and authenticates its header',async()=>{
   const data=emptyWorkspace();data.notes.push({id:'note-1',title:'PRIVATE-TITLE-CANARY',text:'PRIVATE-TEXT-CANARY',createdAt:Date.now()});
@@ -37,4 +37,19 @@ test('heuristic redaction removes known patterns and leaves ordinary text intact
   const found=inspectText('Email alex@example.com. api_key=qa-test-token. Keep the tone concise.');
   assert.equal(found.count,2);assert.equal(found.redacted.includes('alex@example.com'),false);assert.equal(found.redacted.includes('qa-test-token'),false);assert.ok(found.redacted.includes('Keep the tone concise'));
   assert.deepEqual(inspectText('Ordinary text.'),{redacted:'Ordinary text.',count:0});
+});
+test('editing a private note preserves identity and leaves approved memory unchanged',async()=>{
+  const data=sampleWorkspace(),note=data.notes[0],createdAt=note.createdAt;
+  const originalMemory=structuredClone(data.memories);
+  saveNote(data,{id:note.id,title:'Updated private note',text:'NEW-PRIVATE-EDIT-CANARY'},createdAt+10);
+  assert.equal(data.notes.length,1);assert.equal(data.notes[0].id,'sample-note');assert.equal(data.notes[0].createdAt,createdAt);assert.equal(data.notes[0].updatedAt,createdAt+10);
+  assert.deepEqual(data.memories,originalMemory);assert.ok(!buildContext(data,['sample-memory'],'Write a summary').includes('NEW-PRIVATE-EDIT-CANARY'));
+  const keys=await createKeys('synthetic note editing test phrase'),sealed=await sealWorkspace(data,keys,2);
+  assert.ok(!JSON.stringify(sealed).includes('NEW-PRIVATE-EDIT-CANARY'));
+  assert.deepEqual((await openWorkspace(sealed,'synthetic note editing test phrase')).data,data);
+});
+test('a removed note cannot be recreated accidentally by saving a stale editor',()=>{
+  const data=emptyWorkspace();assert.throws(()=>saveNote(data,{id:'removed-note',title:'Old title',text:'Old text'}),/no longer exists/);assert.deepEqual(data.notes,[]);
+  assert.throws(()=>saveNote(data,{title:' ',text:'body'}),/note limits/);
+  assert.throws(()=>saveNote(data,{title:'title',text:'x'.repeat(20001)}),/note limits/);
 });

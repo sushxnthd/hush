@@ -1,0 +1,60 @@
+name: soak-segment
+on:
+  workflow_call:
+    inputs:
+      segment:
+        required: true
+        type: number
+      previous:
+        required: true
+        type: number
+      full:
+        required: true
+        type: boolean
+permissions:
+  contents: read
+jobs:
+  durability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 210
+    environment: production-soak
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Source safety gate
+        if: inputs.segment == 1
+        run: npm run check:syntax && npm test
+      - uses: actions/download-artifact@v8
+        if: inputs.segment > 1
+        with:
+          name: hush-soak-state-${{ github.run_id }}-${{ inputs.previous }}
+          path: dist/soak-state
+      - name: Kill and restart the same encrypted synthetic fixture
+        env:
+          HUSH_SOAK_DIR: dist/soak-state
+          HUSH_SOAK_SEGMENT: ${{ inputs.segment }}
+          HUSH_SOAK_DURATION_MS: ${{ inputs.full && '10800000' || '60000' }}
+          HUSH_SOAK_MAX_ITERATIONS: ${{ inputs.full && '1000000' || '20' }}
+          HUSH_SOAK_PAUSE_MS: ${{ inputs.full && '30000' || '0' }}
+          HUSH_SOAK_REQUIRE_FULL_DURATION: ${{ inputs.full && '1' || '0' }}
+        run: npm run ops:soak
+      - name: Require actual crash coverage
+        run: node -e "const x=require('./dist/evidence/soak.json');if(x.status!=='pass'||!x.coverageComplete||x.crashes<20)process.exit(1)"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: hush-soak-state-${{ github.run_id }}-${{ inputs.segment }}
+          path: dist/soak-state
+          if-no-files-found: error
+          retention-days: 5
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: hush-soak-evidence-${{ github.run_id }}-${{ inputs.segment }}
+          path: dist/evidence/soak.json
+          if-no-files-found: warn
+          retention-days: 90

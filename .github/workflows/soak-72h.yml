@@ -1,38 +1,218 @@
 name: soak-72h
-
 on:
   workflow_dispatch:
-
+    inputs:
+      mode:
+        description: Two-runner smoke or full 24-segment 72-hour validation
+        type: choice
+        options: [smoke, full]
+        default: smoke
 permissions:
   contents: read
-
+concurrency:
+  group: hush-soak-${{ inputs.mode }}
+  cancel-in-progress: false
 jobs:
-  soak:
-    name: 72h-crash-restart-durability
-    runs-on: [self-hosted, hush-soak]
-    environment: production-soak
+  segment-1:
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 1
+      previous: 0
+      full: ${{ inputs.mode == 'full' }}
+  segment-2:
+    needs: segment-1
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 2
+      previous: 1
+      full: ${{ inputs.mode == 'full' }}
+  segment-3:
+    needs: segment-2
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 3
+      previous: 2
+      full: ${{ inputs.mode == 'full' }}
+  segment-4:
+    needs: segment-3
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 4
+      previous: 3
+      full: ${{ inputs.mode == 'full' }}
+  segment-5:
+    needs: segment-4
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 5
+      previous: 4
+      full: ${{ inputs.mode == 'full' }}
+  segment-6:
+    needs: segment-5
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 6
+      previous: 5
+      full: ${{ inputs.mode == 'full' }}
+  segment-7:
+    needs: segment-6
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 7
+      previous: 6
+      full: ${{ inputs.mode == 'full' }}
+  segment-8:
+    needs: segment-7
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 8
+      previous: 7
+      full: ${{ inputs.mode == 'full' }}
+  segment-9:
+    needs: segment-8
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 9
+      previous: 8
+      full: ${{ inputs.mode == 'full' }}
+  segment-10:
+    needs: segment-9
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 10
+      previous: 9
+      full: ${{ inputs.mode == 'full' }}
+  segment-11:
+    needs: segment-10
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 11
+      previous: 10
+      full: ${{ inputs.mode == 'full' }}
+  segment-12:
+    needs: segment-11
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 12
+      previous: 11
+      full: ${{ inputs.mode == 'full' }}
+  segment-13:
+    needs: segment-12
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 13
+      previous: 12
+      full: ${{ inputs.mode == 'full' }}
+  segment-14:
+    needs: segment-13
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 14
+      previous: 13
+      full: ${{ inputs.mode == 'full' }}
+  segment-15:
+    needs: segment-14
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 15
+      previous: 14
+      full: ${{ inputs.mode == 'full' }}
+  segment-16:
+    needs: segment-15
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 16
+      previous: 15
+      full: ${{ inputs.mode == 'full' }}
+  segment-17:
+    needs: segment-16
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 17
+      previous: 16
+      full: ${{ inputs.mode == 'full' }}
+  segment-18:
+    needs: segment-17
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 18
+      previous: 17
+      full: ${{ inputs.mode == 'full' }}
+  segment-19:
+    needs: segment-18
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 19
+      previous: 18
+      full: ${{ inputs.mode == 'full' }}
+  segment-20:
+    needs: segment-19
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 20
+      previous: 19
+      full: ${{ inputs.mode == 'full' }}
+  segment-21:
+    needs: segment-20
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 21
+      previous: 20
+      full: ${{ inputs.mode == 'full' }}
+  segment-22:
+    needs: segment-21
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 22
+      previous: 21
+      full: ${{ inputs.mode == 'full' }}
+  segment-23:
+    needs: segment-22
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 23
+      previous: 22
+      full: ${{ inputs.mode == 'full' }}
+  segment-24:
+    needs: segment-23
+    if: inputs.mode == 'full'
+    uses: ./.github/workflows/soak-segment.yml
+    with:
+      segment: 24
+      previous: 23
+      full: ${{ inputs.mode == 'full' }}
+  verify:
+    needs: [segment-2, segment-24]
+    if: always()
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
-          persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          package-manager-cache: false
-      - name: Syntax and unit safety gate before soak
-        run: npm run check:syntax && npm test
-      - name: Run full 72-hour encrypted state reopen soak
+          name: hush-soak-evidence-${{ github.run_id }}-${{ inputs.mode == 'full' && '24' || '2' }}
+          path: evidence
+      - name: Verify elapsed time and chain of checkpoints
         env:
-          HUSH_SOAK_DURATION_MS: '259200000'
-          HUSH_SOAK_MAX_ITERATIONS: '400000'
-          HUSH_SOAK_PAUSE_MS: '1000'
-          HUSH_SOAK_REQUIRE_FULL_DURATION: '1'
-        run: npm run ops:soak
-      - name: Verify attested duration
-        run: node -e "const x=require('./dist/evidence/soak.json');if(x.status!=='pass'||!x.fullDurationSatisfied||x.elapsedMs<259200000)process.exit(1);console.log(x)"
-      - uses: actions/upload-artifact@v7
-        with:
-          name: hush-72h-soak-${{ github.sha }}
-          path: dist/evidence/soak.json
-          if-no-files-found: error
-          retention-days: 90
+          SOAK_FULL: ${{ inputs.mode == 'full' && '1' || '0' }}
+        run: |
+          node -e "const fs=require('fs'),x=JSON.parse(fs.readFileSync('evidence/soak.json'));if(x.status!=='pass'||!x.coverageComplete||x.commit!==process.env.GITHUB_SHA||x.segment!==(process.env.SOAK_FULL==='1'?24:2)||(process.env.SOAK_FULL==='1'&&!x.full72HourSatisfied))process.exit(1);console.log(JSON.stringify(x,null,2))"

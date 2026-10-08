@@ -27,6 +27,14 @@ jobs:
       - run: npm run site:verify
       - run: npm run launch:smoke
         if: runner.os == 'Linux'
+      - name: Crash and restart all 20 persistence boundaries
+        if: runner.os == 'Linux'
+        env:
+          HUSH_SOAK_DURATION_MS: '60000'
+          HUSH_SOAK_MAX_ITERATIONS: '20'
+        run: |
+          npm run ops:soak
+          node -e "const x=require('./dist/evidence/soak.json');if(x.status!=='pass'||!x.coverageComplete||x.crashes<20)process.exit(1)"
 
   benchmark:
     runs-on: ubuntu-latest
