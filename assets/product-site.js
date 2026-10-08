@@ -1,6 +1,6 @@
 // Progressive enhancement. No analytics, provider requests or private app state.
 document.documentElement.classList.add('js');
-const menu=document.querySelector('.menu'),navigation=document.querySelector('#site-navigation'),rail=document.querySelector('.rail');
+const menu=document.querySelector('.menu'),navigation=document.querySelector('#site-doors'),rail=document.querySelector('.rail');
 if(menu&&navigation){
   const close=()=>{menu.setAttribute('aria-expanded','false');rail.classList.remove('is-open');};
   menu.addEventListener('click',()=>{const open=menu.getAttribute('aria-expanded')!=='true';menu.setAttribute('aria-expanded',String(open));rail.classList.toggle('is-open',open);});
