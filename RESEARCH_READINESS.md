@@ -1,5 +1,7 @@
 # Hush production-readiness research brief
 
+The scientific-validation track is frozen in [research/SCIENTIFIC_VALIDATION_V2.md](research/SCIENTIFIC_VALIDATION_V2.md). It extends the internal synthetic protocols with external AgentDAM/AgentLeak-style task evidence and behavioral side-channel tests; it is a preregistration, not a completed result.
+
 Updated 9 October 2026. This brief records primary-source research that refines Hush's launch gates. It is not a certification, an independent review, or evidence that a gate has passed.
 
 ## Findings mapped to Hush
