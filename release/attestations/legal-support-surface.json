@@ -1,0 +1,11 @@
+{
+  "status": "pass",
+  "issuedAt": "2026-10-08T01:19:00Z",
+  "evidence": "Published GitHub Pages privacy, early-access terms and support pages were opened and inspected in a browser after the reference-led redesign. Privacy covers website hosting metadata, encrypted browser storage, clipboard, backups, deletion and local-runtime connections. Terms describe current early access, responsibilities and scope. Support provides a guide, FAQ, GitHub issue route and link to SECURITY.md. Footer destinations and internal routes pass site:verify. This attests public surface availability only; it is not legal review, staffed support, an SLA, independent compliance validation or incident readiness.",
+  "commit": "833a3d40d58e8759cdc9a52e595b2d7eebf8bebf",
+  "urls": [
+    "https://sushxnthd.github.io/hush/privacy/",
+    "https://sushxnthd.github.io/hush/terms/",
+    "https://sushxnthd.github.io/hush/support/"
+  ]
+}

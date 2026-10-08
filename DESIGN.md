@@ -1,150 +1,28 @@
-# Hush Design System
+# Hush visual and motion system
 
-## Canonical direction
+The supplied Supermemory bundle defines the layout and motion reference. Hush retains its own key-bot logo, blue palette, product story, diagrams, research evidence and destinations. Do not import reference company copy, testimonials, investor logos, analytics or tracking code.
 
-Hush uses the supplied reference homepage bundle as a **measurement reference**, not as loose moodboard inspiration. The public page should preserve reference's compact rail/editorial-column anatomy while replacing product content, diagrams, branding, and evidence with Hush's own.
+## Layout
 
-## Exact desktop constants recovered from the supplied CSS
+Desktop uses a centered 956px composition: a 208px sticky rail, 108px gap and 640px reading column. Rail and content begin at 64px; major sections are separated by 72px. Geist and Geist Mono are self-hosted. The hero is 40px / 1.12, weight 400, with -0.03em tracking. Body/deck copy is 16–17px. Hush blue is `#0562ef`, ink `#0b1015`, paper white with lightly ruled boundaries.
 
-```css
---rail-w: 208px;
---rail-gap: 108px;
---col-w: 640px;
---sp-rail-top: 64px;
---sp-col-top: 64px;
---sp-section: 72px;
---fs-statement: 40px;
---lh-statement: 1.12;
---fs-dek: 17px;
---fs-body: 17px;
---paper: #f4f4f6;
---ink: #0b1015;
---rule: #dfdfdf;
---blue: #0562ef;
-```
+The homepage moves from a compact statement, controls and botanical blue footage into the thesis, three product rows, context-boundary illustration, working-workspace entry point, scoped research evidence and a dark blue closing field. Other routes share the same rail, typography, controls and footer.
 
-Desktop page width is therefore approximately `208 + 108 + 640 = 956px`, centered in the viewport. A vertical rule sits in the rail/content gap. Do **not** widen the content column into a generic marketing canvas.
-
-## Core anatomy
-
-```text
-208px rail       108px gap         640px editorial column
-┌──────────────┐        │       ┌──────────────────────────┐
-│ wordmark     │        │       │ announcement             │
-│ Human/Agent  │        │       │ 40px statement           │
-│              │        │       │ 17px deck                │
-│ site nav     │        │       │ 44px mono CTAs           │
-│              │        │       │ setup prompt strip       │
-│ section nav  │        │       │ compatibility row        │
-│ ruler/marker │        │       │ 2.4:1 technical field    │
-│              │        │       │ manifesto                │
-└──────────────┘        │       │ ruled product rows       │
-                                │ compact evidence blocks  │
-                                │ deployment plates        │
-                                │ CTA / writing / footer   │
-                                └──────────────────────────┘
-```
-
-## Typography
-
-The reference uses Geist and Geist Mono. Hush should use the same metrics where available, with neutral system fallbacks.
-
-- hero statement: `40px / 1.12`, weight 400, `-0.03em`
-- deck/body: `17px`, body leading around `1.6–1.65`
-- section title: `24px`, weight 400
-- production creed: `30px / 1.28`
-- navigation: `15px / 1.4`
-- labels/buttons: 11–12px Geist Mono
-- primary CTA: `44px` high, ~`208px` minimum width
-
-The hero is intentionally compact. Never convert it to a 70–100px centered SaaS headline.
+At 1000px and below, the rail becomes a horizontal navigation row and the column expands within a 720px maximum. At 600px and below, the menu supports explicit expansion and Escape, hero type becomes 34px, CTAs stack, footage is 16:9 and evidence cards become one column.
 
 ## Motion
 
-Motion is part of the reference system and must stay coherent across the whole page. Do not add one-off durations or easing curves to individual components.
+- Standard reveal: 300ms, `cubic-bezier(.4,0,.2,1)`, 7px vertical movement with opacity, without layout shifts.
+- Hero sequence: announcement 40ms, headline 120ms, deck 200ms, actions 260ms, caption 280ms, compatibility 320ms, footage 340ms.
+- Feature rows: 60 / 120 / 180ms stagger. Footage plays when visible for at most four seconds per entry and on pointer interaction.
+- Primary CTA: 360ms diagonal arrow tile exchange, `cubic-bezier(.23,1,.32,1)`. No hover scale or glow.
+- Desktop reading marker: blue 6px square interpolated between section ticks, one animation frame per scroll update.
+- Context diagram: a dotted canvas, dashed private boundary, framed nodes, flowing signals and restrained pulse. Four 2.4-second states explain Keep, Approve, Review and Share. Every state can be selected manually; selection stops autoplay. The illustration explicitly describes a reviewed clipboard workflow.
+- Hero and diagram each have keyboard-accessible pause/play controls. Offscreen and background animations stop. Reduced-motion settings suppress autoplay and decorative CSS motion, including when preferences change during a session. Explicit play remains available.
+- Content and controls remain visible without JavaScript. Do not depend on animation to communicate product availability or security boundaries.
 
-Canonical tokens:
+## Source and validation
 
-```css
---ease-standard: cubic-bezier(.4,0,.2,1);
---ease-hover: cubic-bezier(.25,.1,.25,1);
---dur-hover: .2s;
---dur-press: .12s;
---dur-reveal: .3s;
---dur-cta: .36s;
---ease-cta: cubic-bezier(.23,1,.32,1);
-```
+`index.html` and the other static marketing pages are generated by `scripts/write-product-site.mjs`. Shared styling and progressive enhancement live in `assets/product-site.css` and `assets/product-site.js`. The encrypted application uses separate workspace files and retains its no-network CSP.
 
-Behavior:
-
-- first-screen reveal sequence: announcement `40ms`, statement `120ms`, deck `200ms`, actions `260ms`, prompt strip `280ms`, compatibility row `320ms`, hero figure `340ms`;
-- scroll reveals use the same `300ms` opacity + `10px` vertical translation and standard easing;
-- `What we do` rows stagger at `60 / 120 / 180ms`, with the supporting link at `240ms`;
-- ordinary hover state changes use `200ms` hover easing;
-- button press feedback uses `120ms`;
-- primary CTA uses the reference-style `360ms` tile/rail animation rather than an unrelated scale or glow effect;
-- the rail marker tracks section progress continuously on `requestAnimationFrame`, rather than jumping between hard-coded positions;
-- reduced-motion users get immediate reveals and no decorative CTA/marker motion;
-- geometry must not shift during reveals or hover states.
-
-## Components that define the look
-
-1. persistent sticky left rail on desktop
-2. rounded `Human / Agent` mono format switch
-3. sparse 15px vertical site navigation
-4. separate section navigation with ruler ticks and a 6px blue moving square
-5. compact announcement strip with green live dot and white bordered CTA tile
-6. two 44px mono action buttons
-7. 32px setup-prompt rail directly below actions
-8. small compatibility row
-9. 2.4:1 technical field interruption
-10. narrow manifesto text at 17px
-11. `What we do` rows with 56px technical tiles and copy to the right
-12. compact white evidence/stat blocks separated by 12px gaps
-13. three bordered deployment plates
-14. dark photographic/field-style CTA that bleeds 32px beyond the 640px column
-15. bordered numbered Writing rows
-16. quiet four-column footer
-
-## Responsive behavior
-
-At `<=1000px` the persistent rail collapses into a horizontal sticky bar and the page becomes one column, max width roughly `720px`.
-
-At `<=600px`:
-- hero statement ~34px
-- body/deck ~16px
-- actions stack
-- field becomes 16:9
-- evidence and deployment grids collapse to one column
-
-## Hush content model
-
-The repeated product abstraction remains:
-
-```text
-private user state
-      →
-Hush Context Kernel
-      →
-bounded result / authorized action
-```
-
-The visual design may closely match the reference system; the actual branding, copy, product diagrams, claims, data, and destinations must remain Hush-specific.
-
-## Avoid
-
-- centered giant SaaS heroes
-- wide 900–1200px content canvases
-- top-nav-only desktop layouts
-- cyber-security dark themes
-- floating card grids
-- pill-heavy interfaces
-- glassmorphism
-- thick borders or shadows
-- decorative gradients used everywhere
-- mixed easing curves or arbitrary animation durations
-- motion that moves layout rather than only presentation
-
-`index.html` is the canonical homepage. All four page routes use `assets/site.css` and `assets/site.js` for typography, navigation, responsive layout and motion.
-
-Geist and Geist Mono are self-hosted under `assets/fonts/` with their SIL Open Font License. The mobile rail has a keyboard-accessible navigation toggle; the setup strip is a native details disclosure with a copy action. Content remains readable if JavaScript is unavailable.
+`npm run site:build` emits only the website into `.site-dist`, excluding runtime/test data and historical replica scripts. CSS/JS are content-versioned. `npm run site:verify` checks local routes, anchors, asset hashes, controls, Hush-only branding and workspace isolation. The Pages workflow runs verification before publishing. Browser review covers the actual rendered page, diagram selection, keyboard pause, offscreen media and console errors; it does not substitute for a complete screen-reader audit.
