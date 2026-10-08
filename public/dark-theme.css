@@ -42,6 +42,11 @@ html { scrollbar-color: #526076 var(--canvas); }
 :root .btn-primary::before { background: var(--raised); }
 :root .btn-primary:hover .btn-label, :root .btn-primary:focus-visible .btn-label { color: var(--ink); }
 :root .btn-tile img { filter: brightness(0) invert(1); }
+:root .skip, :root .site-skip { background: var(--action); color: #fff; }
+:root .arrow, :root .page a.more .arrow, :root .prose a.bare .arrow,
+:root .proof .stat-more .arrow { background: var(--raised); color: var(--ink); }
+:root .page .sep { color: var(--ink-60); }
+:root .product-preview .preview-approve { background: var(--action); color: #fff; }
 :root .btn-secondary, :root .site-button.secondary { color: var(--ink); background-color: var(--blue-7); }
 :root .btn-secondary:hover, :root .site-button.secondary:hover { background-color: var(--blue-11); }
 :root .plugs-row img, :root .provider-row img, :root .fleet img { filter: grayscale(1) brightness(0) invert(1); }
@@ -61,7 +66,7 @@ html { scrollbar-color: #526076 var(--canvas); }
 :root .stat-rank .bar:not(.us) { background: #526076; }
 :root .stat-rank .bar.us, :root .stat-blocks rect.on { fill: var(--blue); background: var(--action); }
 :root .ledger td, :root .ledger th, :root .chart-data { color: var(--ink-68); }
-:root .cc-tooltip { background: var(--raised); border-color: var(--rule); color: var(--ink); box-shadow: 0 8px 30px #0006; }
+:root .cc-tooltip, :root .cost-wrap .cc-tooltip { background: var(--raised); border: 1px solid var(--rule); color: var(--ink); box-shadow: 0 8px 30px #0006; }
 :root .cc-axis, :root .cc-axis-title, :root .cc-annot-label { fill: var(--ink-60); }
 :root .cc-marker { fill: var(--canvas); }
 :root .cc-line--smfs { stroke: var(--blue); }
@@ -100,6 +105,8 @@ html { scrollbar-color: #526076 var(--canvas); }
 :root .boundary-art { background-color: #063491; }
 :root .art-kernel { background: #063491dd; }
 :root .loop .mark, :root .loop .tile img { filter: brightness(0) invert(1); }
+:root .loop .canvas { background: var(--panel); }
+:root .loop .hub { background: var(--action); color: #fff; }
 :root a, :root button { -webkit-tap-highlight-color: #80acff30; }
 @media (hover: none) {
   :root .btn-primary:hover .btn-rail { translate: 0; }
