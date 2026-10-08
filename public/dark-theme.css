@@ -44,7 +44,7 @@ html { scrollbar-color: #526076 var(--canvas); }
 :root .btn-tile img { filter: brightness(0) invert(1); }
 :root .skip, :root .site-skip { background: var(--action); color: #fff; }
 :root .arrow, :root .page a.more .arrow, :root .prose a.bare .arrow,
-:root .proof .stat-more .arrow { background: var(--raised); color: var(--ink); }
+:root .proof .stat-more .arrow { background: var(--ink-45); color: var(--canvas); }
 :root .page .sep { color: var(--ink-60); }
 :root .product-preview .preview-approve { background: var(--action); color: #fff; }
 :root .btn-secondary, :root .site-button.secondary { color: var(--ink); background-color: var(--blue-7); }
