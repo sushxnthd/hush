@@ -16,8 +16,8 @@ try{
   const dataDir=path.join(work,'state');
   const first=getOrCreatePlatformRootKey(dataDir,{production:true,allowFileFallback:false});
   const second=getOrCreatePlatformRootKey(dataDir,{production:true,allowFileFallback:false});
-  const expected=process.platform==='win32'?'windows-dpapi':process.platform==='darwin'?'macos-keychain':null;
-  if(!expected) throw new Error(`Packaged keystore verification is only defined for Windows/macOS here; got ${process.platform}`);
+  const expected={win32:'windows-dpapi',darwin:'macos-keychain',linux:'linux-secret-service'}[process.platform];
+  if(!expected) throw new Error(`Packaged keystore verification is not defined for ${process.platform}`);
   assert.equal(first.backend,expected);
   assert.equal(second.backend,expected);
   assert.equal(crypto.timingSafeEqual(first.key,second.key),true,'OS credential store must return the stable root key');

@@ -9,6 +9,11 @@ for(const file of pages){
   const html=await readFile(file,'utf8'),relative=path.relative(root,file);
   assert.match(html,/<html\b[^>]*lang="en"/,relative+' language');assert.match(html,/<title>[^<]+<\/title>/,relative+' title');assert.match(html,/name="viewport"/,relative+' viewport');
   const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,new Set(ids).size,relative+' duplicate ids');
+  assert.ok(!/supermemory/i.test(html),relative+' reference branding leaked into Hush');
+  assert.ok(!/<script[^>]+src="https?:/i.test(html),relative+' remote executable script');
+  for(const button of html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/gi)){
+    assert.ok(button[2].replace(/<[^>]+>/g,'').trim()||/aria-label="[^"]+"/.test(button[1]),relative+' unnamed button');
+  }
   for(const m of html.matchAll(/\b(?:href|src)="([^"]*)"/g)){
     const value=m[1];if(!value||/^(?:https?:|data:|mailto:)/.test(value))continue;
     const [raw,fragment]=value.split('#');const clean=raw.split('?')[0];let target=path.resolve(path.dirname(file),clean||path.basename(file));
@@ -24,6 +29,11 @@ for(const file of pages){
   }
 }
 const app=await readFile(path.join(root,'app/index.html'),'utf8');
+for(const route of ['index.html','product/index.html']){
+  const html=await readFile(path.join(root,route),'utf8');
+  assert.match(html,/class="loop-motion"[^>]*aria-pressed="false"/,route+' motion must have a pause/play control');
+  assert.equal([...html.matchAll(/data-loop-step="\d"/g)].length,4,route+' diagram must expose all four steps without autoplay');
+}
 const coreVersion=createHash('sha256').update(await readFile(path.join(root,'assets/workspace-core.js'))).digest('hex').slice(0,16);
 assert.ok((await readFile(path.join(root,'assets/workspace.js'),'utf8')).includes(`'./workspace-core.js?v=${coreVersion}'`),'Workspace module dependency must be versioned');
 assert.match(app,/connect-src 'none'/,'Workspace must have no remote connections');

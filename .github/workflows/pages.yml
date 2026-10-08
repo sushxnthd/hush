@@ -27,6 +27,8 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Build website
         run: node scripts/build-website.mjs
+      - name: Verify routes, references and workspace isolation
+        run: node scripts/verify-website.mjs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

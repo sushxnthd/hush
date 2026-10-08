@@ -1,7 +1,25 @@
 {
   "status": "pass",
-  "issuedAt": "2026-10-07T15:56:00Z",
-  "evidence": "Release-candidate workflow run 37647761404 passed independent release:verify on Ubuntu, Windows and macOS for commit d03a9addfd46b9ce4f91a7d377b3bfb20e11fbaf. Artifact digests: Linux sha256:00ebc42ccc42804777f9398b7d3a661d87db05772fceba0fa22de6c3a428254b (artifact 11494794010); macOS sha256:907f86d850286d15f3ce4ab5f86e680eebbe89a00118f016067c285242af7921 (artifact 11494779369); Windows sha256:8f7990a9df34644799e3532894413815f04d563d81816a4554e1b2f79cae0631 (artifact 11494739072). The verifier checked SPDX 2.3 inventory, release-manifest file hashes/sizes, SHA256SUMS, symlink absence, and runtime-secret exclusion.",
-  "workflowRun": 37647761404,
-  "commit": "d03a9addfd46b9ce4f91a7d377b3bfb20e11fbaf"
+  "issuedAt": "2026-10-08T01:10:00Z",
+  "evidence": "Release-candidate run 37710140951 completed successfully on fresh Ubuntu, Windows and macOS runners at commit 9f1fdd58804d4436d8c6835aff0c77d8e304f0ca. release:verify checked SPDX inventory, manifest file hashes/sizes, SHA256SUMS, symlink absence and runtime-secret exclusion. These are unsigned portable release candidates; no installer signing or production deployment is implied. Artifact metadata and completed job steps were rechecked through GitHub Actions.",
+  "workflowRun": 37710140951,
+  "workflowUrl": "https://github.com/sushxnthd/hush/actions/runs/37710140951",
+  "commit": "9f1fdd58804d4436d8c6835aff0c77d8e304f0ca",
+  "artifacts": [
+    {
+      "platform": "Linux",
+      "id": 11521840950,
+      "digest": "sha256:7bf052affcda384ebfa29c07e75b99d83ab56291c1b00df9b3070b2f85442e3c"
+    },
+    {
+      "platform": "macOS",
+      "id": 11521037686,
+      "digest": "sha256:828066198411f9afaa8a53fcd3c0eca5187aa28eca47fe43634328ac0a0f2ac2"
+    },
+    {
+      "platform": "Windows",
+      "id": 11520924459,
+      "digest": "sha256:8a113c4cf39e87737acd4bd3224f3cfcf84280286126a65a4a5baffeb6629617"
+    }
+  ]
 }

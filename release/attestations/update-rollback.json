@@ -1,7 +1,25 @@
 {
   "status": "pass",
-  "issuedAt": "2026-10-07T15:56:00Z",
-  "evidence": "Release-candidate workflow run 37647761404 passed the update rollback drill independently on Ubuntu, Windows and macOS for commit d03a9addfd46b9ce4f91a7d377b3bfb20e11fbaf. The drill snapshots user state outside the live data directory, excludes runtime.lock, mutates/deletes/adds post-update state, restores atomically, verifies the exact pre-update state digest, and rejects a tampered snapshot before restore.",
-  "workflowRun": 37647761404,
-  "commit": "d03a9addfd46b9ce4f91a7d377b3bfb20e11fbaf"
+  "issuedAt": "2026-10-08T01:10:00Z",
+  "evidence": "Release-candidate run 37710140951 completed successfully on fresh Ubuntu, Windows and macOS runners at commit 9f1fdd58804d4436d8c6835aff0c77d8e304f0ca. ops:rollback completed the synthetic update/rollback drill; the exact packaged runtime also passed boot and fresh-directory recovery checks. These are unsigned portable release candidates; no installer signing or production deployment is implied. Artifact metadata and completed job steps were rechecked through GitHub Actions.",
+  "workflowRun": 37710140951,
+  "workflowUrl": "https://github.com/sushxnthd/hush/actions/runs/37710140951",
+  "commit": "9f1fdd58804d4436d8c6835aff0c77d8e304f0ca",
+  "artifacts": [
+    {
+      "platform": "Linux",
+      "id": 11521840950,
+      "digest": "sha256:7bf052affcda384ebfa29c07e75b99d83ab56291c1b00df9b3070b2f85442e3c"
+    },
+    {
+      "platform": "macOS",
+      "id": 11521037686,
+      "digest": "sha256:828066198411f9afaa8a53fcd3c0eca5187aa28eca47fe43634328ac0a0f2ac2"
+    },
+    {
+      "platform": "Windows",
+      "id": 11520924459,
+      "digest": "sha256:8a113c4cf39e87737acd4bd3224f3cfcf84280286126a65a4a5baffeb6629617"
+    }
+  ]
 }
