@@ -32,7 +32,7 @@ for (const route of routes) {
 // and encoded source packages remain in the repo, outside the published bundle.
 await mkdir(path.join(output,'assets/source/brand/media'),{recursive:true});
 await mkdir(path.join(output,'assets/source/media'),{recursive:true});
-for(const item of ['fonts','vendor','hush-logo.svg','favicon.svg','dark-theme.css','product-site.css','reference-site.css','reference-pages.css','product-site.js','workspace.css','workspace.js','workspace-core.js'])
+for(const item of ['fonts','vendor','hush-logo.svg','favicon.svg','product-site.css','reference-site.css','reference-pages.css','product-site.js','workspace.css','workspace.js','workspace-core.js'])
   await cp(path.join(root,'assets',item),path.join(output,'assets',item),{recursive:true});
 await cp(path.join(root,'assets/source/brand/plans'),path.join(output,'assets/source/brand/plans'),{recursive:true});
 await cp(path.join(root,'assets/source/brand/deploy'),path.join(output,'assets/source/brand/deploy'),{recursive:true});
