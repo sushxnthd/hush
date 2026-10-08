@@ -6,7 +6,7 @@ const root=path.resolve('.site-dist');
 async function walk(dir){const out=[];for(const e of await readdir(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isDirectory())out.push(...await walk(p));else out.push(p);}return out;}
 const files=await walk(root),pages=files.filter(f=>f.endsWith('.html'));let checked=0;
 for(const file of pages){
-  const html=await readFile(file,'utf8'),relative=path.relative(root,file);
+  const html=await readFile(file,'utf8'),relative=path.relative(root,file).split(path.sep).join('/');
   assert.match(html,/<html\b[^>]*lang="en"/,relative+' language');assert.match(html,/<title>[^<]+<\/title>/,relative+' title');assert.match(html,/name="viewport"/,relative+' viewport');
   const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,new Set(ids).size,relative+' duplicate ids');
   assert.ok(!/supermemory/i.test(html),relative+' reference branding leaked into Hush');
