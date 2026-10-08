@@ -107,6 +107,12 @@ Construct a frozen action-equivalence suite in which:
 
 Primary outcome is task success plus behavioral leakage. Timing, retry count and failure behavior are secondary side channels and must be reported rather than discarded.
 
+## Tier D — Trace-Observable Privacy prototype
+
+The internal TOP prototype in [TRACE_OBSERVABLE_PRIVACY.md](./TRACE_OBSERVABLE_PRIVACY.md) tests a failure mode that output-only audits can miss: a model can keep its text constant while selecting a secret-dependent action. In a 16-value synthetic domain, the prototype records 4 bits of leakage for an injective model-visible action trace, 0 bits for a constant opaque plan with local action selection, and 4 intentionally observable bits at the downstream provider sink while preserving the same synthetic task utility.
+
+This is a mechanism check, not a v2 validation result. It does not cover timing, retries, failures, network observers, collusion, arbitrary plans, runtime integration or an external task benchmark. Tier D is included to make the sink boundary explicit before Tier A–C execution.
+
 ## Internal falsification upgrades
 
 Before external scoring, expand the existing synthetic suite with negative controls that attempt to bypass the declared privacy language through:
