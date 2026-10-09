@@ -18,6 +18,10 @@ Instead of moving your calendar, finances, identity, preferences, credentials an
 
 The browser workspace makes no AI calls and does not enforce permissions in another app. It prepares manually reviewed context for copy and paste. Its encrypted browser store is separate from the native Context Kernel. The local runtime is a release candidate; external registrations, signed installers and independent assurance remain release gates.
 
+## Release readiness
+
+The current release candidate, strict evidence gate and remaining launch blockers are tracked in [PRODUCTION_LAUNCH_CHECKLIST.md](PRODUCTION_LAUNCH_CHECKLIST.md). Hush remains an early-access browser workspace and native release candidate until the external evidence domains are complete.
+
 ## How it works
 
 ```text
