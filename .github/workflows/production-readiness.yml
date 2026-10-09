@@ -24,7 +24,30 @@ jobs:
           node-version: 22
           package-manager-cache: false
       - name: Inspect exact-source release evidence
-        run: node scripts/production-readiness.mjs --json > production-readiness.json
+        shell: bash
+        run: |
+          set +e
+          set -o pipefail
+          node scripts/production-readiness.mjs --json | tee production-readiness.json
+          status=${PIPESTATUS[0]}
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const report=JSON.parse(fs.readFileSync('production-readiness.json','utf8'));
+          const blocked=report.domains.filter(domain=>domain.status!=='pass').map(domain=>`- ${domain.name}`).join('\\n')||'- none';
+          const summary=[
+            '## Hush production-readiness gate',
+            '',
+            `- Engineering: **${report.engineering.passed}/${report.engineering.total} (${report.engineering.percent}%)**`,
+            `- Release domains: **${report.releaseDomains}/${report.totalDomains}**`,
+            '',
+            '### Blocked domains',
+            blocked,
+            '',
+            '> Structural validation does not establish external evidence authenticity or release authorization.'
+          ].join('\\n');
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,summary+'\\n');
+          NODE
+          exit $status
       - uses: actions/upload-artifact@v7
         if: always()
         with:
