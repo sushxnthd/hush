@@ -1,25 +1,41 @@
 {
+  "schema": "hush.release-evidence.v2",
   "status": "pass",
-  "issuedAt": "2026-10-08T01:10:00Z",
-  "evidence": "Release-candidate run 37710140951 completed successfully on fresh Ubuntu, Windows and macOS runners at commit 9f1fdd58804d4436d8c6835aff0c77d8e304f0ca. ops:rollback completed the synthetic update/rollback drill; the exact packaged runtime also passed boot and fresh-directory recovery checks. These are unsigned portable release candidates; no installer signing or production deployment is implied. Artifact metadata and completed job steps were rechecked through GitHub Actions.",
-  "workflowRun": 37710140951,
-  "workflowUrl": "https://github.com/sushxnthd/hush/actions/runs/37710140951",
-  "commit": "9f1fdd58804d4436d8c6835aff0c77d8e304f0ca",
+  "issuedAt": "2026-10-09T00:00:00Z",
+  "commit": "65c69fe901b878489feda37dbdd32172680276a7",
+  "reviewer": null,
+  "scope": "Current release-candidate portable artifacts and the synthetic update/rollback drill on fresh Linux, Windows and macOS runners.",
+  "limitations": "Unsigned portable release candidates. This does not establish installer signing, notarization, production deployment, a signed updater or external-device update behavior.",
+  "evidence": "The current release-candidate workflow completed successfully on all three platforms; the update/rollback drill, exact bundled-runtime smoke, fresh-directory recovery and release-integrity checks completed successfully.",
+  "evidenceUrls": [
+    "https://github.com/sushxnthd/hush/actions/runs/37829984785"
+  ],
   "artifacts": [
     {
-      "platform": "Linux",
-      "id": 11521840950,
-      "digest": "sha256:7bf052affcda384ebfa29c07e75b99d83ab56291c1b00df9b3070b2f85442e3c"
+      "id": 11572962264,
+      "name": "hush-portable-Linux-65c69fe901b878489feda37dbdd32172680276a7",
+      "digest": "sha256:b3cfec9a9bc052040a9beb786a29f30e49ef82be7475e394ada50130ffe7068a",
+      "url": "https://api.github.com/repos/sushxnthd/hush/actions/artifacts/11572962264",
+      "expiresAt": "2026-10-22T19:11:24Z"
     },
     {
-      "platform": "macOS",
-      "id": 11521037686,
-      "digest": "sha256:828066198411f9afaa8a53fcd3c0eca5187aa28eca47fe43634328ac0a0f2ac2"
+      "id": 11572579955,
+      "name": "hush-portable-macOS-65c69fe901b878489feda37dbdd32172680276a7",
+      "digest": "sha256:4fda14bfcba1909b95bbb83d441b278f5340a63fe37b01cd733c10bea2be9809",
+      "url": "https://api.github.com/repos/sushxnthd/hush/actions/artifacts/11572579955",
+      "expiresAt": "2026-10-22T19:11:43Z"
     },
     {
-      "platform": "Windows",
-      "id": 11520924459,
-      "digest": "sha256:8a113c4cf39e87737acd4bd3224f3cfcf84280286126a65a4a5baffeb6629617"
+      "id": 11572119854,
+      "name": "hush-portable-Windows-65c69fe901b878489feda37dbdd32172680276a7",
+      "digest": "sha256:0e5e9244ae8fa01d3f6ff7ff726b51d624125f5cadb49cfd9767721126bf0d02",
+      "url": "https://api.github.com/repos/sushxnthd/hush/actions/artifacts/11572119854",
+      "expiresAt": "2026-10-22T19:12:09Z"
     }
-  ]
+  ],
+  "validation": {
+    "rollbackExercise": true,
+    "updateExercise": true,
+    "allPlatformJobsPass": true
+  }
 }
