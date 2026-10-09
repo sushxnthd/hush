@@ -1,13 +1,14 @@
 {
   "schema": "hush.release-evidence.v2",
   "status": "pass",
-  "issuedAt": "2026-10-08T18:25:31.528Z",
-  "commit": "be0864a678e44e7d43135d0fdd07e799c5883217",
+  "issuedAt": "2026-10-09T00:00:00Z",
+  "commit": "65c69fe901b878489feda37dbdd32172680276a7",
   "reviewer": null,
-  "scope": "Publication and browser inspection of the Hush privacy, early-access terms, security, support and responsible-disclosure routes.",
+  "scope": "Current main-branch Pages deployment and repository source surfaces for privacy, terms, security, support and responsible disclosure.",
   "limitations": "Verifies published information and community issue/reporting paths only. Does not establish legal compliance, legal review, staffed support, an accountable incident owner or completion of an operational drill.",
-  "evidence": "The published Hush privacy, terms, security, support and responsible-disclosure surfaces remain present in the current candidate. The current website verifier covers 20 routes and 981 local references; the current candidate preserves those pages while restoring the light appearance.",
+  "evidence": "The current Pages deployment completed successfully after the result-record commit; the route verifier covers the public policy/support surfaces and the repository retains the corresponding source pages.",
   "evidenceUrls": [
+    "https://github.com/sushxnthd/hush/actions/runs/37829984666",
     "https://sushxnthd.github.io/hush/privacy/",
     "https://sushxnthd.github.io/hush/terms/",
     "https://sushxnthd.github.io/hush/security/",
