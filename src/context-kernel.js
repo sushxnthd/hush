@@ -170,6 +170,12 @@ export class ContextKernel extends BaseContextKernel{
     return [...this.constraintContracts.values()].map(constraintContractSummary).sort((a,b)=>a.id.localeCompare(b.id));
   }
 
+  partitionExposure(){
+    return super.partitionExposure().map(row=>String(row.field).startsWith('pcc:')
+      ?{...row,field:'pcc:derived'}
+      :row);
+  }
+
   _prepareConstraintPartitionTransaction(rows){
     const firewall=this.runtime.partitionFirewall;
     if(!firewall) throw new Error('Constraint comparison releases require the partition inference firewall');

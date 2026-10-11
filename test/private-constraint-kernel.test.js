@@ -249,3 +249,20 @@ test('equal-valued field aliases with conflicting domains fail closed',()=>{
   k.consumeConstraintRelease({releaseId:first.releaseId,agent:'assistant',sink:'model.example'});
   assert.throws(()=>k.prepareConstraintRelease({contractId:'finance.narrow',agent:'assistant',sink:'model.example'}),/identical declared integer domain/);
 });
+
+test('public PCC partition footprint does not expose the scalar digest',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-pcc-public-footprint-'));
+  const k=new ContextKernel({dir,passphrase:'public footprint regression test'});
+  k.put('finance.balance',500,{category:'finance',domain:{type:'integer',min:0,max:1023}});
+  k.registerConstraintContract({
+    id:'finance.lower',privateRef:{category:'finance'},
+    extractor:{kind:'number',min:0,max:1023,integer:true},
+    release:{op:'compare',label:'balance at least 400',operator:'gte',arg:400}
+  });
+  const prepared=k.prepareConstraintRelease({contractId:'finance.lower',agent:'assistant',sink:'model.example'});
+  k.approveConstraintRelease(prepared.releaseId);
+  k.consumeConstraintRelease({releaseId:prepared.releaseId,agent:'assistant',sink:'model.example'});
+  const pcc=k.partitionExposure().find(row=>String(row.field).startsWith('pcc:'));
+  assert.equal(pcc.field,'pcc:derived');
+  assert.equal(pcc.remainingCandidates,624);
+});

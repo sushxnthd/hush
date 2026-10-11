@@ -85,6 +85,12 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
   field aliases now share one ledger, conflicting domains fail closed, and the
   full 303-test suite passes. The conservative cost is that unrelated fields
   with equal current values may also share accounting.
+- Collision resistance is not secrecy for a small domain. Publishing the
+  scalar's raw SHA-256 identifier in the local diagnostic footprint allowed an
+  independent enumerator to recover 500 from 1,024 candidates. The failure is
+  preserved; public diagnostics now show only `pcc:derived`, retain aggregate
+  posterior statistics, and yield zero dictionary matches. The complete suite
+  passes 304/304 tests.
 
 ## Honest boundary
 
@@ -109,6 +115,8 @@ node research/pcc-runtime-product/run_extractor_alias_probe.mjs \
   --output /tmp/extractor_alias_replay.json
 node research/pcc-runtime-product/run_field_alias_probe.mjs \
   --output /tmp/field_alias_replay.json
+node research/pcc-runtime-product/run_digest_dictionary_probe.mjs \
+  --output /tmp/digest_dictionary_replay.json
 npm test
 ```
 
