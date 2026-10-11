@@ -78,7 +78,7 @@ async function pccPayload(record,candidates,caseId){
   for(const [index,candidate] of candidates.entries()){
     const id=`calendar.case-${caseId}.candidate-${index}`;
     kernel.registerConstraintContract({
-      id,privateRef:{category:'calendar'},privateField:'availabilityCutoff',extractor:{kind:'number',min:0,max:1439},
+      id,privateRef:{category:'calendar'},privateField:'availabilityCutoff',extractor:{kind:'number',min:0,max:1439,integer:true},
       release:{op:'compare',label:`Candidate ${index+1} allowed`,operator:'gte',arg:candidate.minute,trueLabel:'yes',falseLabel:'no'}
     });
     const prepared=kernel.prepareConstraintRelease({contractId:id,task:'choose an acceptable public meeting slot',agent:'scheduler',sink:'model.example',purpose:'calendar scheduling'});
