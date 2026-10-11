@@ -81,7 +81,8 @@ function normalizeExtractor(extractor={}){
     const min=extractor.min===undefined?null:Number(extractor.min);
     const max=extractor.max===undefined?null:Number(extractor.max);
     if((min!==null&&!Number.isFinite(min))||(max!==null&&!Number.isFinite(max))||(min!==null&&max!==null&&min>max)) throw new ConstraintCompilationError('Invalid numeric bounds.',{code:'invalid_constraint_contract'});
-    return {...common,units:normalizeWords(extractor.units??[],'units'),min,max};
+    if(extractor.integer!==undefined&&typeof extractor.integer!=='boolean') throw new ConstraintCompilationError('Numeric integer flag must be boolean.',{code:'invalid_constraint_contract'});
+    return {...common,units:normalizeWords(extractor.units??[],'units'),min,max,integer:extractor.integer===true};
   }
   if(kind==='enum') return {...common,values:normalizeEnumValues(extractor.values)};
   if(kind==='boolean'){
@@ -168,6 +169,7 @@ function extractNumber(value,extractor){
   const candidates=numericCandidates(value,extractor);
   if(!candidates.length) throw new ConstraintCompilationError('No numeric evidence satisfies the contract.',{code:'constraint_evidence_missing'});
   if(candidates.length!==1) throw new ConstraintCompilationError('Numeric evidence is ambiguous.',{code:'constraint_evidence_ambiguous'});
+  if(extractor.integer&&!Number.isSafeInteger(candidates[0])) throw new ConstraintCompilationError('Numeric evidence must be a safe integer.',{code:'constraint_evidence_invalid'});
   return candidates[0];
 }
 function extractEnum(value,extractor){
