@@ -180,11 +180,11 @@ export class ContextKernel extends BaseContextKernel{
       const release=contract.release;
       if(extractor.kind!=='number'||extractor.integer!==true||!Number.isSafeInteger(extractor.min)||!Number.isSafeInteger(extractor.max)) throw new Error('Constraint comparison releases require a bounded integer extractor');
       if(!['eq','neq','lt','lte','gt','gte'].includes(release.operator)||!Number.isSafeInteger(Number(release.arg))) throw new Error('Constraint comparison release is not analyzable by the inference firewall');
-      const candidateField=`pcc:${sha256(canonicalize({
-        path,
-        privateField:contract.privateField,
-        privateScalarDigest:compiled.privateScalarDigest
-      }))}`;
+      // Composition follows the recovered bounded scalar, not contract or
+      // schema syntax. This deliberately co-accounts equal scalar values from
+      // different paths: conservative false positives are safer than letting
+      // field aliases create independent privacy budgets.
+      const candidateField=`pcc:${compiled.privateScalarDigest}`;
       if(field!==null&&candidateField!==field) throw new Error('Constraint bundle contracts must share one bounded private field and extractor');
       field=candidateField;
       domain={type:'integer',min:extractor.min,max:extractor.max};

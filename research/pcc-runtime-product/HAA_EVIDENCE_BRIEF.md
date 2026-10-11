@@ -78,7 +78,13 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
   its extractor. A harmless anchor alias initially split one secret across two
   ledgers and enabled exact reconstruction. The preserved counterexample now
   fails closed: equivalent extractors share one opaque scalar ledger, conflicting
-  domain aliases are rejected, and the full 301-test suite passes.
+  domain aliases are rejected.
+- Schema paths are not necessarily scalar identities either. A duplicate
+  `balance`/`availableBalance` field pair again split the ledger and reconstructed
+  the exact value. Scalar-only identity closed the unchanged frozen probe;
+  field aliases now share one ledger, conflicting domains fail closed, and the
+  full 303-test suite passes. The conservative cost is that unrelated fields
+  with equal current values may also share accounting.
 
 ## Honest boundary
 
@@ -101,6 +107,8 @@ node research/pcc-runtime-product/run_bundled_benchmark.mjs \
   --output research/pcc-runtime-product/bundled_results_v4.json
 node research/pcc-runtime-product/run_extractor_alias_probe.mjs \
   --output /tmp/extractor_alias_replay.json
+node research/pcc-runtime-product/run_field_alias_probe.mjs \
+  --output /tmp/field_alias_replay.json
 npm test
 ```
 
