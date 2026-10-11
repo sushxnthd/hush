@@ -34,6 +34,10 @@ locally, disclose only a bounded result, then broker the approved action.
 5. **Actual Hush product path.** Across 256 cases per arm, PCC exercised the
    encrypted ContextKernel, typed contracts, explicit consent, one-shot release,
    action broker, Calendar adapter, captured provider payload, and receipts.
+6. **Usability mechanism.** A prospectively frozen bounded bundle combined two
+   boolean PCC releases under a two-bit ceiling. On untouched case IDs 256–511,
+   it preserved 256/256 task/action successes and zero tested source disclosures
+   while reducing approvals from 768 to 512 (3.0 to 2.0 per action).
 
 ## Decisive product result
 
@@ -56,9 +60,12 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
 - Strict redaction protects privacy but can destroy the action capability.
 - One-bit answers are not automatically safe under repetition; composition must
   be budgeted across the task trajectory.
-- PCC's current privacy/utility advantage costs two extra approvals and roughly
-  150–271 ms in a conservative fresh-kernel microbenchmark. Approval bundling is
-  now a product research target, not a hidden limitation.
+- The first approval-bundle run failed 1/256 receipt checks because public
+  `outputBytes: 203` collided with a private cutoff of 203. The failed run was
+  preserved; removing unnecessary size metadata eliminated that side-channel
+  surface, and the untouched correction cohort passed all six frozen gates.
+- Bounded bundling removes one of PCC's two additional approvals. Its roughly
+  197 ms fresh-kernel latency remains a product limitation, not a hidden cost.
 
 ## Honest boundary
 
@@ -76,6 +83,9 @@ python3 research/pcc-cleanroom/run_experiment.py \
   --output research/pcc-cleanroom/results_v2.json
 node research/pcc-runtime-product/run_benchmark.mjs \
   --output research/pcc-runtime-product/results.json
+node research/pcc-runtime-product/run_bundled_benchmark.mjs \
+  --case-start 256 \
+  --output research/pcc-runtime-product/bundled_results_v2.json
 npm test
 ```
 
@@ -83,9 +93,8 @@ Public review package: https://github.com/sushxnthd/hush/pull/35
 
 ## Next experiment
 
-Bundle the two PCC predicates under one disclosure-budget-preserving task
-approval, then freeze an external scheduling set and pinned local model. Capture
-model, MCP, provider, error, retry, timing, and receipt traces, and score exact
-plus semantic/inference leakage against raw and exact semantic-minimization
-controls.
+Freeze an external scheduling set and pinned local model, then run the bounded
+bundle through captured model, MCP, provider, error, retry, timing, and receipt
+traces. Score exact plus semantic/inference leakage against raw and exact
+semantic-minimization controls, including adaptive repeated-query attacks.
 
