@@ -38,6 +38,11 @@ locally, disclose only a bounded result, then broker the approved action.
    boolean PCC releases under a two-bit ceiling. On untouched case IDs 256–511,
    it preserved 256/256 task/action successes and zero tested source disclosures
    while reducing approvals from 768 to 512 (3.0 to 2.0 per action).
+7. **Adversarial correction.** Two comparisons initially reconstructed an exact
+   value from a 1,024-value domain while PCC reported only two nominal bits. The
+   failure was preserved. PCC now uses the shared realized-posterior firewall;
+   it denied the identifying pair at 10 bits and retained exactly 30 candidates
+   in every case of a new 256-case scheduling cohort.
 
 ## Decisive product result
 
@@ -66,6 +71,9 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
   surface, and the untouched correction cohort passed all six frozen gates.
 - Bounded bundling removes one of PCC's two additional approvals. Its roughly
   197 ms fresh-kernel latency remains a product limitation, not a hidden cost.
+- A small output alphabet is not a privacy guarantee: rare output preimages can
+  reveal far more than `log2(output count)`. PCC comparison receipts now report
+  realized-posterior accounting, and stale concurrent preparations fail closed.
 
 ## Honest boundary
 
@@ -84,8 +92,8 @@ python3 research/pcc-cleanroom/run_experiment.py \
 node research/pcc-runtime-product/run_benchmark.mjs \
   --output research/pcc-runtime-product/results.json
 node research/pcc-runtime-product/run_bundled_benchmark.mjs \
-  --case-start 256 \
-  --output research/pcc-runtime-product/bundled_results_v2.json
+  --case-start 768 \
+  --output research/pcc-runtime-product/bundled_results_v4.json
 npm test
 ```
 
