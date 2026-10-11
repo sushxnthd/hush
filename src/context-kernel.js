@@ -2,6 +2,8 @@ import crypto from 'node:crypto';
 import {ContextKernel as BaseContextKernel} from './context-kernel-base.js';
 import {resolvePrivateRef} from './context-compiler.js';
 import {compilePrivateConstraint,normalizeConstraintContract,constraintContractSummary} from './private-constraint-compiler.js';
+import {PartitionAwareReconstructionFirewall} from './partition-firewall.js';
+import {canonicalize,sha256} from './core.js';
 
 const DEFAULT_CONSTRAINT_TTL=5*60*1000;
 const MAX_CONSTRAINT_TTL=15*60*1000;
@@ -37,6 +39,13 @@ function safeConstraintReleaseMetadata(release){
     rawSourceIncluded:false,
     rawPrivatePathIncluded:false,
     derivedDisclosure:true
+    ,inferenceProtection:release.partitionTransaction?{
+      accounting:'realized-partition',
+      beforeCandidates:release.partitionTransaction.summary.beforeCandidates,
+      afterCandidates:release.partitionTransaction.summary.afterCandidates,
+      totalKnowledgeBits:release.partitionTransaction.summary.totalKnowledgeBits,
+      maxKnowledgeBits:release.partitionTransaction.summary.maxKnowledgeBits
+    }:null
   };
 }
 
@@ -62,7 +71,22 @@ function safeConstraintBundleMetadata(bundle){
     rawSourceIncluded:false,
     rawPrivatePathIncluded:false,
     derivedDisclosure:true
+    ,inferenceProtection:{
+      accounting:'realized-partition',
+      beforeCandidates:bundle.partitionTransaction.summary.beforeCandidates,
+      afterCandidates:bundle.partitionTransaction.summary.afterCandidates,
+      totalKnowledgeBits:bundle.partitionTransaction.summary.totalKnowledgeBits,
+      maxKnowledgeBits:bundle.partitionTransaction.summary.maxKnowledgeBits
+    }
   };
+}
+
+function partitionFieldEntry(firewall,field){
+  return firewall.snapshot().fields.find(item=>item.field===field)??null;
+}
+
+function partitionEntryDigest(entry){
+  return sha256(canonicalize(entry));
 }
 
 /**
@@ -146,6 +170,73 @@ export class ContextKernel extends BaseContextKernel{
     return [...this.constraintContracts.values()].map(constraintContractSummary).sort((a,b)=>a.id.localeCompare(b.id));
   }
 
+  _prepareConstraintPartitionTransaction(rows){
+    const firewall=this.runtime.partitionFirewall;
+    if(!firewall) throw new Error('Constraint comparison releases require the partition inference firewall');
+    let field=null,domain=null;
+    const programs=[];
+    for(const {contract,compiled,path} of rows){
+      const extractor=contract.extractor;
+      const release=contract.release;
+      if(extractor.kind!=='number'||extractor.integer!==true||!Number.isSafeInteger(extractor.min)||!Number.isSafeInteger(extractor.max)) throw new Error('Constraint comparison releases require a bounded integer extractor');
+      if(!['eq','neq','lt','lte','gt','gte'].includes(release.operator)||!Number.isSafeInteger(Number(release.arg))) throw new Error('Constraint comparison release is not analyzable by the inference firewall');
+      const selectorDigest=sha256(canonicalize({path,privateField:contract.privateField,extractor}));
+      const candidateField=`pcc:${sha256(canonicalize({selectorDigest,sourceDigest:compiled.sourceDigest}))}`;
+      if(field!==null&&candidateField!==field) throw new Error('Constraint bundle contracts must share one bounded private field and extractor');
+      field=candidateField;
+      domain={type:'integer',min:extractor.min,max:extractor.max};
+      programs.push({kind:'predicate',private:field,op:release.operator,value:Number(release.arg),result:Boolean(compiled.value)});
+    }
+    if(!firewall.hasField(field)){
+      firewall.registerField(field,domain);
+      this._persistState();
+    }
+    const beforeEntry=partitionFieldEntry(firewall,field);
+    const snapshot=firewall.snapshot();
+    const trial=new PartitionAwareReconstructionFirewall({
+      maxKnowledgeBits:snapshot.maxKnowledgeBits,
+      minRemaining:snapshot.minRemaining,
+      maxDomainSize:snapshot.maxDomainSize,
+      maxFragments:snapshot.maxFragments
+    });
+    trial.restore(snapshot);
+    let first=null,last=null;
+    for(const row of programs){
+      const assessment=trial.evaluate({field,program:row,result:row.result});
+      if(assessment.decision!=='allow') throw new Error(`Constraint release denied by inference firewall: ${assessment.reason}`);
+      if(!first) first=assessment;
+      trial.commit(assessment);
+      last=assessment;
+    }
+    return {
+      field,
+      beforeDigest:partitionEntryDigest(beforeEntry),
+      programs,
+      summary:{
+        beforeCandidates:first.beforeCandidates,
+        afterCandidates:last.afterCandidates,
+        totalKnowledgeBits:last.totalKnowledgeBits,
+        maxKnowledgeBits:last.maxKnowledgeBits
+      }
+    };
+  }
+
+  _commitConstraintPartitionTransaction(transaction){
+    if(!transaction) return null;
+    const firewall=this.runtime.partitionFirewall;
+    const current=partitionFieldEntry(firewall,transaction.field);
+    if(!current||partitionEntryDigest(current)!==transaction.beforeDigest) throw new Error('Constraint release privacy state changed; prepare a new release');
+    let last=null;
+    for(const row of transaction.programs){
+      const assessment=firewall.evaluate({field:transaction.field,program:row,result:row.result});
+      if(assessment.decision!=='allow') throw new Error(`Constraint release denied by inference firewall: ${assessment.reason}`);
+      firewall.commit(assessment);
+      last=assessment;
+    }
+    this._persistState();
+    return last;
+  }
+
   prepareConstraintRelease({contractId,task='',agent='unknown-agent',sink='unknown-sink',purpose='unspecified',ttlMs=DEFAULT_CONSTRAINT_TTL}={}){
     const ttl=Number(ttlMs);
     if(!Number.isFinite(ttl)||ttl<1000) throw new Error('Constraint release TTL must be finite and at least 1000 ms');
@@ -157,6 +248,9 @@ export class ContextKernel extends BaseContextKernel{
     if(!recordId) throw new Error('Selected private context is unavailable');
     const record=this.store.get(recordId);
     const compiled=compilePrivateConstraint(record.value,contract);
+    const partitionTransaction=compiled.releaseKind==='compare'
+      ?this._prepareConstraintPartitionTransaction([{contract,compiled,path}])
+      :null;
     const now=this.now();
     const request={
       capability:'context.compute',
@@ -190,6 +284,7 @@ export class ContextKernel extends BaseContextKernel{
       deniedAt:verdict.decision==='deny'?now:null,
       consumedAt:null,
       consent:consentSummary(verdict)
+      ,partitionTransaction
     };
     if(verdict.decision==='allow'&&verdict.rule?.mode==='once'){
       this.consentRegistry.evaluate(request,{consume:true});
@@ -239,6 +334,7 @@ export class ContextKernel extends BaseContextKernel{
     if(release.deniedAt) throw new Error('Constraint release was denied');
     if(!release.approvedAt) return {...safeConstraintReleaseMetadata(release),decision:'ask'};
     if(release.consumedAt) throw new Error('Constraint release already consumed');
+    const partition=this._commitConstraintPartitionTransaction(release.partitionTransaction);
     release.consumedAt=this.now();
     return {
       decision:'allow',
@@ -268,6 +364,13 @@ export class ContextKernel extends BaseContextKernel{
         rawSourceIncluded:false,
         rawPrivatePathIncluded:false,
         consentRuleId:release.consent?.ruleId??null
+        ,inferenceProtection:partition?{
+          accounting:'realized-partition',
+          beforeCandidates:partition.beforeCandidates,
+          afterCandidates:partition.afterCandidates,
+          totalKnowledgeBits:partition.totalKnowledgeBits,
+          maxKnowledgeBits:partition.maxKnowledgeBits
+        }:null
       }
     };
   }
@@ -281,7 +384,7 @@ export class ContextKernel extends BaseContextKernel{
     const declaredBits=Number(maxBits);
     if(!Number.isInteger(declaredBits)||declaredBits<ids.length||declaredBits>4) throw new Error('Constraint bundle maxBits must cover every boolean output and be at most 4');
 
-    const outputs=[];
+    const outputs=[],partitionRows=[];
     let sharedPath=null;
     let sharedCategory=null;
     for(const id of ids){
@@ -305,7 +408,10 @@ export class ContextKernel extends BaseContextKernel{
         contractDigest:compiled.contractDigest,
         sourceDigest:compiled.sourceDigest
       });
+      partitionRows.push({contract,compiled,path});
     }
+
+    const partitionTransaction=this._prepareConstraintPartitionTransaction(partitionRows);
 
     const request={
       capability:'context.compute',
@@ -337,6 +443,7 @@ export class ContextKernel extends BaseContextKernel{
       deniedAt:verdict.decision==='deny'?now:null,
       consumedAt:null,
       consent:consentSummary(verdict)
+      ,partitionTransaction
     };
     if(verdict.decision==='allow'&&verdict.rule?.mode==='once'){
       this.consentRegistry.evaluate(request,{consume:true});
@@ -386,6 +493,7 @@ export class ContextKernel extends BaseContextKernel{
     if(bundle.deniedAt) throw new Error('Constraint bundle was denied');
     if(!bundle.approvedAt) return {...safeConstraintBundleMetadata(bundle),decision:'ask'};
     if(bundle.consumedAt) throw new Error('Constraint bundle already consumed');
+    const partition=this._commitConstraintPartitionTransaction(bundle.partitionTransaction);
     bundle.consumedAt=this.now();
     return {
       decision:'allow',
@@ -412,6 +520,13 @@ export class ContextKernel extends BaseContextKernel{
         rawSourceIncluded:false,
         rawPrivatePathIncluded:false,
         consentRuleId:bundle.consent?.ruleId??null
+        ,inferenceProtection:{
+          accounting:'realized-partition',
+          beforeCandidates:partition.beforeCandidates,
+          afterCandidates:partition.afterCandidates,
+          totalKnowledgeBits:partition.totalKnowledgeBits,
+          maxKnowledgeBits:partition.maxKnowledgeBits
+        }
       }
     };
   }
