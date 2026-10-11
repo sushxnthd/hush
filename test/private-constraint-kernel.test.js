@@ -79,7 +79,7 @@ test('comparison contracts can disclose less than the extracted private value',(
   k.registerConstraintContract({
     id:'flight.speed-limit-check',
     privateRef:{category:'flight'},
-    extractor:{kind:'number',anchors:['maximum','groundspeed'],units:['mph'],min:0,max:500},
+    extractor:{kind:'number',anchors:['maximum','groundspeed'],units:['mph'],min:0,max:500,integer:true},
     release:{op:'compare',label:'Groundspeed within 120 mph release limit',operator:'lte',arg:120,trueLabel:'yes',falseLabel:'no'}
   });
   const prepared=k.prepareConstraintRelease({contractId:'flight.speed-limit-check',agent:'assistant',sink:'model.example'});
@@ -95,7 +95,7 @@ test('bounded comparison bundle needs one approval and releases at most its decl
   for(const [id,limit] of [['flight.under-120',120],['flight.under-100',100]]){
     k.registerConstraintContract({
       id,privateRef:{category:'flight'},
-      extractor:{kind:'number',anchors:['maximum','groundspeed'],units:['mph'],min:0,max:500},
+      extractor:{kind:'number',anchors:['maximum','groundspeed'],units:['mph'],min:0,max:500,integer:true},
       release:{op:'compare',label:`Groundspeed within ${limit} mph`,operator:'lte',arg:limit,trueLabel:'yes',falseLabel:'no'}
     });
   }
@@ -114,6 +114,7 @@ test('bounded comparison bundle needs one approval and releases at most its decl
   assert.deepEqual(released.constraints.map(row=>row.value),[true,false]);
   assert.equal(released.capacityBits,2);
   assert.equal(released.receipt.declaredMaxBits,2);
+  assert.equal(released.receipt.inferenceProtection.afterCandidates,20);
   assert.equal(Object.hasOwn(released.receipt,'outputBytes'),false);
   assert.equal(JSON.stringify(released).includes('extra hour'),false);
   assert.throws(()=>k.consumeConstraintReleaseBundle({bundleId:prepared.bundleId,agent:'assistant',sink:'model.example'}),/already consumed/);
@@ -123,7 +124,7 @@ test('comparison bundle fails closed for excess capacity, identity releases, and
   const {k}=setup();
   k.registerConstraintContract({
     id:'flight.compare',privateRef:{category:'flight'},
-    extractor:{kind:'number',anchors:['maximum','groundspeed'],units:['mph'],min:0,max:500},
+    extractor:{kind:'number',anchors:['maximum','groundspeed'],units:['mph'],min:0,max:500,integer:true},
     release:{op:'compare',label:'Within limit',operator:'lte',arg:120}
   });
   assert.throws(()=>k.prepareConstraintReleaseBundle({contractIds:['flight.compare','flight.maximum-groundspeed'],maxBits:2}),/boolean comparison releases only/);
@@ -141,10 +142,35 @@ test('comparison bundle fails closed for excess capacity, identity releases, and
 test('changing private evidence invalidates an unconsumed comparison bundle',()=>{
   const {k}=setup();
   for(const [id,limit] of [['flight.a',120],['flight.b',130]]) k.registerConstraintContract({
-    id,privateRef:{category:'flight'},extractor:{kind:'number',anchors:['maximum','groundspeed'],units:['mph'],min:0,max:500},
+    id,privateRef:{category:'flight'},extractor:{kind:'number',anchors:['maximum','groundspeed'],units:['mph'],min:0,max:500,integer:true},
     release:{op:'compare',label:id,operator:'lte',arg:limit}
   });
   const prepared=k.prepareConstraintReleaseBundle({contractIds:['flight.a','flight.b'],maxBits:2,agent:'assistant',sink:'model.example'});
   k.put('flight.readiness','Maximum planned groundspeed is 95 mph.',{label:'Flight readiness evidence',category:'flight',tags:['flight']});
   assert.throws(()=>k.approveConstraintReleaseBundle(prepared.bundleId),/not found/);
+});
+
+test('PCC bundle denies a two-boolean vector that identifies an exact finite-domain value',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-pcc-inference-'));
+  const k=new ContextKernel({dir,passphrase:'pcc inference denial test'});
+  k.put('finance.balance',500,{category:'finance',domain:{type:'integer',min:0,max:1023}});
+  for(const [id,operator] of [['finance.gte','gte'],['finance.lte','lte']]) k.registerConstraintContract({
+    id,privateRef:{category:'finance'},extractor:{kind:'number',min:0,max:1023,integer:true},
+    release:{op:'compare',label:id,operator,arg:500}
+  });
+  assert.throws(()=>k.prepareConstraintReleaseBundle({contractIds:['finance.gte','finance.lte'],maxBits:2}),/denied by inference firewall/);
+  assert.equal(k.partitionExposure().find(row=>row.field==='finance.balance').remainingCandidates,1024);
+});
+
+test('stale concurrent PCC preparations cannot spend the same posterior twice',()=>{
+  const {k}=setup();
+  for(const [id,limit] of [['flight.concurrent-a',120],['flight.concurrent-b',130]]) k.registerConstraintContract({
+    id,privateRef:{category:'flight'},extractor:{kind:'number',anchors:['maximum','groundspeed'],units:['mph'],min:0,max:500,integer:true},
+    release:{op:'compare',label:id,operator:'lte',arg:limit}
+  });
+  const args={contractIds:['flight.concurrent-a','flight.concurrent-b'],maxBits:2,agent:'assistant',sink:'model.example'};
+  const first=k.prepareConstraintReleaseBundle(args),second=k.prepareConstraintReleaseBundle(args);
+  k.approveConstraintReleaseBundle(first.bundleId);k.consumeConstraintReleaseBundle({bundleId:first.bundleId,agent:'assistant',sink:'model.example'});
+  k.approveConstraintReleaseBundle(second.bundleId);
+  assert.throws(()=>k.consumeConstraintReleaseBundle({bundleId:second.bundleId,agent:'assistant',sink:'model.example'}),/privacy state changed/);
 });
