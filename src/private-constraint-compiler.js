@@ -251,6 +251,10 @@ export function compilePrivateConstraint(privateValue,rawContract){
     statement:released.statement,
     releaseKind:released.releaseKind,
     sourceDigest:sha256(canonicalize(selected)),
+    // Internal-only identity for posterior accounting. Equivalent extractors
+    // that recover the same scalar must share one privacy ledger. The raw
+    // scalar is never returned across the kernel boundary.
+    privateScalarDigest:sha256(canonicalize({kind:contract.extractor.kind,value:extracted})),
     contractDigest:sha256(canonicalize(contract)),
     rawSourceIncluded:false,
     rawPrivatePathIncluded:false,

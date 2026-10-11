@@ -174,3 +174,39 @@ test('stale concurrent PCC preparations cannot spend the same posterior twice',(
   k.approveConstraintReleaseBundle(second.bundleId);
   assert.throws(()=>k.consumeConstraintReleaseBundle({bundleId:second.bundleId,agent:'assistant',sink:'model.example'}),/privacy state changed/);
 });
+
+test('semantically equivalent extractor aliases share one PCC posterior ledger',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-pcc-extractor-alias-'));
+  const k=new ContextKernel({dir,passphrase:'extractor alias regression test'});
+  k.put('finance.balance',500,{category:'finance',domain:{type:'integer',min:0,max:1023}});
+  const base={kind:'number',min:0,max:1023,integer:true};
+  for(const [id,operator,extractor] of [
+    ['finance.lower','gte',base],
+    ['finance.upper','lte',{...base,anchors:['balance']}]
+  ]) k.registerConstraintContract({
+    id,privateRef:{category:'finance'},extractor,
+    release:{op:'compare',label:id,operator,arg:500}
+  });
+  const first=k.prepareConstraintRelease({contractId:'finance.lower',agent:'assistant',sink:'model.example'});
+  k.approveConstraintRelease(first.releaseId);
+  const released=k.consumeConstraintRelease({releaseId:first.releaseId,agent:'assistant',sink:'model.example'});
+  assert.equal(released.constraint.value,true);
+  assert.throws(()=>k.prepareConstraintRelease({contractId:'finance.upper',agent:'assistant',sink:'model.example'}),/denied by inference firewall/);
+  const ledgers=k.partitionExposure().filter(row=>String(row.field).startsWith('pcc:'));
+  assert.equal(ledgers.length,1);
+  assert.equal(ledgers[0].remainingCandidates,524);
+});
+
+test('conflicting domains for extractor aliases fail closed',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-pcc-domain-alias-'));
+  const k=new ContextKernel({dir,passphrase:'domain alias regression test'});
+  k.put('finance.balance',500,{category:'finance',domain:{type:'integer',min:0,max:1023}});
+  for(const [id,max,anchors] of [['finance.wide',1023,[]],['finance.narrow',800,['balance']]]) k.registerConstraintContract({
+    id,privateRef:{category:'finance'},extractor:{kind:'number',min:0,max,integer:true,anchors},
+    release:{op:'compare',label:id,operator:'gte',arg:400}
+  });
+  const first=k.prepareConstraintRelease({contractId:'finance.wide',agent:'assistant',sink:'model.example'});
+  k.approveConstraintRelease(first.releaseId);
+  k.consumeConstraintRelease({releaseId:first.releaseId,agent:'assistant',sink:'model.example'});
+  assert.throws(()=>k.prepareConstraintRelease({contractId:'finance.narrow',agent:'assistant',sink:'model.example'}),/identical declared integer domain/);
+});

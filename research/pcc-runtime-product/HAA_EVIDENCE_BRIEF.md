@@ -74,6 +74,11 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
 - A small output alphabet is not a privacy guarantee: rare output preimages can
   reveal far more than `log2(output count)`. PCC comparison receipts now report
   realized-posterior accounting, and stale concurrent preparations fail closed.
+- Posterior keys must represent the recovered private scalar, not the syntax of
+  its extractor. A harmless anchor alias initially split one secret across two
+  ledgers and enabled exact reconstruction. The preserved counterexample now
+  fails closed: equivalent extractors share one opaque scalar ledger, conflicting
+  domain aliases are rejected, and the full 301-test suite passes.
 
 ## Honest boundary
 
@@ -94,6 +99,8 @@ node research/pcc-runtime-product/run_benchmark.mjs \
 node research/pcc-runtime-product/run_bundled_benchmark.mjs \
   --case-start 768 \
   --output research/pcc-runtime-product/bundled_results_v4.json
+node research/pcc-runtime-product/run_extractor_alias_probe.mjs \
+  --output /tmp/extractor_alias_replay.json
 npm test
 ```
 

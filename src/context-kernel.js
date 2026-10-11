@@ -180,14 +180,20 @@ export class ContextKernel extends BaseContextKernel{
       const release=contract.release;
       if(extractor.kind!=='number'||extractor.integer!==true||!Number.isSafeInteger(extractor.min)||!Number.isSafeInteger(extractor.max)) throw new Error('Constraint comparison releases require a bounded integer extractor');
       if(!['eq','neq','lt','lte','gt','gte'].includes(release.operator)||!Number.isSafeInteger(Number(release.arg))) throw new Error('Constraint comparison release is not analyzable by the inference firewall');
-      const selectorDigest=sha256(canonicalize({path,privateField:contract.privateField,extractor}));
-      const candidateField=`pcc:${sha256(canonicalize({selectorDigest,sourceDigest:compiled.sourceDigest}))}`;
+      const candidateField=`pcc:${sha256(canonicalize({
+        path,
+        privateField:contract.privateField,
+        privateScalarDigest:compiled.privateScalarDigest
+      }))}`;
       if(field!==null&&candidateField!==field) throw new Error('Constraint bundle contracts must share one bounded private field and extractor');
       field=candidateField;
       domain={type:'integer',min:extractor.min,max:extractor.max};
       programs.push({kind:'predicate',private:field,op:release.operator,value:Number(release.arg),result:Boolean(compiled.value)});
     }
-    if(!firewall.hasField(field)){
+    if(firewall.hasField(field)){
+      const existing=partitionFieldEntry(firewall,field)?.domain;
+      if(!existing||existing.type!=='integer'||existing.min!==domain.min||existing.max!==domain.max) throw new Error('Constraint contracts for one private scalar require an identical declared integer domain');
+    }else{
       firewall.registerField(field,domain);
       this._persistState();
     }
