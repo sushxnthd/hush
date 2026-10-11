@@ -1,0 +1,52 @@
+{
+  "ambiguity": {
+    "cases": 64,
+    "rejected": 64
+  },
+  "composition": {
+    "guarded_exact_recoveries": 0,
+    "minimum_guarded_candidates": 128,
+    "secrets": 4096,
+    "unbudgeted_exact_recoveries": 4096
+  },
+  "gates": {
+    "ambiguity_fail_closed": true,
+    "equivalence": true,
+    "guard_prevents_reconstruction": true,
+    "oracle_agreement": true,
+    "product_utility": true,
+    "product_zero_pcc_canaries": true,
+    "raw_exposes_all_canaries": true,
+    "receipt_non_disclosure": true,
+    "unbudgeted_reconstructs": true,
+    "zero_pcc_canary_disclosure": true
+  },
+  "mechanism": {
+    "cases": 114688,
+    "equivalence_violations": 0,
+    "oracle_disagreements": 0,
+    "protected_disclosures": 0
+  },
+  "overall": "PASS",
+  "product_boundary": {
+    "pcc": {
+      "canary_disclosures": 0,
+      "cases": 512,
+      "receipt_disclosures": 0,
+      "success": 512
+    },
+    "raw": {
+      "canary_disclosures": 512,
+      "cases": 512,
+      "receipt_disclosures": 0,
+      "success": 512
+    },
+    "redaction": {
+      "canary_disclosures": 0,
+      "cases": 512,
+      "receipt_disclosures": 0,
+      "success": 162
+    }
+  },
+  "study": "PCC clean-room replication and product-boundary test"
+}
