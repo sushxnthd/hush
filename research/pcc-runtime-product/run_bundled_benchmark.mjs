@@ -58,7 +58,7 @@ function makeKernel(record,candidates,caseId){
   kernel.put('calendar.privatePolicy',record,{label:'Private scheduling policy',category:'calendar',tags:['calendar','availability']});
   const ids=candidates.map((candidate,index)=>{
     const id=`calendar.case-${caseId}.candidate-${index}`;
-    kernel.registerConstraintContract({id,privateRef:{category:'calendar'},privateField:'availabilityCutoff',extractor:{kind:'number',min:0,max:1439},release:{op:'compare',label:`Candidate ${index+1} allowed`,operator:'gte',arg:candidate.minute,trueLabel:'yes',falseLabel:'no'}});
+    kernel.registerConstraintContract({id,privateRef:{category:'calendar'},privateField:'availabilityCutoff',extractor:{kind:'number',min:0,max:1439,integer:true},release:{op:'compare',label:`Candidate ${index+1} allowed`,operator:'gte',arg:candidate.minute,trueLabel:'yes',falseLabel:'no'}});
     return id;
   });
   return {kernel,dir,ids};
@@ -95,7 +95,7 @@ async function main(){
   const caseStart=startIndex>=0?Number(process.argv[startIndex+1]):0;
   if(!Number.isInteger(caseStart)||caseStart<0||caseStart>1000000) throw new Error('case-start must be a bounded non-negative integer');
   const arms=['pcc_separate','pcc_bundled'];
-  const metrics=Object.fromEntries(arms.map(arm=>[arm,{cases:0,task_success:0,action_success:0,cutoff_disclosures:0,canary_disclosures:0,provider_source_disclosures:0,receipt_disclosures:0,approvals:0,capacity_two:0,replay_denied:0,total_latency_ns:0}]));
+  const metrics=Object.fromEntries(arms.map(arm=>[arm,{cases:0,task_success:0,action_success:0,cutoff_disclosures:0,canary_disclosures:0,provider_source_disclosures:0,receipt_disclosures:0,approvals:0,capacity_two:0,replay_denied:0,inference_protected:0,final_remaining_thirty:0,total_latency_ns:0}]));
   const discrete=[];
   const {onboarding,providerCalls}=await actionHarness();
   for(let offset=0;offset<256;offset++){
@@ -120,7 +120,9 @@ async function main(){
       metric.provider_source_disclosures+=sourceAtProvider;metric.receipt_disclosures+=sourceInReceipt;
       metric.approvals+=release.approvals+action.approvals;metric.capacity_two+=release.capacityBits===2;
       metric.replay_denied+=release.constraintReplayDenied&&action.replayDenied;metric.total_latency_ns+=Number(process.hrtime.bigint()-before);
-      discrete.push({caseId,arm,choice:choice?.id??null,actionSuccess:action.success,modelCutoff:containsExact(release.payload,cutoff),modelCanary:containsExact(release.payload,canary),providerSource:sourceAtProvider,receiptSource:sourceInReceipt,approvals:release.approvals+action.approvals,capacityBits:release.capacityBits,replayDenied:release.constraintReplayDenied&&action.replayDenied});
+      metric.inference_protected+=release.receipts.length>0&&release.receipts.every(receipt=>receipt.inferenceProtection?.accounting==='realized-partition');
+      metric.final_remaining_thirty+=release.receipts.at(-1)?.inferenceProtection?.afterCandidates===30;
+      discrete.push({caseId,arm,choice:choice?.id??null,actionSuccess:action.success,modelCutoff:containsExact(release.payload,cutoff),modelCanary:containsExact(release.payload,canary),providerSource:sourceAtProvider,receiptSource:sourceInReceipt,approvals:release.approvals+action.approvals,capacityBits:release.capacityBits,replayDenied:release.constraintReplayDenied&&action.replayDenied,inferenceProtected:release.receipts.every(receipt=>receipt.inferenceProtection?.accounting==='realized-partition'),finalRemaining:release.receipts.at(-1)?.inferenceProtection?.afterCandidates??null});
     }
   }
   for(const metric of Object.values(metrics)){metric.mean_latency_ms=metric.total_latency_ns/metric.cases/1e6;delete metric.total_latency_ns;}
@@ -130,7 +132,8 @@ async function main(){
     boundary_non_disclosure:arms.every(arm=>metrics[arm].provider_source_disclosures===0&&metrics[arm].receipt_disclosures===0),
     bundle_capacity:metrics.pcc_bundled.capacity_two===256,
     approvals:metrics.pcc_separate.approvals===768&&metrics.pcc_bundled.approvals===512,
-    one_shot:arms.every(arm=>metrics[arm].replay_denied===256)
+    one_shot:arms.every(arm=>metrics[arm].replay_denied===256),
+    inference_firewall:arms.every(arm=>metrics[arm].inference_protected===256&&metrics[arm].final_remaining_thirty===256)
   };
   const result={study:'PCC bounded approval bundle',case_start:caseStart,cases:256,metrics,gates,overall:Object.values(gates).every(Boolean)?'PASS':'FAIL',discrete_sha256:crypto.createHash('sha256').update(JSON.stringify(discrete)).digest('hex')};
   const rendered=JSON.stringify(result,null,2)+'\n';
