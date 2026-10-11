@@ -29,7 +29,6 @@ function safeConstraintReleaseMetadata(release){
     category:release.category,
     valueType:release.valueType,
     releaseKind:release.releaseKind,
-    outputBytes:release.outputBytes,
     createdAt:release.createdAt,
     expiresAt:release.expiresAt,
     approvedAt:release.approvedAt,
@@ -42,9 +41,8 @@ function safeConstraintReleaseMetadata(release){
     ,inferenceProtection:release.partitionTransaction?{
       accounting:'realized-partition',
       beforeCandidates:release.partitionTransaction.summary.beforeCandidates,
-      afterCandidates:release.partitionTransaction.summary.afterCandidates,
-      totalKnowledgeBits:release.partitionTransaction.summary.totalKnowledgeBits,
-      maxKnowledgeBits:release.partitionTransaction.summary.maxKnowledgeBits
+      maxKnowledgeBits:release.partitionTransaction.summary.maxKnowledgeBits,
+      realizedAccountingWithheldUntilConsumption:true
     }:null
   };
 }
@@ -74,9 +72,8 @@ function safeConstraintBundleMetadata(bundle){
     ,inferenceProtection:{
       accounting:'realized-partition',
       beforeCandidates:bundle.partitionTransaction.summary.beforeCandidates,
-      afterCandidates:bundle.partitionTransaction.summary.afterCandidates,
-      totalKnowledgeBits:bundle.partitionTransaction.summary.totalKnowledgeBits,
-      maxKnowledgeBits:bundle.partitionTransaction.summary.maxKnowledgeBits
+      maxKnowledgeBits:bundle.partitionTransaction.summary.maxKnowledgeBits,
+      realizedAccountingWithheldUntilConsumption:true
     }
   };
 }

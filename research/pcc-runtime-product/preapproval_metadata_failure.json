@@ -1,0 +1,65 @@
+{
+  "study": "PCC pre-approval metadata disclosure probe",
+  "domain": {
+    "type": "integer",
+    "min": 0,
+    "max": 1023
+  },
+  "countChannel": {
+    "metadata": {
+      "decision": "ask",
+      "outputBytes": 111,
+      "beforeCandidates": 1024,
+      "afterCandidates": 524,
+      "totalKnowledgeBits": 0.966576998,
+      "maxKnowledgeBits": 8
+    },
+    "inferredTrue": true,
+    "actual": true
+  },
+  "sizeChannel": {
+    "trueMetadata": {
+      "decision": "ask",
+      "outputBytes": 108,
+      "beforeCandidates": 1024,
+      "afterCandidates": 512,
+      "totalKnowledgeBits": 1,
+      "maxKnowledgeBits": 8
+    },
+    "falseReferenceMetadata": {
+      "decision": "ask",
+      "outputBytes": 132,
+      "beforeCandidates": 1024,
+      "afterCandidates": 512,
+      "totalKnowledgeBits": 1,
+      "maxKnowledgeBits": 8
+    },
+    "inferredTrue": true,
+    "actual": true
+  },
+  "bundleChannel": {
+    "metadata": {
+      "decision": "ask",
+      "outputBytes": null,
+      "beforeCandidates": 1024,
+      "afterCandidates": 300,
+      "totalKnowledgeBits": 1.77118131,
+      "maxKnowledgeBits": 8
+    },
+    "inferredResults": [
+      true,
+      true
+    ],
+    "actual": [
+      true,
+      true
+    ]
+  },
+  "gates": {
+    "no_approval_or_consumption": true,
+    "realized_count_does_not_reveal_result": false,
+    "serialized_size_does_not_reveal_result": false,
+    "bundle_metadata_does_not_reveal_result": false
+  },
+  "verdict": "FAIL"
+}

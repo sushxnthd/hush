@@ -91,6 +91,14 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
   preserved; public diagnostics now show only `pcc:derived`, retain aggregate
   posterior statistics, and yield zero dictionary matches. The complete suite
   passes 304/304 tests.
+- An approval prompt is itself a disclosure boundary. Before correction,
+  single-release preparation exposed a private comparison through both its
+  realized candidate count (524 versus 500) and serialized size (108 versus
+  132 bytes); bundle preparation exposed a result pair through a realized count
+  of 300. All results were inferred while the decision remained `ask`, with no
+  approval or consumption. Safe metadata now withholds result-dependent size
+  and posterior statistics until consumption; the unchanged probe recovers
+  0/3 results and the full 304-test suite passes.
 
 ## Honest boundary
 
@@ -117,6 +125,8 @@ node research/pcc-runtime-product/run_field_alias_probe.mjs \
   --output /tmp/field_alias_replay.json
 node research/pcc-runtime-product/run_digest_dictionary_probe.mjs \
   --output /tmp/digest_dictionary_replay.json
+node research/pcc-runtime-product/run_preapproval_metadata_probe.mjs \
+  --output /tmp/preapproval_metadata_replay.json
 npm test
 ```
 

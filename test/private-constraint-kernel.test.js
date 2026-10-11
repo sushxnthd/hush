@@ -32,6 +32,7 @@ test('PCC release hides source and compiled value until local approval',()=>{
   assert.equal(prepared.derivedDisclosure,true);
   assert.equal(Object.hasOwn(prepared,'statement'),false);
   assert.equal(Object.hasOwn(prepared,'value'),false);
+  assert.equal(Object.hasOwn(prepared,'outputBytes'),false);
   const wire=JSON.stringify(prepared);
   // Random release IDs and epoch timestamps can coincidentally contain "110".
   // Check the human-readable fields for the private value, not opaque metadata.
@@ -83,6 +84,9 @@ test('comparison contracts can disclose less than the extracted private value',(
     release:{op:'compare',label:'Groundspeed within 120 mph release limit',operator:'lte',arg:120,trueLabel:'yes',falseLabel:'no'}
   });
   const prepared=k.prepareConstraintRelease({contractId:'flight.speed-limit-check',agent:'assistant',sink:'model.example'});
+  assert.equal(Object.hasOwn(prepared.inferenceProtection,'afterCandidates'),false);
+  assert.equal(Object.hasOwn(prepared.inferenceProtection,'totalKnowledgeBits'),false);
+  assert.equal(prepared.inferenceProtection.realizedAccountingWithheldUntilConsumption,true);
   k.approveConstraintRelease(prepared.releaseId);
   const released=k.consumeConstraintRelease({releaseId:prepared.releaseId,agent:'assistant',sink:'model.example'});
   assert.equal(released.constraint.value,true);
@@ -108,6 +112,9 @@ test('bounded comparison bundle needs one approval and releases at most its decl
   assert.equal(prepared.outputCount,2);
   assert.equal(Object.hasOwn(prepared,'outputs'),false);
   assert.equal(Object.hasOwn(prepared,'outputBytes'),false);
+  assert.equal(Object.hasOwn(prepared.inferenceProtection,'afterCandidates'),false);
+  assert.equal(Object.hasOwn(prepared.inferenceProtection,'totalKnowledgeBits'),false);
+  assert.equal(prepared.inferenceProtection.realizedAccountingWithheldUntilConsumption,true);
   assert.throws(()=>k.consumeConstraintReleaseBundle({bundleId:prepared.bundleId,agent:'other',sink:'model.example'}),/bound to another agent or sink/);
   k.approveConstraintReleaseBundle(prepared.bundleId);
   const released=k.consumeConstraintReleaseBundle({bundleId:prepared.bundleId,agent:'assistant',sink:'model.example'});
