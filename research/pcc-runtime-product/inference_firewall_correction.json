@@ -1,0 +1,55 @@
+{
+  "study": "PCC inference-firewall correction",
+  "domain": {
+    "type": "integer",
+    "min": 0,
+    "max": 1023
+  },
+  "secret": 500,
+  "target": 500,
+  "native": {
+    "decision": "deny",
+    "hasResult": false,
+    "partition": {
+      "decision": "deny",
+      "reason": "Realized posterior knowledge exceeds the partition privacy limit.",
+      "field": "finance.balance",
+      "beforeCandidates": 1024,
+      "afterCandidates": 1,
+      "marginalKnowledgeBits": 10,
+      "totalKnowledgeBits": 10,
+      "maxKnowledgeBits": 8,
+      "minRemaining": 1
+    }
+  },
+  "pcc": {
+    "prepared": false,
+    "error": "Constraint release denied by inference firewall: Realized posterior knowledge exceeds the partition privacy limit.",
+    "derivedPartition": [
+      {
+        "field": "pcc:06cba2da507fe37e006bdd4859000bcc6172fea592a297c5e6f3565235888e81",
+        "domain": {
+          "type": "integer",
+          "min": 0,
+          "max": 1023,
+          "size": 1024
+        },
+        "initialCandidates": 1024,
+        "remainingCandidates": 1024,
+        "totalKnowledgeBits": 0,
+        "maxKnowledgeBits": 8,
+        "minRemaining": 1,
+        "fragments": 1
+      }
+    ]
+  },
+  "checks": {
+    "native_denied": true,
+    "native_identifying": true,
+    "pcc_denied_before_approval": true,
+    "no_pcc_output_released": true,
+    "denied_transaction_not_committed": true
+  },
+  "security_consistency_gate": "PASS",
+  "evidence_sha256": "271bcc811c6087f926d32b33eac248d2b0fd6f993a5bbc53bb06c675bb84f0b3"
+}
