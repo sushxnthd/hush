@@ -89,3 +89,62 @@ test('comparison contracts can disclose less than the extracted private value',(
   assert.equal(released.constraint.statement,'Groundspeed within 120 mph release limit: yes.');
   assert.equal(JSON.stringify(released.constraint).includes('110'),false);
 });
+
+test('bounded comparison bundle needs one approval and releases at most its declared bits',()=>{
+  const {k}=setup();
+  for(const [id,limit] of [['flight.under-120',120],['flight.under-100',100]]){
+    k.registerConstraintContract({
+      id,privateRef:{category:'flight'},
+      extractor:{kind:'number',anchors:['maximum','groundspeed'],units:['mph'],min:0,max:500},
+      release:{op:'compare',label:`Groundspeed within ${limit} mph`,operator:'lte',arg:limit,trueLabel:'yes',falseLabel:'no'}
+    });
+  }
+  const prepared=k.prepareConstraintReleaseBundle({
+    contractIds:['flight.under-120','flight.under-100'],maxBits:2,
+    agent:'assistant',sink:'model.example',purpose:'flight readiness'
+  });
+  assert.equal(prepared.decision,'ask');
+  assert.equal(prepared.capacityBits,2);
+  assert.equal(prepared.outputCount,2);
+  assert.equal(Object.hasOwn(prepared,'outputs'),false);
+  assert.equal(Object.hasOwn(prepared,'outputBytes'),false);
+  assert.throws(()=>k.consumeConstraintReleaseBundle({bundleId:prepared.bundleId,agent:'other',sink:'model.example'}),/bound to another agent or sink/);
+  k.approveConstraintReleaseBundle(prepared.bundleId);
+  const released=k.consumeConstraintReleaseBundle({bundleId:prepared.bundleId,agent:'assistant',sink:'model.example'});
+  assert.deepEqual(released.constraints.map(row=>row.value),[true,false]);
+  assert.equal(released.capacityBits,2);
+  assert.equal(released.receipt.declaredMaxBits,2);
+  assert.equal(Object.hasOwn(released.receipt,'outputBytes'),false);
+  assert.equal(JSON.stringify(released).includes('extra hour'),false);
+  assert.throws(()=>k.consumeConstraintReleaseBundle({bundleId:prepared.bundleId,agent:'assistant',sink:'model.example'}),/already consumed/);
+});
+
+test('comparison bundle fails closed for excess capacity, identity releases, and mixed sources',()=>{
+  const {k}=setup();
+  k.registerConstraintContract({
+    id:'flight.compare',privateRef:{category:'flight'},
+    extractor:{kind:'number',anchors:['maximum','groundspeed'],units:['mph'],min:0,max:500},
+    release:{op:'compare',label:'Within limit',operator:'lte',arg:120}
+  });
+  assert.throws(()=>k.prepareConstraintReleaseBundle({contractIds:['flight.compare','flight.maximum-groundspeed'],maxBits:2}),/boolean comparison releases only/);
+  assert.throws(()=>k.prepareConstraintReleaseBundle({contractIds:['flight.compare','flight.compare'],maxBits:2}),/unique contracts/);
+  assert.throws(()=>k.prepareConstraintReleaseBundle({contractIds:['flight.compare','flight.maximum-groundspeed'],maxBits:1}),/maxBits/);
+
+  k.put('medical.status',{eligible:true},{label:'Medical status',category:'medical'});
+  k.registerConstraintContract({
+    id:'medical.eligible',privateRef:{category:'medical'},privateField:'eligible',
+    extractor:{kind:'boolean'},release:{op:'compare',label:'Eligible',operator:'eq',arg:true}
+  });
+  assert.throws(()=>k.prepareConstraintReleaseBundle({contractIds:['flight.compare','medical.eligible'],maxBits:2}),/same private record/);
+});
+
+test('changing private evidence invalidates an unconsumed comparison bundle',()=>{
+  const {k}=setup();
+  for(const [id,limit] of [['flight.a',120],['flight.b',130]]) k.registerConstraintContract({
+    id,privateRef:{category:'flight'},extractor:{kind:'number',anchors:['maximum','groundspeed'],units:['mph'],min:0,max:500},
+    release:{op:'compare',label:id,operator:'lte',arg:limit}
+  });
+  const prepared=k.prepareConstraintReleaseBundle({contractIds:['flight.a','flight.b'],maxBits:2,agent:'assistant',sink:'model.example'});
+  k.put('flight.readiness','Maximum planned groundspeed is 95 mph.',{label:'Flight readiness evidence',category:'flight',tags:['flight']});
+  assert.throws(()=>k.approveConstraintReleaseBundle(prepared.bundleId),/not found/);
+});
