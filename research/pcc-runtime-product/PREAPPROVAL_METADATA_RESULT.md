@@ -23,7 +23,7 @@ combination.
 
 ## Evidence
 
-- Preregistered prediction commit: `7112b95296fdc72b04f7d86693bfb814bdc9cc4e`
+- Preregistered prediction commit: `7112b95aaa801c2ca71d9120557b76bcd05943fc`
 - Raw artifact SHA-256:
   `6387be722bbaed07d631b30a062af900134784f6b68970a5e007e34e69fcabb8`
 - Declared domain: integer 0..1023
