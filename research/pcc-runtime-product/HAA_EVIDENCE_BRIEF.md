@@ -99,6 +99,13 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
   approval or consumption. Safe metadata now withholds result-dependent size
   and posterior statistics until consumption; the unchanged probe recovers
   0/3 results and the full 304-test suite passes.
+- Firewall control flow is also an approval-bound disclosure surface. An
+  equality that exceeded the eight-bit posterior limit threw during preparation,
+  while the opposite result returned `ask`, revealing the private comparison
+  without approval. Preparation now returns the same safe `ask` observation in
+  both worlds; after explicit approval, withheld releases become generic,
+  one-shot denials with no result or posterior commit. The unchanged probe,
+  15/15 focused tests, and the complete 304/304 suite pass.
 
 ## Honest boundary
 
@@ -127,6 +134,8 @@ node research/pcc-runtime-product/run_digest_dictionary_probe.mjs \
   --output /tmp/digest_dictionary_replay.json
 node research/pcc-runtime-product/run_preapproval_metadata_probe.mjs \
   --output /tmp/preapproval_metadata_replay.json
+node research/pcc-runtime-product/run_denial_oracle_probe.mjs \
+  --output /tmp/denial_oracle_replay.json
 npm test
 ```
 

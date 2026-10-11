@@ -165,7 +165,14 @@ test('PCC bundle denies a two-boolean vector that identifies an exact finite-dom
     id,privateRef:{category:'finance'},extractor:{kind:'number',min:0,max:1023,integer:true},
     release:{op:'compare',label:id,operator,arg:500}
   });
-  assert.throws(()=>k.prepareConstraintReleaseBundle({contractIds:['finance.gte','finance.lte'],maxBits:2}),/denied by inference firewall/);
+  const prepared=k.prepareConstraintReleaseBundle({contractIds:['finance.gte','finance.lte'],maxBits:2,agent:'assistant',sink:'model.example'});
+  assert.equal(prepared.decision,'ask');
+  k.approveConstraintReleaseBundle(prepared.bundleId);
+  const denied=k.consumeConstraintReleaseBundle({bundleId:prepared.bundleId,agent:'assistant',sink:'model.example'});
+  assert.equal(denied.decision,'deny');
+  assert.equal(denied.derivedDisclosure,false);
+  assert.equal(Object.hasOwn(denied,'constraints'),false);
+  assert.throws(()=>k.consumeConstraintReleaseBundle({bundleId:prepared.bundleId,agent:'assistant',sink:'model.example'}),/already consumed/);
   assert.equal(k.partitionExposure().find(row=>row.field==='finance.balance').remainingCandidates,1024);
 });
 
@@ -198,7 +205,12 @@ test('semantically equivalent extractor aliases share one PCC posterior ledger',
   k.approveConstraintRelease(first.releaseId);
   const released=k.consumeConstraintRelease({releaseId:first.releaseId,agent:'assistant',sink:'model.example'});
   assert.equal(released.constraint.value,true);
-  assert.throws(()=>k.prepareConstraintRelease({contractId:'finance.upper',agent:'assistant',sink:'model.example'}),/denied by inference firewall/);
+  const second=k.prepareConstraintRelease({contractId:'finance.upper',agent:'assistant',sink:'model.example'});
+  assert.equal(second.decision,'ask');
+  k.approveConstraintRelease(second.releaseId);
+  const denied=k.consumeConstraintRelease({releaseId:second.releaseId,agent:'assistant',sink:'model.example'});
+  assert.equal(denied.decision,'deny');
+  assert.equal(Object.hasOwn(denied,'constraint'),false);
   const ledgers=k.partitionExposure().filter(row=>String(row.field).startsWith('pcc:'));
   assert.equal(ledgers.length,1);
   assert.equal(ledgers[0].remainingCandidates,524);
@@ -233,7 +245,12 @@ test('semantically equivalent private-field aliases share one PCC posterior ledg
   const first=k.prepareConstraintRelease({contractId:'finance.lower',agent:'assistant',sink:'model.example'});
   k.approveConstraintRelease(first.releaseId);
   assert.equal(k.consumeConstraintRelease({releaseId:first.releaseId,agent:'assistant',sink:'model.example'}).constraint.value,true);
-  assert.throws(()=>k.prepareConstraintRelease({contractId:'finance.upper',agent:'assistant',sink:'model.example'}),/denied by inference firewall/);
+  const second=k.prepareConstraintRelease({contractId:'finance.upper',agent:'assistant',sink:'model.example'});
+  assert.equal(second.decision,'ask');
+  k.approveConstraintRelease(second.releaseId);
+  const denied=k.consumeConstraintRelease({releaseId:second.releaseId,agent:'assistant',sink:'model.example'});
+  assert.equal(denied.decision,'deny');
+  assert.equal(Object.hasOwn(denied,'constraint'),false);
   const ledgers=k.partitionExposure().filter(row=>String(row.field).startsWith('pcc:'));
   assert.equal(ledgers.length,1);
   assert.equal(ledgers[0].remainingCandidates,524);

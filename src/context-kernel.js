@@ -212,7 +212,21 @@ export class ContextKernel extends BaseContextKernel{
     let first=null,last=null;
     for(const row of programs){
       const assessment=trial.evaluate({field,program:row,result:row.result});
-      if(assessment.decision!=='allow') throw new Error(`Constraint release denied by inference firewall: ${assessment.reason}`);
+      if(assessment.decision!=='allow'){
+        return {
+          field,
+          beforeDigest:partitionEntryDigest(beforeEntry),
+          programs,
+          denied:true,
+          denialReason:assessment.reason,
+          summary:{
+            beforeCandidates:first?.beforeCandidates??assessment.beforeCandidates,
+            afterCandidates:assessment.afterCandidates,
+            totalKnowledgeBits:assessment.totalKnowledgeBits??null,
+            maxKnowledgeBits:assessment.maxKnowledgeBits??snapshot.maxKnowledgeBits
+          }
+        };
+      }
       if(!first) first=assessment;
       trial.commit(assessment);
       last=assessment;
@@ -221,6 +235,7 @@ export class ContextKernel extends BaseContextKernel{
       field,
       beforeDigest:partitionEntryDigest(beforeEntry),
       programs,
+      denied:false,
       summary:{
         beforeCandidates:first.beforeCandidates,
         afterCandidates:last.afterCandidates,
@@ -232,6 +247,7 @@ export class ContextKernel extends BaseContextKernel{
 
   _commitConstraintPartitionTransaction(transaction){
     if(!transaction) return null;
+    if(transaction.denied) throw new Error('Denied constraint preflight cannot be committed');
     const firewall=this.runtime.partitionFirewall;
     const current=partitionFieldEntry(firewall,transaction.field);
     if(!current||partitionEntryDigest(current)!==transaction.beforeDigest) throw new Error('Constraint release privacy state changed; prepare a new release');
@@ -343,6 +359,18 @@ export class ContextKernel extends BaseContextKernel{
     if(release.deniedAt) throw new Error('Constraint release was denied');
     if(!release.approvedAt) return {...safeConstraintReleaseMetadata(release),decision:'ask'};
     if(release.consumedAt) throw new Error('Constraint release already consumed');
+    if(release.partitionTransaction?.denied){
+      release.consumedAt=this.now();
+      return {
+        decision:'deny',
+        reason:'Approved constraint was withheld by the privacy policy.',
+        contractId:release.contractId,
+        rawSourceIncluded:false,
+        rawPrivatePathIncluded:false,
+        derivedDisclosure:false,
+        oneShot:true
+      };
+    }
     const partition=this._commitConstraintPartitionTransaction(release.partitionTransaction);
     release.consumedAt=this.now();
     return {
@@ -502,6 +530,18 @@ export class ContextKernel extends BaseContextKernel{
     if(bundle.deniedAt) throw new Error('Constraint bundle was denied');
     if(!bundle.approvedAt) return {...safeConstraintBundleMetadata(bundle),decision:'ask'};
     if(bundle.consumedAt) throw new Error('Constraint bundle already consumed');
+    if(bundle.partitionTransaction?.denied){
+      bundle.consumedAt=this.now();
+      return {
+        decision:'deny',
+        reason:'Approved constraint bundle was withheld by the privacy policy.',
+        contractIds:[...bundle.contractIds],
+        rawSourceIncluded:false,
+        rawPrivatePathIncluded:false,
+        derivedDisclosure:false,
+        oneShot:true
+      };
+    }
     const partition=this._commitConstraintPartitionTransaction(bundle.partitionTransaction);
     bundle.consumedAt=this.now();
     return {
