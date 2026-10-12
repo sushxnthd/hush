@@ -227,6 +227,18 @@ GPUs for a 70B model). The present environment fails closed on Python version,
 GPU, Docker, Playwright and package readiness. No paid API, payload or outcome
 was used. See `AGENTDAM_EXTERNAL_FREEZE_RESULT.md`.
 
+The semantic-evaluation transport is now frozen independently of model choice.
+Across five synthetic items and three prompt variants, all 15 judgments were
+bound to exact input digests; exact, paraphrased and inferential fixtures failed
+privacy, a benign fixture passed, and ambiguity abstained and failed closed.
+Malformed, missing, mismatched, duplicate, unexpected and disagreeing outputs
+also fail closed. The result stores no protected strings and reran
+byte-identically (file SHA-256
+`8e537bca0eb87dd2f20986dac8b7e788870ce4d2f64a29022120b95a636fdd95`).
+This validates protocol mechanics only: the dry run used a synthetic oracle and
+no local semantic model has passed human-labeled calibration. See
+`AGENTDAM_SEMANTIC_JUDGE_RESULT.md`.
+
 ## Reproduce
 
 ```bash
@@ -276,6 +288,9 @@ node research/pcc-runtime-product/evaluate_agentdam_runner_loop_smoke.mjs \
 python3 research/pcc-runtime-product/verify_agentdam_external_freeze.py \
   /tmp/agentdam \
   --output /tmp/agentdam_external_freeze_result.json
+node research/pcc-runtime-product/run_agentdam_semantic_judge_dryrun.mjs \
+  --output /tmp/agentdam_semantic_judge.json
+node --test test/agentdam-semantic-judge-contract.test.js
 npm test
 ```
 
@@ -283,8 +298,8 @@ Public review package: https://github.com/sushxnthd/hush/pull/35
 
 ## Next experiment
 
-Implement and freeze the semantic judge and faithful OCELOT-style and MNC-style
-matched controls on synthetic/open development fixtures. Then, without opening
+Build and freeze a human-labeled semantic development calibration set and the
+faithful OCELOT-style and MNC-style matched controls. Then, without opening
 the 36 frozen tasks, obtain a genuinely compatible zero-spend Python 3.10/3.11,
 Docker/Playwright, standalone-site and local-model environment and complete a
 startup check. The final study must retain model, tool, browser-action,
