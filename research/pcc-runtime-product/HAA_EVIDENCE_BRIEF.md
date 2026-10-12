@@ -252,6 +252,23 @@ This validates protocol mechanics only: the dry run used a synthetic oracle and
 no local semantic model has passed human-labeled calibration. See
 `AGENTDAM_SEMANTIC_JUDGE_RESULT.md`.
 
+## Skewed-prior accounting regime law
+
+The matched-control boundary now has an exact three-regime decomposition. For
+global prior concentration `alpha = n max(p)` and observed-branch concentration
+`beta = k max_B(p) / P(B)`, the gap between PCC cardinality charge and realized
+statewise min-entropy reduction is exactly `log2(alpha / beta)`. PCC overcharges
+when `alpha > beta`, matches at equality, and undercharges when `alpha < beta`.
+
+A preregistered exhaustive verifier covered 3,289 positive rational priors and
+189,222 prior/branch cases with zero decomposition or sign disagreements. Both
+overcharge and undercharge regimes occurred; the latter falsifies the assumption
+that cardinality accounting is always conservative under skewed priors. Two runs
+were byte-identical (file SHA-256
+`f42b8bd8284ee50be1d5926c38386a6dc149653f9bd57466ebe3e7786ba724f3`).
+This is an exact product-design oracle, not historical-novelty or external-utility
+evidence. See `SKEWED_PRIOR_REGIME_LAW_RESULT.md`.
+
 ## Reproduce
 
 ```bash
