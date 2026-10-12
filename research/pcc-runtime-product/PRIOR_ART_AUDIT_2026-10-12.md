@@ -79,3 +79,19 @@ Until that matched comparison exists, HAA materials should emphasize research
 rigor, independently checkable counterexamples and product execution—not claim
 field-level novelty or superiority.
 
+## Exact accounting discrimination update
+
+An exhaustive preregistered finite-domain test now sharpens the matched-control
+requirement. For uniform feasible states and deterministic binary releases,
+PCC cardinality charge and realized posterior min-entropy reduction are
+algebraically identical. Enumeration over 1,561,584 release cases and
+37,478,016 weighted budget decisions found zero disagreements. This does not
+reproduce OCELOT's calibrated per-operator upper bounds or MNC's scope monitor,
+but it falsifies the uniform exact charge formula as a useful differentiator.
+
+The smallest tested non-uniform prior `(0.9, 0.1)` separates cardinality charge
+(`1.0` bit) from statewise min-entropy reduction (`0.152003` bits). The next
+comparison should therefore concentrate on prior calibration, conservative
+bounds, scope/lifetime enforcement, witness/candidate quality and end-to-end
+failure behavior. See `MATCHED_CONTROL_EQUIVALENCE_RESULT.md`.
+
