@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 
 const MAX_ITEMS=5000;
 const NAME=/^[a-z0-9][a-z0-9._-]{0,63}$/;
+const PRIVACY_KEY=/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$/;
 
 function text(value,max=500){
   const out=String(value??'').trim();
@@ -18,11 +19,17 @@ function sourceId(item,index){
   if(id==null||String(id).trim()==='') throw new Error(`Connector item ${index} is missing a stable source id`);
   return String(id);
 }
+function durablePrivacyKey(item,index){
+  if(item?.privacyKey==null) return null;
+  const key=String(item.privacyKey).trim();
+  if(!PRIVACY_KEY.test(key)) throw new Error(`Connector item ${index} privacyKey must be a non-empty stable public identifier using letters, numbers, dots, underscores, colons, slashes, or hyphens`);
+  return key;
+}
 function stablePath(provider,collection,id){
   const digest=crypto.createHash('sha256').update(`${provider}\0${collection}\0${id}`).digest('hex').slice(0,32);
   return `connector.${provider}.${collection}.${digest}`;
 }
-function envelope({provider,collection,id,label,category,tags,value,domain=null,kind='context'}){
+function envelope({provider,collection,id,privacyKey=null,label,category,tags,value,domain=null,kind='context'}){
   return {
     kind,
     path:stablePath(provider,collection,id),
@@ -31,7 +38,7 @@ function envelope({provider,collection,id,label,category,tags,value,domain=null,
     tags:uniq([provider,collection,...(tags??[])]),
     value:structuredClone(value),
     domain:domain==null?null:structuredClone(domain),
-    source:{provider,collection,sourceId:String(id)}
+    source:{provider,collection,sourceId:String(id),...(privacyKey==null?{}:{privacyKey})}
   };
 }
 
@@ -39,7 +46,7 @@ function normalizeGmail(item,index,provider,collection){
   const id=sourceId(item,index);
   const subject=text(item.subject||item.payload?.headers?.find?.(h=>String(h.name).toLowerCase()==='subject')?.value||'Email',500);
   const from=text(item.from||item.payload?.headers?.find?.(h=>String(h.name).toLowerCase()==='from')?.value||'',500);
-  return envelope({provider,collection,id,label:subject,category:'email',tags:['message',...(item.labelIds??item.labels??[])],value:{
+  return envelope({provider,collection,id,privacyKey:durablePrivacyKey(item,index),label:subject,category:'email',tags:['message',...(item.labelIds??item.labels??[])],value:{
     id,
     threadId:item.threadId??null,
     subject,
@@ -55,7 +62,7 @@ function normalizeGmail(item,index,provider,collection){
 function normalizeCalendar(item,index,provider,collection){
   const id=sourceId(item,index);
   const summary=text(item.summary||item.title||'Calendar event',500);
-  return envelope({provider,collection,id,label:summary,category:'calendar',tags:['event',...(item.tags??[])],value:{
+  return envelope({provider,collection,id,privacyKey:durablePrivacyKey(item,index),label:summary,category:'calendar',tags:['event',...(item.tags??[])],value:{
     id,
     summary,
     description:item.description??null,
@@ -72,7 +79,7 @@ function normalizeCalendar(item,index,provider,collection){
 function normalizeDrive(item,index,provider,collection){
   const id=sourceId(item,index);
   const name=text(item.name||item.title||'File',500);
-  return envelope({provider,collection,id,label:name,category:'files',tags:['file',item.mimeType??item.type??'',...(item.tags??[])],value:{
+  return envelope({provider,collection,id,privacyKey:durablePrivacyKey(item,index),label:name,category:'files',tags:['file',item.mimeType??item.type??'',...(item.tags??[])],value:{
     id,
     name,
     mimeType:item.mimeType??item.type??null,
@@ -87,7 +94,7 @@ function normalizeDrive(item,index,provider,collection){
 function normalizeContact(item,index,provider,collection){
   const id=sourceId(item,index);
   const displayName=text(item.displayName||item.name||item.names?.[0]?.displayName||'Contact',500);
-  return envelope({provider,collection,id,label:displayName,category:'contacts',tags:['contact',...(item.tags??[])],value:{
+  return envelope({provider,collection,id,privacyKey:durablePrivacyKey(item,index),label:displayName,category:'contacts',tags:['contact',...(item.tags??[])],value:{
     id,
     displayName,
     emails:item.emails??item.emailAddresses??[],
@@ -101,13 +108,13 @@ function normalizeContact(item,index,provider,collection){
 function normalizeGithub(item,index,provider,collection){
   const id=sourceId(item,index);
   const label=text(item.full_name||item.name||item.login||item.title||'GitHub item',500);
-  return envelope({provider,collection,id,label,category:'github',tags:['github',collection,item.private?'private':'public',...(item.topics??item.tags??[])],value:structuredClone(item)});
+  return envelope({provider,collection,id,privacyKey:durablePrivacyKey(item,index),label,category:'github',tags:['github',collection,item.private?'private':'public',...(item.topics??item.tags??[])],value:structuredClone(item)});
 }
 
 function normalizeGeneric(item,index,provider,collection){
   const id=sourceId(item,index);
   if(!Object.hasOwn(item,'value')) throw new Error(`Generic connector item ${index} is missing value`);
-  return envelope({provider,collection,id,label:item.label??id,category:item.category??collection,tags:item.tags??[],value:item.value,domain:item.domain??null});
+  return envelope({provider,collection,id,privacyKey:durablePrivacyKey(item,index),label:item.label??id,category:item.category??collection,tags:item.tags??[],value:item.value,domain:item.domain??null});
 }
 
 const NORMALIZERS=Object.freeze({
@@ -131,9 +138,14 @@ export function normalizeConnectorSnapshot(snapshot={}){
   if(snapshot.items.length>MAX_ITEMS) throw new Error(`Connector snapshots support at most ${MAX_ITEMS} items per import`);
   const records=snapshot.items.map((item,index)=>normalize(item,index,provider,collection));
   const ids=new Set();
+  const privacyKeys=new Set();
   for(const record of records){
     if(ids.has(record.source.sourceId)) throw new Error('Connector snapshot contains duplicate source ids');
     ids.add(record.source.sourceId);
+    if(record.source.privacyKey!=null){
+      if(privacyKeys.has(record.source.privacyKey)) throw new Error('Connector snapshot contains duplicate privacy keys');
+      privacyKeys.add(record.source.privacyKey);
+    }
   }
   return {provider,collection,replace:snapshot.replace!==false,records};
 }
