@@ -175,6 +175,15 @@ third-party reproduction, or universal privacy. The scientific breakthrough
 gate remains **INCONCLUSIVE** pending fresh external model-based evaluation and
 prior-art/independent review.
 
+The first candidate external benchmark has also been audited before opening any
+task outcomes. At AgentDAM revision `5d4068a`, the released privacy judge scores
+browser action strings rather than outbound model/provider payloads, defaults an
+unparseable judge response to no leakage, and omits errored tasks from the scored
+denominator. AgentDAM can still supply external web-agent tasks, but its released
+privacy score is not boundary-equivalent to PCC's claim. A common fail-closed
+boundary tracer/evaluator is now a frozen prerequisite; see
+`AGENTDAM_EVALUATOR_AUDIT_2026-10-12.md`.
+
 ## Reproduce
 
 ```bash
@@ -212,8 +221,10 @@ Public review package: https://github.com/sushxnthd/hush/pull/35
 
 ## Next experiment
 
-Freeze an external scheduling set and pinned local model, then run the bounded
-bundle through captured model, MCP, provider, error, retry, timing, and receipt
-traces. Score exact plus semantic/inference leakage against raw and exact
-semantic-minimization controls, including adaptive repeated-query attacks.
+Build and synthetic-dry-run the frozen fail-closed AgentDAM boundary adapter
+before opening any task outcomes. It must retain model, MCP, browser-action,
+provider, error, retry, timing, and receipt traces in one fixed denominator and
+apply the same exact plus semantic/inference evaluator to raw context, AgentDAM's
+privacy prompt, strict redaction, PCC, OCELOT-style budgeting, and MNC-style
+scoped-declassifier controls.
 
