@@ -216,6 +216,17 @@ This closes runner-control-flow integration uncertainty, not external validity:
 heavy dependencies were replaced by local doubles and no benchmark outcome was
 opened. See `AGENTDAM_RUNNER_LOOP_SMOKE_RESULT.md`.
 
+The external cohort is now frozen without opening task payloads or outcomes. A
+revision-bound hash rule selected 12 task IDs from each of AgentDAM's GitLab,
+Reddit and Shopping files; an independent verifier reproduced all source hashes,
+Git blobs, counts and 36 selected IDs. The same audit records an important
+release/execution boundary: the task data are CC BY-NC 4.0, the WebArena-format
+generation also carries Llama 3.1 terms, and the official zero-spend local path
+requires a substantial vLLM/browser/site stack (the released example uses eight
+GPUs for a 70B model). The present environment fails closed on Python version,
+GPU, Docker, Playwright and package readiness. No paid API, payload or outcome
+was used. See `AGENTDAM_EXTERNAL_FREEZE_RESULT.md`.
+
 ## Reproduce
 
 ```bash
@@ -262,6 +273,9 @@ node research/pcc-runtime-product/evaluate_agentdam_runner_loop_smoke.mjs \
   --manifest /tmp/agentdam-runner-manifest.json \
   --traces /tmp/agentdam-runner-traces.json \
   --output /tmp/agentdam-runner-result.json
+python3 research/pcc-runtime-product/verify_agentdam_external_freeze.py \
+  /tmp/agentdam \
+  --output /tmp/agentdam_external_freeze_result.json
 npm test
 ```
 
@@ -269,9 +283,10 @@ Public review package: https://github.com/sushxnthd/hush/pull/35
 
 ## Next experiment
 
-Freeze licensed AgentDAM subset IDs/hashes, pinned local model, semantic judge,
-exact timing capture and faithful matched-control specifications. Then complete
-a clean-environment dependency/browser startup check without opening task
-outcomes. The final study must retain model, tool, browser-action, provider,
-error, retry, timing and receipt traces in one fixed denominator.
+Implement and freeze the semantic judge and faithful OCELOT-style and MNC-style
+matched controls on synthetic/open development fixtures. Then, without opening
+the 36 frozen tasks, obtain a genuinely compatible zero-spend Python 3.10/3.11,
+Docker/Playwright, standalone-site and local-model environment and complete a
+startup check. The final study must retain model, tool, browser-action,
+provider, error, retry, timing and receipt traces in one fixed denominator.
 
