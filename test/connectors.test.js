@@ -70,7 +70,14 @@ test('generic connector values can be used by path-free semantic private queries
   assert.equal(wire.includes('1500'),false);
 });
 
-test('connector snapshots fail closed on unknown providers and duplicate source ids',()=>{
+test('connector snapshots fail closed on unknown providers and duplicate identities',()=>{
   assert.throws(()=>normalizeConnectorSnapshot({provider:'unknown',items:[]}),/Unsupported connector provider/);
   assert.throws(()=>normalizeConnectorSnapshot({provider:'drive',items:[{id:'same',name:'a'},{id:'same',name:'b'}]}),/duplicate source ids/);
+  assert.throws(()=>normalizeConnectorSnapshot({provider:'generic',items:[
+    {id:'a',privacyKey:'same-logical-record',value:1},
+    {id:'b',privacyKey:'same-logical-record',value:2}
+  ]}),/duplicate privacy keys/);
+  assert.throws(()=>normalizeConnectorSnapshot({provider:'generic',items:[
+    {id:'a',privacyKey:'private value = 500',value:500}
+  ]}),/privacyKey/);
 });
