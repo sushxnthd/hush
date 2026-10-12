@@ -122,9 +122,11 @@ export function normalizeConstraintContract(contract={}){
   if(!/^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(id)) throw new ConstraintCompilationError('Constraint contract id contains unsafe characters.',{code:'invalid_constraint_contract'});
   const privateRef=normalizePrivateRef(contract.privateRef);
   const privateField=normalizePath(contract.privateField);
+  const privacyGroup=contract.privacyGroup===undefined||contract.privacyGroup===''?'':boundedText(contract.privacyGroup,MAX_ID,'privacy group');
+  if(privacyGroup&&!/^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(privacyGroup)) throw new ConstraintCompilationError('privacyGroup contains unsafe characters.',{code:'invalid_constraint_contract'});
   const extractor=normalizeExtractor(contract.extractor);
   const release=normalizeRelease(contract.release,extractor.kind);
-  return {v:1,id,privateRef,privateField,extractor,release};
+  return {v:1,id,privateRef,privateField,privacyGroup,extractor,release};
 }
 
 function sourceSegments(value){
@@ -251,10 +253,6 @@ export function compilePrivateConstraint(privateValue,rawContract){
     statement:released.statement,
     releaseKind:released.releaseKind,
     sourceDigest:sha256(canonicalize(selected)),
-    // Internal-only identity for posterior accounting. Equivalent extractors
-    // that recover the same scalar must share one privacy ledger. The raw
-    // scalar is never returned across the kernel boundary.
-    privateScalarDigest:sha256(canonicalize({kind:contract.extractor.kind,value:extracted})),
     contractDigest:sha256(canonicalize(contract)),
     rawSourceIncluded:false,
     rawPrivatePathIncluded:false,
@@ -270,6 +268,7 @@ export function constraintContractSummary(rawContract){
     releaseKind:contract.release.op,
     outputLabel:contract.release.label,
     hasPrivateField:Boolean(contract.privateField),
+    hasPrivacyGroup:Boolean(contract.privacyGroup),
     selector:{...contract.privateRef}
   };
 }

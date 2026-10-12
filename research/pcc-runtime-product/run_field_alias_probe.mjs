@@ -31,6 +31,7 @@ function run(alias){
       id:`finance.${suffix}`,
       privateRef:{category:'finance'},
       privateField:fields[i],
+      ...(alias?{privacyGroup:'finance.balance'}:{}),
       extractor:{kind:'number',min:domain.min,max:domain.max,integer:true},
       release:{op:'compare',label:`Balance ${operator} ${target}`,operator,arg:target}
     });

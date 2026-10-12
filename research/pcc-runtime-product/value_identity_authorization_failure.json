@@ -1,0 +1,48 @@
+{
+  "study": "PCC value-derived identity authorization differential",
+  "domain": {
+    "type": "integer",
+    "min": 0,
+    "max": 1023
+  },
+  "equalWorld": {
+    "privateRelation": "equal",
+    "actualResults": [
+      true,
+      true
+    ],
+    "transcript": {
+      "firstReleased": {
+        "decision": "allow",
+        "value": true
+      },
+      "secondPrepared": {
+        "decision": "deny",
+        "derivedDisclosure": false
+      }
+    }
+  },
+  "unequalWorld": {
+    "privateRelation": "unequal",
+    "actualResults": [
+      true,
+      true
+    ],
+    "transcript": {
+      "firstReleased": {
+        "decision": "allow",
+        "value": true
+      },
+      "secondPrepared": {
+        "decision": "ask",
+        "derivedDisclosure": true
+      }
+    }
+  },
+  "adversaryInference": "second denial implies equality; second ask implies inequality",
+  "gates": {
+    "identical_released_results": true,
+    "second_decision_relation_independent": false
+  },
+  "verdict": "FAIL"
+}

@@ -124,6 +124,16 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
   zero approvals and consumptions. The preserved failure is corrected by one
   conservative aggregate PCC diagnostic row. The unchanged differential is now
   relation-independent, reruns byte-identically, and 307/307 tests pass.
+- More fundamentally, automatic co-accounting by current scalar equality made
+  authorization itself private-dependent. Two worlds released identical
+  predicates (`true`, `true`), yet the second preparation denied only when two
+  fields were equal. Value-derived identity is therefore falsified, superseding
+  the earlier scalar-only correction. PCC now uses stable record/field identity
+  by default and an explicit trusted `privacyGroup` for intentional aliases;
+  legacy value-derived state fails closed rather than resetting its budget.
+  The unchanged equality differential passes while extractor aliases and
+  explicitly grouped field aliases remain protected; 29/29 focused tests and
+  the complete 310/310 suite pass.
 
 ## Honest boundary
 
@@ -160,6 +170,8 @@ node research/pcc-runtime-product/run_selective_refusal_probe.mjs \
   --output /tmp/selective_refusal_replay.json
 node research/pcc-runtime-product/run_ledger_cardinality_probe.mjs \
   --output /tmp/ledger_cardinality_replay.json
+node research/pcc-runtime-product/run_value_identity_authorization_probe.mjs \
+  --output /tmp/value_identity_authorization_replay.json
 npm test
 ```
 

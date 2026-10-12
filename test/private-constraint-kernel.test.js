@@ -234,7 +234,7 @@ test('semantically equivalent private-field aliases share one PCC posterior ledg
     ['finance.lower','gte','balance'],
     ['finance.upper','lte','availableBalance']
   ]) k.registerConstraintContract({
-    id,privateRef:{category:'finance'},privateField,
+    id,privateRef:{category:'finance'},privateField,privacyGroup:'finance.balance',
     extractor:{kind:'number',min:0,max:1023,integer:true},
     release:{op:'compare',label:id,operator,arg:500}
   });
@@ -250,6 +250,38 @@ test('semantically equivalent private-field aliases share one PCC posterior ledg
   assert.equal(ledgers[0].remainingCandidates,524);
 });
 
+test('equal values in structurally independent fields do not share authorization state',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-pcc-independent-equal-fields-'));
+  const k=new ContextKernel({dir,passphrase:'independent equal fields regression'});
+  for(const suffix of ['a','b']){
+    k.put(`finance.${suffix}`,500,{category:`finance-${suffix}`});
+    k.registerConstraintContract({
+      id:`finance.${suffix}`,privateRef:{category:`finance-${suffix}`},
+      extractor:{kind:'number',min:0,max:1023,integer:true},
+      release:{op:'compare',label:suffix,operator:suffix==='a'?'gte':'lte',arg:suffix==='a'?500:501}
+    });
+  }
+  const first=k.prepareConstraintRelease({contractId:'finance.a',agent:'assistant',sink:'model.example'});
+  k.approveConstraintRelease(first.releaseId);
+  assert.equal(k.consumeConstraintRelease({releaseId:first.releaseId,agent:'assistant',sink:'model.example'}).constraint.value,true);
+  const second=k.prepareConstraintRelease({contractId:'finance.b',agent:'assistant',sink:'model.example'});
+  assert.equal(second.decision,'ask');
+});
+
+test('legacy value-derived PCC ledgers fail closed instead of resetting privacy state',()=>{
+  const {k}=setup();
+  k.runtime.partitionFirewall.registerField('pcc:legacy-value-derived-key',{type:'integer',min:0,max:500});
+  k.registerConstraintContract({
+    id:'flight.legacy-migration',privateRef:{category:'flight'},
+    extractor:{kind:'number',anchors:['maximum','groundspeed'],units:['mph'],min:0,max:500,integer:true},
+    release:{op:'compare',label:'Within limit',operator:'lte',arg:120}
+  });
+  assert.throws(
+    ()=>k.prepareConstraintRelease({contractId:'flight.legacy-migration',agent:'assistant',sink:'model.example'}),
+    /requires explicit migration/
+  );
+});
+
 test('equal-valued field aliases with conflicting domains fail closed',()=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-pcc-field-domain-alias-'));
   const k=new ContextKernel({dir,passphrase:'field alias domain regression test'});
@@ -258,7 +290,7 @@ test('equal-valued field aliases with conflicting domains fail closed',()=>{
     ['finance.wide',1023,'balance'],
     ['finance.narrow',800,'availableBalance']
   ]) k.registerConstraintContract({
-    id,privateRef:{category:'finance'},privateField,
+    id,privateRef:{category:'finance'},privateField,privacyGroup:'finance.balance',
     extractor:{kind:'number',min:0,max,integer:true},
     release:{op:'compare',label:id,operator:'gte',arg:400}
   });

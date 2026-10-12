@@ -196,6 +196,9 @@ export class ContextKernel extends BaseContextKernel{
   _prepareConstraintPartitionTransaction(rows){
     const firewall=this.runtime.partitionFirewall;
     if(!firewall) throw new Error('Constraint comparison releases require the partition inference firewall');
+    if(firewall.snapshot().fields.some(item=>String(item.field).startsWith('pcc:')&&!String(item.field).startsWith('pcc:v2:'))){
+      throw new Error('Legacy value-derived PCC privacy state requires explicit migration before comparison releases');
+    }
     let field=null,domain=null;
     const programs=[];
     for(const {contract,compiled,path} of rows){
@@ -203,11 +206,15 @@ export class ContextKernel extends BaseContextKernel{
       const release=contract.release;
       if(extractor.kind!=='number'||extractor.integer!==true||!Number.isSafeInteger(extractor.min)||!Number.isSafeInteger(extractor.max)) throw new Error('Constraint comparison releases require a bounded integer extractor');
       if(!['eq','neq','lt','lte','gt','gte'].includes(release.operator)||!Number.isSafeInteger(Number(release.arg))) throw new Error('Constraint comparison release is not analyzable by the inference firewall');
-      // Composition follows the recovered bounded scalar, not contract or
-      // schema syntax. This deliberately co-accounts equal scalar values from
-      // different paths: conservative false positives are safer than letting
-      // field aliases create independent privacy budgets.
-      const candidateField=`pcc:${compiled.privateScalarDigest}`;
+      // Composition identity must be structural and result-independent.
+      // Same-field extractor aliases share the default record/field identity;
+      // intentional aliases across fields or records must declare one trusted
+      // public privacyGroup. Current private-value equality is never an input.
+      const recordId=this.pathToId.get(path);
+      const identity=contract.privacyGroup
+        ?{scope:'declared',privacyGroup:contract.privacyGroup}
+        :{scope:'record-field',recordId,privateField:contract.privateField||'$self'};
+      const candidateField=`pcc:v2:${sha256(canonicalize(identity))}`;
       if(field!==null&&candidateField!==field) throw new Error('Constraint bundle contracts must share one bounded private field and extractor');
       field=candidateField;
       domain={type:'integer',min:extractor.min,max:extractor.max};
