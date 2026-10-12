@@ -1,0 +1,5559 @@
+{
+  "study": "PCC preparation timing-oracle differential",
+  "protocol": {
+    "domain": {
+      "type": "integer",
+      "min": 0,
+      "max": 1023
+    },
+    "guess": 500,
+    "warmups": 25,
+    "pairs": 500,
+    "seed": "0x5eed1234",
+    "clock": "process.hrtime.bigint"
+  },
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "observations": {
+    "targetMedianNs": {
+      "equal": 85734.5,
+      "unequal": 87918.5
+    },
+    "nullMedianNs": {
+      "a": 85040,
+      "b": 84948.5
+    },
+    "adjustedMedianLogRatio": 0.0005196165830020569,
+    "adjustedMedianRatio": 1.0005197516070847,
+    "positive": 251,
+    "negative": 249,
+    "directionalConsistency": 0.502,
+    "exactTwoSidedSignP": 0.9643353544466887,
+    "blockMedians": [
+      0.035523782009498496,
+      -0.001043371479178831,
+      0.014810842286293983,
+      -0.0002520005523461823,
+      -0.02290467771116322
+    ],
+    "agreeingBlocks": 2
+  },
+  "gates": {
+    "minimum_effect": false,
+    "direction_consistency": false,
+    "sign_test": false,
+    "block_consistency": false
+  },
+  "verdict": "PASS_WITHIN_TESTED_RESOLUTION",
+  "raw": {
+    "target": [
+      {
+        "leftNs": 140742,
+        "rightNs": 99650,
+        "logRatio": 0.34526438037973795
+      },
+      {
+        "leftNs": 1144303,
+        "rightNs": 289628,
+        "logRatio": 1.3739536560896157
+      },
+      {
+        "leftNs": 100136,
+        "rightNs": 144953,
+        "logRatio": -0.36988028991976374
+      },
+      {
+        "leftNs": 88323,
+        "rightNs": 125452,
+        "logRatio": -0.35092266594875465
+      },
+      {
+        "leftNs": 88711,
+        "rightNs": 82134,
+        "logRatio": 0.0770318353138103
+      },
+      {
+        "leftNs": 80949,
+        "rightNs": 81366,
+        "logRatio": -0.005138168591030782
+      },
+      {
+        "leftNs": 240505,
+        "rightNs": 105550,
+        "logRatio": 0.8235561050561667
+      },
+      {
+        "leftNs": 95163,
+        "rightNs": 257354,
+        "logRatio": -0.9948613582237237
+      },
+      {
+        "leftNs": 126412,
+        "rightNs": 89486,
+        "logRatio": 0.3454642254512103
+      },
+      {
+        "leftNs": 100253,
+        "rightNs": 87377,
+        "logRatio": 0.1374649007913233
+      },
+      {
+        "leftNs": 79863,
+        "rightNs": 83245,
+        "logRatio": -0.04147540032726995
+      },
+      {
+        "leftNs": 79321,
+        "rightNs": 82205,
+        "logRatio": -0.03571321672984735
+      },
+      {
+        "leftNs": 78026,
+        "rightNs": 123540,
+        "logRatio": -0.4595228857880409
+      },
+      {
+        "leftNs": 94513,
+        "rightNs": 91198,
+        "logRatio": 0.03570442416064764
+      },
+      {
+        "leftNs": 103644,
+        "rightNs": 117150,
+        "logRatio": -0.12249321486765585
+      },
+      {
+        "leftNs": 100411,
+        "rightNs": 139606,
+        "logRatio": -0.3295524063381879
+      },
+      {
+        "leftNs": 223528,
+        "rightNs": 159210,
+        "logRatio": 0.33931260034092947
+      },
+      {
+        "leftNs": 223583,
+        "rightNs": 151732,
+        "logRatio": 0.38766690300890055
+      },
+      {
+        "leftNs": 130624,
+        "rightNs": 105361,
+        "logRatio": 0.21493041852936237
+      },
+      {
+        "leftNs": 94509,
+        "rightNs": 92620,
+        "logRatio": 0.020189967007469903
+      },
+      {
+        "leftNs": 276309,
+        "rightNs": 147359,
+        "logRatio": 0.628648018306867
+      },
+      {
+        "leftNs": 259911,
+        "rightNs": 231806,
+        "logRatio": 0.11443844976882331
+      },
+      {
+        "leftNs": 107146,
+        "rightNs": 109338,
+        "logRatio": -0.02025161135381072
+      },
+      {
+        "leftNs": 102417,
+        "rightNs": 96476,
+        "logRatio": 0.059758441701744214
+      },
+      {
+        "leftNs": 1263225,
+        "rightNs": 243350,
+        "logRatio": 1.6469225174730961
+      },
+      {
+        "leftNs": 113330,
+        "rightNs": 160750,
+        "logRatio": -0.3495464463728717
+      },
+      {
+        "leftNs": 220228,
+        "rightNs": 120766,
+        "logRatio": 0.6008085844040489
+      },
+      {
+        "leftNs": 96454,
+        "rightNs": 165008,
+        "logRatio": -0.5369277468165032
+      },
+      {
+        "leftNs": 142195,
+        "rightNs": 136113,
+        "logRatio": 0.04371393190959323
+      },
+      {
+        "leftNs": 89274,
+        "rightNs": 92717,
+        "logRatio": -0.03784155095557011
+      },
+      {
+        "leftNs": 84979,
+        "rightNs": 84917,
+        "logRatio": 0.0007298582986325978
+      },
+      {
+        "leftNs": 93968,
+        "rightNs": 129683,
+        "logRatio": -0.32213871224765595
+      },
+      {
+        "leftNs": 98549,
+        "rightNs": 88770,
+        "logRatio": 0.10450513133358391
+      },
+      {
+        "leftNs": 121741,
+        "rightNs": 174572,
+        "logRatio": -0.3604414267342093
+      },
+      {
+        "leftNs": 181726,
+        "rightNs": 99535,
+        "logRatio": 0.6019907170698573
+      },
+      {
+        "leftNs": 88163,
+        "rightNs": 86239,
+        "logRatio": 0.022064862317594035
+      },
+      {
+        "leftNs": 82085,
+        "rightNs": 83067,
+        "logRatio": -0.011892215331746938
+      },
+      {
+        "leftNs": 276798,
+        "rightNs": 248584,
+        "logRatio": 0.10750718169683753
+      },
+      {
+        "leftNs": 167507,
+        "rightNs": 182392,
+        "logRatio": -0.08513307559256975
+      },
+      {
+        "leftNs": 272737,
+        "rightNs": 400781,
+        "logRatio": -0.3849071825748704
+      },
+      {
+        "leftNs": 94221,
+        "rightNs": 105139,
+        "logRatio": -0.10964019754461383
+      },
+      {
+        "leftNs": 88155,
+        "rightNs": 395114,
+        "logRatio": -1.5000777021241747
+      },
+      {
+        "leftNs": 205991,
+        "rightNs": 118395,
+        "logRatio": 0.5538059866863112
+      },
+      {
+        "leftNs": 140865,
+        "rightNs": 89313,
+        "logRatio": 0.45565493092976705
+      },
+      {
+        "leftNs": 97179,
+        "rightNs": 103241,
+        "logRatio": -0.06051142223000695
+      },
+      {
+        "leftNs": 192380,
+        "rightNs": 100170,
+        "logRatio": 0.6526038401007966
+      },
+      {
+        "leftNs": 89017,
+        "rightNs": 87788,
+        "logRatio": 0.013902545687159214
+      },
+      {
+        "leftNs": 233219,
+        "rightNs": 1087047,
+        "logRatio": -1.5392421981708673
+      },
+      {
+        "leftNs": 107164,
+        "rightNs": 94815,
+        "logRatio": 0.12243274674834331
+      },
+      {
+        "leftNs": 87858,
+        "rightNs": 88884,
+        "logRatio": -0.011610274017977321
+      },
+      {
+        "leftNs": 105852,
+        "rightNs": 128937,
+        "logRatio": -0.197282020911527
+      },
+      {
+        "leftNs": 557805,
+        "rightNs": 87676,
+        "logRatio": 1.850361237218412
+      },
+      {
+        "leftNs": 91038,
+        "rightNs": 93236,
+        "logRatio": -0.023856911433264114
+      },
+      {
+        "leftNs": 93580,
+        "rightNs": 89017,
+        "logRatio": 0.04998932271029886
+      },
+      {
+        "leftNs": 95557,
+        "rightNs": 117184,
+        "logRatio": -0.20402242097589154
+      },
+      {
+        "leftNs": 127424,
+        "rightNs": 152605,
+        "logRatio": -0.18033277527158945
+      },
+      {
+        "leftNs": 87238,
+        "rightNs": 87169,
+        "logRatio": 0.0007912526859583637
+      },
+      {
+        "leftNs": 84750,
+        "rightNs": 84663,
+        "logRatio": 0.0010270759345259147
+      },
+      {
+        "leftNs": 176411,
+        "rightNs": 102552,
+        "logRatio": 0.5424465128953049
+      },
+      {
+        "leftNs": 126411,
+        "rightNs": 92410,
+        "logRatio": 0.31330330534278056
+      },
+      {
+        "leftNs": 120600,
+        "rightNs": 188282,
+        "logRatio": -0.4454615546606001
+      },
+      {
+        "leftNs": 135543,
+        "rightNs": 132521,
+        "logRatio": 0.022547809716481015
+      },
+      {
+        "leftNs": 134589,
+        "rightNs": 262367,
+        "logRatio": -0.6675185967205712
+      },
+      {
+        "leftNs": 659006,
+        "rightNs": 316810,
+        "logRatio": 0.7324304140665052
+      },
+      {
+        "leftNs": 173563,
+        "rightNs": 99444,
+        "logRatio": 0.5569459742145889
+      },
+      {
+        "leftNs": 166045,
+        "rightNs": 259163,
+        "logRatio": -0.4451983714180563
+      },
+      {
+        "leftNs": 84615,
+        "rightNs": 86959,
+        "logRatio": -0.027325187346766318
+      },
+      {
+        "leftNs": 103098,
+        "rightNs": 86052,
+        "logRatio": 0.1807282275042249
+      },
+      {
+        "leftNs": 87607,
+        "rightNs": 1105984,
+        "logRatio": -2.5356298120059098
+      },
+      {
+        "leftNs": 511810,
+        "rightNs": 116805,
+        "logRatio": 1.4774475847201238
+      },
+      {
+        "leftNs": 1251528,
+        "rightNs": 84106,
+        "logRatio": 2.7000425757011794
+      },
+      {
+        "leftNs": 106575,
+        "rightNs": 137212,
+        "logRatio": -0.2526782123726483
+      },
+      {
+        "leftNs": 300381,
+        "rightNs": 121069,
+        "logRatio": 0.9086910378872882
+      },
+      {
+        "leftNs": 85590,
+        "rightNs": 85972,
+        "logRatio": -0.004453207951511082
+      },
+      {
+        "leftNs": 84193,
+        "rightNs": 121419,
+        "logRatio": -0.3661355913924806
+      },
+      {
+        "leftNs": 85797,
+        "rightNs": 85059,
+        "logRatio": 0.00863890749852208
+      },
+      {
+        "leftNs": 83599,
+        "rightNs": 83553,
+        "logRatio": 0.00055039725712237
+      },
+      {
+        "leftNs": 83233,
+        "rightNs": 132517,
+        "logRatio": -0.46506703527925464
+      },
+      {
+        "leftNs": 118927,
+        "rightNs": 352155,
+        "logRatio": -1.0855615600868043
+      },
+      {
+        "leftNs": 89765,
+        "rightNs": 87126,
+        "logRatio": 0.02983979754613685
+      },
+      {
+        "leftNs": 153558,
+        "rightNs": 258941,
+        "logRatio": -0.522521890698831
+      },
+      {
+        "leftNs": 85418,
+        "rightNs": 92508,
+        "logRatio": -0.07973827584635057
+      },
+      {
+        "leftNs": 82172,
+        "rightNs": 80663,
+        "logRatio": 0.018534629520231678
+      },
+      {
+        "leftNs": 131440,
+        "rightNs": 85748,
+        "logRatio": 0.4271377115701235
+      },
+      {
+        "leftNs": 84456,
+        "rightNs": 118912,
+        "logRatio": -0.3421530350639249
+      },
+      {
+        "leftNs": 86186,
+        "rightNs": 160949,
+        "logRatio": -0.6245797931296647
+      },
+      {
+        "leftNs": 90898,
+        "rightNs": 82769,
+        "logRatio": 0.09368440358894423
+      },
+      {
+        "leftNs": 83118,
+        "rightNs": 80807,
+        "logRatio": 0.02819768946586007
+      },
+      {
+        "leftNs": 114288,
+        "rightNs": 95856,
+        "logRatio": 0.17587451307104765
+      },
+      {
+        "leftNs": 188133,
+        "rightNs": 262670,
+        "logRatio": -0.3337493319486524
+      },
+      {
+        "leftNs": 114459,
+        "rightNs": 92306,
+        "logRatio": 0.2151075354530589
+      },
+      {
+        "leftNs": 87763,
+        "rightNs": 98159,
+        "logRatio": -0.11194861338043069
+      },
+      {
+        "leftNs": 90115,
+        "rightNs": 84229,
+        "logRatio": 0.06754735244251313
+      },
+      {
+        "leftNs": 130591,
+        "rightNs": 85137,
+        "logRatio": 0.42780857805972083
+      },
+      {
+        "leftNs": 98724,
+        "rightNs": 128229,
+        "logRatio": -0.26148964997872903
+      },
+      {
+        "leftNs": 92265,
+        "rightNs": 87647,
+        "logRatio": 0.05134748758631739
+      },
+      {
+        "leftNs": 94167,
+        "rightNs": 84181,
+        "logRatio": 0.11210055915701497
+      },
+      {
+        "leftNs": 87484,
+        "rightNs": 121066,
+        "logRatio": -0.32487993193563175
+      },
+      {
+        "leftNs": 88136,
+        "rightNs": 144400,
+        "logRatio": -0.4937061504209621
+      },
+      {
+        "leftNs": 193463,
+        "rightNs": 154514,
+        "logRatio": 0.22480157259648387
+      },
+      {
+        "leftNs": 159083,
+        "rightNs": 152289,
+        "logRatio": 0.043646047174969865
+      },
+      {
+        "leftNs": 90136,
+        "rightNs": 90808,
+        "logRatio": -0.0074277465911734685
+      },
+      {
+        "leftNs": 225134,
+        "rightNs": 106491,
+        "logRatio": 0.7486353059508413
+      },
+      {
+        "leftNs": 450163,
+        "rightNs": 261617,
+        "logRatio": 0.542728137218847
+      },
+      {
+        "leftNs": 261371,
+        "rightNs": 508369,
+        "logRatio": -0.6652667078972082
+      },
+      {
+        "leftNs": 279360,
+        "rightNs": 229701,
+        "logRatio": 0.1957228094610902
+      },
+      {
+        "leftNs": 90383,
+        "rightNs": 113009,
+        "logRatio": -0.22341126494187913
+      },
+      {
+        "leftNs": 76340,
+        "rightNs": 76569,
+        "logRatio": -0.0029952477775183543
+      },
+      {
+        "leftNs": 146873,
+        "rightNs": 80323,
+        "logRatio": 0.6035122619409219
+      },
+      {
+        "leftNs": 76974,
+        "rightNs": 77145,
+        "logRatio": -0.002219065399730991
+      },
+      {
+        "leftNs": 98764,
+        "rightNs": 148702,
+        "logRatio": -0.40921113739037784
+      },
+      {
+        "leftNs": 82077,
+        "rightNs": 78410,
+        "logRatio": 0.04570636080406964
+      },
+      {
+        "leftNs": 77836,
+        "rightNs": 80629,
+        "logRatio": -0.035254337192473395
+      },
+      {
+        "leftNs": 74922,
+        "rightNs": 104125,
+        "logRatio": -0.32914452812594375
+      },
+      {
+        "leftNs": 75726,
+        "rightNs": 76030,
+        "logRatio": -0.004006436735796745
+      },
+      {
+        "leftNs": 74493,
+        "rightNs": 74018,
+        "logRatio": 0.006396854370906235
+      },
+      {
+        "leftNs": 75491,
+        "rightNs": 74962,
+        "logRatio": 0.007032125380733393
+      },
+      {
+        "leftNs": 838325,
+        "rightNs": 398268,
+        "logRatio": 0.7442807079495875
+      },
+      {
+        "leftNs": 356631,
+        "rightNs": 86589,
+        "logRatio": 1.4155288470721619
+      },
+      {
+        "leftNs": 93550,
+        "rightNs": 81641,
+        "logRatio": 0.13616446595587256
+      },
+      {
+        "leftNs": 78098,
+        "rightNs": 77275,
+        "logRatio": 0.010593960304942536
+      },
+      {
+        "leftNs": 78616,
+        "rightNs": 87635,
+        "logRatio": -0.10860522046501353
+      },
+      {
+        "leftNs": 78286,
+        "rightNs": 77803,
+        "logRatio": 0.006188796668855453
+      },
+      {
+        "leftNs": 77818,
+        "rightNs": 76047,
+        "logRatio": 0.023021196696579666
+      },
+      {
+        "leftNs": 88292,
+        "rightNs": 78437,
+        "logRatio": 0.11835374847517147
+      },
+      {
+        "leftNs": 76391,
+        "rightNs": 77813,
+        "logRatio": -0.01844362415492718
+      },
+      {
+        "leftNs": 76258,
+        "rightNs": 75894,
+        "logRatio": 0.004784698123336253
+      },
+      {
+        "leftNs": 79313,
+        "rightNs": 115256,
+        "logRatio": -0.37375369162791966
+      },
+      {
+        "leftNs": 76756,
+        "rightNs": 74518,
+        "logRatio": 0.029590852366900882
+      },
+      {
+        "leftNs": 74635,
+        "rightNs": 121903,
+        "logRatio": -0.49061608043553473
+      },
+      {
+        "leftNs": 117361,
+        "rightNs": 77450,
+        "logRatio": 0.4156220877262763
+      },
+      {
+        "leftNs": 75305,
+        "rightNs": 86404,
+        "logRatio": -0.13748743737085378
+      },
+      {
+        "leftNs": 117482,
+        "rightNs": 282580,
+        "logRatio": -0.8776765659778245
+      },
+      {
+        "leftNs": 76561,
+        "rightNs": 76378,
+        "logRatio": 0.002393112120996295
+      },
+      {
+        "leftNs": 76995,
+        "rightNs": 75851,
+        "logRatio": 0.014969595057119131
+      },
+      {
+        "leftNs": 79766,
+        "rightNs": 114082,
+        "logRatio": -0.3578201395678075
+      },
+      {
+        "leftNs": 77732,
+        "rightNs": 75879,
+        "logRatio": 0.024127046725699028
+      },
+      {
+        "leftNs": 74353,
+        "rightNs": 74962,
+        "logRatio": -0.008157296681201843
+      },
+      {
+        "leftNs": 76836,
+        "rightNs": 75756,
+        "logRatio": 0.014155631151176544
+      },
+      {
+        "leftNs": 75024,
+        "rightNs": 76253,
+        "logRatio": -0.016248696628620385
+      },
+      {
+        "leftNs": 84584,
+        "rightNs": 77187,
+        "logRatio": 0.0915140743617031
+      },
+      {
+        "leftNs": 87777,
+        "rightNs": 100997,
+        "logRatio": -0.14029130610372306
+      },
+      {
+        "leftNs": 80031,
+        "rightNs": 83135,
+        "logRatio": -0.03805173287719654
+      },
+      {
+        "leftNs": 114765,
+        "rightNs": 89794,
+        "logRatio": 0.24536840142076832
+      },
+      {
+        "leftNs": 78734,
+        "rightNs": 77208,
+        "logRatio": 0.01957200385497721
+      },
+      {
+        "leftNs": 90202,
+        "rightNs": 116862,
+        "logRatio": -0.25894215170405377
+      },
+      {
+        "leftNs": 79996,
+        "rightNs": 87300,
+        "logRatio": -0.08737382942171652
+      },
+      {
+        "leftNs": 76545,
+        "rightNs": 77009,
+        "logRatio": -0.0060434949562231995
+      },
+      {
+        "leftNs": 98920,
+        "rightNs": 79173,
+        "logRatio": 0.22267611104645865
+      },
+      {
+        "leftNs": 77770,
+        "rightNs": 76469,
+        "logRatio": 0.016870322759892684
+      },
+      {
+        "leftNs": 76133,
+        "rightNs": 76723,
+        "logRatio": -0.007719722222757231
+      },
+      {
+        "leftNs": 75958,
+        "rightNs": 74382,
+        "logRatio": 0.020966578866206374
+      },
+      {
+        "leftNs": 77214,
+        "rightNs": 75907,
+        "logRatio": 0.017071880976645436
+      },
+      {
+        "leftNs": 76265,
+        "rightNs": 75323,
+        "logRatio": 0.01242858439772318
+      },
+      {
+        "leftNs": 89402,
+        "rightNs": 155847,
+        "logRatio": -0.5557317034560378
+      },
+      {
+        "leftNs": 919337,
+        "rightNs": 78029,
+        "logRatio": 2.4665722056117736
+      },
+      {
+        "leftNs": 95138,
+        "rightNs": 178559,
+        "logRatio": -0.6295906096879655
+      },
+      {
+        "leftNs": 77820,
+        "rightNs": 76212,
+        "logRatio": 0.02087953694756948
+      },
+      {
+        "leftNs": 76364,
+        "rightNs": 76361,
+        "logRatio": 0.00003928629890820241
+      },
+      {
+        "leftNs": 83267,
+        "rightNs": 87140,
+        "logRatio": -0.04546370847137915
+      },
+      {
+        "leftNs": 138508,
+        "rightNs": 191838,
+        "logRatio": -0.3257231801782972
+      },
+      {
+        "leftNs": 75035,
+        "rightNs": 77383,
+        "logRatio": -0.03081244688082317
+      },
+      {
+        "leftNs": 75054,
+        "rightNs": 76442,
+        "logRatio": -0.01832442888101195
+      },
+      {
+        "leftNs": 74199,
+        "rightNs": 114936,
+        "logRatio": -0.43762477871484884
+      },
+      {
+        "leftNs": 96421,
+        "rightNs": 189257,
+        "logRatio": -0.6743818595285214
+      },
+      {
+        "leftNs": 104425,
+        "rightNs": 88049,
+        "logRatio": 0.17057563268893572
+      },
+      {
+        "leftNs": 81139,
+        "rightNs": 79232,
+        "logRatio": 0.023783475702660158
+      },
+      {
+        "leftNs": 79265,
+        "rightNs": 78693,
+        "logRatio": 0.007242463189841492
+      },
+      {
+        "leftNs": 80386,
+        "rightNs": 78743,
+        "logRatio": 0.020650646803408636
+      },
+      {
+        "leftNs": 78196,
+        "rightNs": 77662,
+        "logRatio": 0.006852418092418398
+      },
+      {
+        "leftNs": 78216,
+        "rightNs": 78223,
+        "logRatio": -0.00008949175083797686
+      },
+      {
+        "leftNs": 78208,
+        "rightNs": 80252,
+        "logRatio": -0.025799739708879034
+      },
+      {
+        "leftNs": 78930,
+        "rightNs": 77129,
+        "logRatio": 0.023082038982268113
+      },
+      {
+        "leftNs": 230930,
+        "rightNs": 123769,
+        "logRatio": 0.6236977092788144
+      },
+      {
+        "leftNs": 89894,
+        "rightNs": 128129,
+        "logRatio": -0.354406370490379
+      },
+      {
+        "leftNs": 137815,
+        "rightNs": 92942,
+        "logRatio": 0.393936563381162
+      },
+      {
+        "leftNs": 191728,
+        "rightNs": 200809,
+        "logRatio": -0.046276506590126505
+      },
+      {
+        "leftNs": 79022,
+        "rightNs": 76725,
+        "logRatio": 0.02949869420523997
+      },
+      {
+        "leftNs": 140629,
+        "rightNs": 74206,
+        "logRatio": 0.6392802075607644
+      },
+      {
+        "leftNs": 175754,
+        "rightNs": 79832,
+        "logRatio": 0.789160863451474
+      },
+      {
+        "leftNs": 79816,
+        "rightNs": 99205,
+        "logRatio": -0.2174644306352276
+      },
+      {
+        "leftNs": 78555,
+        "rightNs": 76557,
+        "logRatio": 0.02576345497559017
+      },
+      {
+        "leftNs": 75022,
+        "rightNs": 75001,
+        "logRatio": 0.0002799570750771927
+      },
+      {
+        "leftNs": 87123,
+        "rightNs": 133150,
+        "logRatio": -0.4241553989664082
+      },
+      {
+        "leftNs": 75140,
+        "rightNs": 74341,
+        "logRatio": 0.010690423658823183
+      },
+      {
+        "leftNs": 74724,
+        "rightNs": 75277,
+        "logRatio": -0.007373317582623815
+      },
+      {
+        "leftNs": 117762,
+        "rightNs": 75504,
+        "logRatio": 0.4444800035479653
+      },
+      {
+        "leftNs": 76560,
+        "rightNs": 121562,
+        "logRatio": -0.462349673549068
+      },
+      {
+        "leftNs": 97069,
+        "rightNs": 83280,
+        "logRatio": 0.15321364152032704
+      },
+      {
+        "leftNs": 83673,
+        "rightNs": 96423,
+        "logRatio": -0.14182841756029838
+      },
+      {
+        "leftNs": 77670,
+        "rightNs": 75767,
+        "logRatio": 0.024806240778782417
+      },
+      {
+        "leftNs": 77272,
+        "rightNs": 80593,
+        "logRatio": -0.042080132228791055
+      },
+      {
+        "leftNs": 77732,
+        "rightNs": 92281,
+        "logRatio": -0.17157125682868923
+      },
+      {
+        "leftNs": 75867,
+        "rightNs": 74971,
+        "logRatio": 0.011880435152712499
+      },
+      {
+        "leftNs": 75311,
+        "rightNs": 77942,
+        "logRatio": -0.034338753871842514
+      },
+      {
+        "leftNs": 100256,
+        "rightNs": 219501,
+        "logRatio": -0.7836298735437233
+      },
+      {
+        "leftNs": 129330,
+        "rightNs": 79821,
+        "logRatio": 0.48258064969661824
+      },
+      {
+        "leftNs": 78160,
+        "rightNs": 78186,
+        "logRatio": -0.00033259565629660493
+      },
+      {
+        "leftNs": 76735,
+        "rightNs": 74995,
+        "logRatio": 0.022936482979735388
+      },
+      {
+        "leftNs": 414239,
+        "rightNs": 172050,
+        "logRatio": 0.8786579696973418
+      },
+      {
+        "leftNs": 79852,
+        "rightNs": 77051,
+        "logRatio": 0.03570738104316938
+      },
+      {
+        "leftNs": 79981,
+        "rightNs": 83576,
+        "logRatio": -0.04396729106891649
+      },
+      {
+        "leftNs": 76357,
+        "rightNs": 74155,
+        "logRatio": 0.029262213306720627
+      },
+      {
+        "leftNs": 139817,
+        "rightNs": 84728,
+        "logRatio": 0.500888299154367
+      },
+      {
+        "leftNs": 77828,
+        "rightNs": 74723,
+        "logRatio": 0.040713320601594244
+      },
+      {
+        "leftNs": 120726,
+        "rightNs": 73527,
+        "logRatio": 0.4958708293115659
+      },
+      {
+        "leftNs": 77561,
+        "rightNs": 110905,
+        "logRatio": -0.35760925546747857
+      },
+      {
+        "leftNs": 80536,
+        "rightNs": 127694,
+        "logRatio": -0.4609324873861579
+      },
+      {
+        "leftNs": 260363,
+        "rightNs": 105835,
+        "logRatio": 0.9001955335729668
+      },
+      {
+        "leftNs": 79555,
+        "rightNs": 78715,
+        "logRatio": 0.01061487189322755
+      },
+      {
+        "leftNs": 76808,
+        "rightNs": 118432,
+        "logRatio": -0.4330301548084228
+      },
+      {
+        "leftNs": 761304,
+        "rightNs": 225859,
+        "logRatio": 1.2151218417046126
+      },
+      {
+        "leftNs": 82681,
+        "rightNs": 78692,
+        "logRatio": 0.049448331149822056
+      },
+      {
+        "leftNs": 112268,
+        "rightNs": 80437,
+        "logRatio": 0.3334146007832876
+      },
+      {
+        "leftNs": 78812,
+        "rightNs": 77725,
+        "logRatio": 0.013888313588903904
+      },
+      {
+        "leftNs": 76724,
+        "rightNs": 75985,
+        "logRatio": 0.009678614473873047
+      },
+      {
+        "leftNs": 76941,
+        "rightNs": 77923,
+        "logRatio": -0.012682265239512231
+      },
+      {
+        "leftNs": 75680,
+        "rightNs": 76095,
+        "logRatio": -0.00546863494314015
+      },
+      {
+        "leftNs": 75000,
+        "rightNs": 74725,
+        "logRatio": 0.0036734053663088884
+      },
+      {
+        "leftNs": 303510,
+        "rightNs": 84161,
+        "logRatio": 1.2826829278378233
+      },
+      {
+        "leftNs": 76014,
+        "rightNs": 75803,
+        "logRatio": 0.0027796641464154577
+      },
+      {
+        "leftNs": 75933,
+        "rightNs": 75538,
+        "logRatio": 0.0052155316250792425
+      },
+      {
+        "leftNs": 76305,
+        "rightNs": 125930,
+        "logRatio": -0.500987730074917
+      },
+      {
+        "leftNs": 75798,
+        "rightNs": 74528,
+        "logRatio": 0.016897013374024956
+      },
+      {
+        "leftNs": 79404,
+        "rightNs": 129680,
+        "logRatio": -0.4905211326094979
+      },
+      {
+        "leftNs": 85672,
+        "rightNs": 130855,
+        "logRatio": -0.42356378884031076
+      },
+      {
+        "leftNs": 92811,
+        "rightNs": 293933,
+        "logRatio": -1.1527866829608269
+      },
+      {
+        "leftNs": 79184,
+        "rightNs": 78294,
+        "logRatio": 0.011303286501365391
+      },
+      {
+        "leftNs": 653877,
+        "rightNs": 264476,
+        "logRatio": 0.9051687504332786
+      },
+      {
+        "leftNs": 92572,
+        "rightNs": 466075,
+        "logRatio": -1.6163598452641095
+      },
+      {
+        "leftNs": 212252,
+        "rightNs": 175148,
+        "logRatio": 0.19214291720307264
+      },
+      {
+        "leftNs": 101846,
+        "rightNs": 88615,
+        "logRatio": 0.1391607249531548
+      },
+      {
+        "leftNs": 79465,
+        "rightNs": 119409,
+        "logRatio": -0.4072379018534463
+      },
+      {
+        "leftNs": 79948,
+        "rightNs": 75838,
+        "logRatio": 0.052776937041274806
+      },
+      {
+        "leftNs": 82302,
+        "rightNs": 75884,
+        "logRatio": 0.081189550234026
+      },
+      {
+        "leftNs": 107930,
+        "rightNs": 87592,
+        "logRatio": 0.2087931992661311
+      },
+      {
+        "leftNs": 79944,
+        "rightNs": 144248,
+        "logRatio": -0.5902076509145789
+      },
+      {
+        "leftNs": 92061,
+        "rightNs": 351275,
+        "logRatio": -1.3391179916813143
+      },
+      {
+        "leftNs": 155793,
+        "rightNs": 86956,
+        "logRatio": 0.5831259594356973
+      },
+      {
+        "leftNs": 77285,
+        "rightNs": 76095,
+        "logRatio": 0.01551732791751882
+      },
+      {
+        "leftNs": 79599,
+        "rightNs": 75234,
+        "logRatio": 0.056398273520898365
+      },
+      {
+        "leftNs": 434383,
+        "rightNs": 242273,
+        "logRatio": 0.5838614439111424
+      },
+      {
+        "leftNs": 86339,
+        "rightNs": 252711,
+        "logRatio": -1.0739651353810287
+      },
+      {
+        "leftNs": 77217,
+        "rightNs": 76771,
+        "logRatio": 0.005792675366003359
+      },
+      {
+        "leftNs": 77311,
+        "rightNs": 125975,
+        "logRatio": -0.4882472263806684
+      },
+      {
+        "leftNs": 180017,
+        "rightNs": 109809,
+        "logRatio": 0.49430879794564253
+      },
+      {
+        "leftNs": 78320,
+        "rightNs": 76206,
+        "logRatio": 0.0273627984720176
+      },
+      {
+        "leftNs": 171289,
+        "rightNs": 97158,
+        "logRatio": 0.5670136691210377
+      },
+      {
+        "leftNs": 75278,
+        "rightNs": 74291,
+        "logRatio": 0.013198113607800873
+      },
+      {
+        "leftNs": 190840,
+        "rightNs": 349558,
+        "logRatio": -0.6052341186166396
+      },
+      {
+        "leftNs": 529922,
+        "rightNs": 78978,
+        "logRatio": 1.903560493232982
+      },
+      {
+        "leftNs": 77711,
+        "rightNs": 76702,
+        "logRatio": 0.01306903384252174
+      },
+      {
+        "leftNs": 127248,
+        "rightNs": 74735,
+        "logRatio": 0.5321894149770016
+      },
+      {
+        "leftNs": 81663,
+        "rightNs": 77017,
+        "logRatio": 0.05857484620317257
+      },
+      {
+        "leftNs": 74649,
+        "rightNs": 73646,
+        "logRatio": 0.013527297544514294
+      },
+      {
+        "leftNs": 91780,
+        "rightNs": 76494,
+        "logRatio": 0.18218210258264728
+      },
+      {
+        "leftNs": 77165,
+        "rightNs": 75620,
+        "logRatio": 0.02022518789000801
+      },
+      {
+        "leftNs": 74647,
+        "rightNs": 73968,
+        "logRatio": 0.00913776838992675
+      },
+      {
+        "leftNs": 975573,
+        "rightNs": 226603,
+        "logRatio": 1.45982540298778
+      },
+      {
+        "leftNs": 82962,
+        "rightNs": 78182,
+        "logRatio": 0.05934322960666175
+      },
+      {
+        "leftNs": 77385,
+        "rightNs": 147728,
+        "logRatio": -0.6465797816655492
+      },
+      {
+        "leftNs": 77936,
+        "rightNs": 77070,
+        "logRatio": 0.011173877274284875
+      },
+      {
+        "leftNs": 76764,
+        "rightNs": 76242,
+        "logRatio": 0.006823288305548569
+      },
+      {
+        "leftNs": 117060,
+        "rightNs": 79110,
+        "logRatio": 0.3918473348297698
+      },
+      {
+        "leftNs": 82362,
+        "rightNs": 221699,
+        "logRatio": -0.9901964405146056
+      },
+      {
+        "leftNs": 77444,
+        "rightNs": 76272,
+        "logRatio": 0.01524919606444889
+      },
+      {
+        "leftNs": 79855,
+        "rightNs": 78537,
+        "logRatio": 0.016642638784957392
+      },
+      {
+        "leftNs": 80062,
+        "rightNs": 170407,
+        "logRatio": -0.7553883588472167
+      },
+      {
+        "leftNs": 91739,
+        "rightNs": 172314,
+        "logRatio": -0.6303708051213769
+      },
+      {
+        "leftNs": 76002,
+        "rightNs": 75127,
+        "logRatio": 0.011579640932372683
+      },
+      {
+        "leftNs": 126066,
+        "rightNs": 73959,
+        "logRatio": 0.5332946937295161
+      },
+      {
+        "leftNs": 77341,
+        "rightNs": 73825,
+        "logRatio": 0.046526788385408455
+      },
+      {
+        "leftNs": 75143,
+        "rightNs": 73499,
+        "logRatio": 0.022121164137214464
+      },
+      {
+        "leftNs": 82303,
+        "rightNs": 105770,
+        "logRatio": -0.2508593663164353
+      },
+      {
+        "leftNs": 75798,
+        "rightNs": 74480,
+        "logRatio": 0.017541274107143873
+      },
+      {
+        "leftNs": 75913,
+        "rightNs": 78605,
+        "logRatio": -0.03484736291092957
+      },
+      {
+        "leftNs": 76834,
+        "rightNs": 107059,
+        "logRatio": -0.33173283384437646
+      },
+      {
+        "leftNs": 75854,
+        "rightNs": 80252,
+        "logRatio": -0.056361243751397644
+      },
+      {
+        "leftNs": 109082,
+        "rightNs": 86336,
+        "logRatio": 0.23385323239086003
+      },
+      {
+        "leftNs": 109329,
+        "rightNs": 76079,
+        "logRatio": 0.3625894106923734
+      },
+      {
+        "leftNs": 75194,
+        "rightNs": 179283,
+        "logRatio": -0.8688941224151565
+      },
+      {
+        "leftNs": 120639,
+        "rightNs": 75389,
+        "logRatio": 0.4701412393236526
+      },
+      {
+        "leftNs": 91086,
+        "rightNs": 183396,
+        "logRatio": -0.6998436341550665
+      },
+      {
+        "leftNs": 77976,
+        "rightNs": 77940,
+        "logRatio": 0.00046178712434580396
+      },
+      {
+        "leftNs": 195578,
+        "rightNs": 112050,
+        "logRatio": 0.5570140765904292
+      },
+      {
+        "leftNs": 78950,
+        "rightNs": 78009,
+        "logRatio": 0.011990536052967352
+      },
+      {
+        "leftNs": 88780,
+        "rightNs": 128992,
+        "logRatio": -0.3735889875288661
+      },
+      {
+        "leftNs": 78815,
+        "rightNs": 86629,
+        "logRatio": -0.09453129841165686
+      },
+      {
+        "leftNs": 76798,
+        "rightNs": 75811,
+        "logRatio": 0.01293519729473933
+      },
+      {
+        "leftNs": 81959,
+        "rightNs": 91999,
+        "logRatio": -0.11555858520217792
+      },
+      {
+        "leftNs": 76232,
+        "rightNs": 76710,
+        "logRatio": -0.00625075592531787
+      },
+      {
+        "leftNs": 75488,
+        "rightNs": 74869,
+        "logRatio": 0.008233783556442678
+      },
+      {
+        "leftNs": 116197,
+        "rightNs": 77454,
+        "logRatio": 0.40560281477596666
+      },
+      {
+        "leftNs": 75687,
+        "rightNs": 74748,
+        "logRatio": 0.012483959120829429
+      },
+      {
+        "leftNs": 75024,
+        "rightNs": 74729,
+        "logRatio": 0.003939826001322473
+      },
+      {
+        "leftNs": 85459,
+        "rightNs": 108291,
+        "logRatio": -0.2367853192940123
+      },
+      {
+        "leftNs": 75866,
+        "rightNs": 76124,
+        "logRatio": -0.003394963455545116
+      },
+      {
+        "leftNs": 152671,
+        "rightNs": 75019,
+        "logRatio": 0.7105438645365519
+      },
+      {
+        "leftNs": 121632,
+        "rightNs": 78302,
+        "logRatio": 0.4404269473521287
+      },
+      {
+        "leftNs": 77786,
+        "rightNs": 74279,
+        "logRatio": 0.046133192585698604
+      },
+      {
+        "leftNs": 180530,
+        "rightNs": 74064,
+        "logRatio": 0.890967384659652
+      },
+      {
+        "leftNs": 160860,
+        "rightNs": 191361,
+        "logRatio": -0.17362727502519815
+      },
+      {
+        "leftNs": 190905,
+        "rightNs": 139944,
+        "logRatio": 0.3105335795241555
+      },
+      {
+        "leftNs": 205001,
+        "rightNs": 354951,
+        "logRatio": -0.5489648946043463
+      },
+      {
+        "leftNs": 87096,
+        "rightNs": 138511,
+        "logRatio": -0.46393878627739527
+      },
+      {
+        "leftNs": 79128,
+        "rightNs": 76904,
+        "logRatio": 0.028508903674024495
+      },
+      {
+        "leftNs": 92585,
+        "rightNs": 142268,
+        "logRatio": -0.4295854612970195
+      },
+      {
+        "leftNs": 95879,
+        "rightNs": 253854,
+        "logRatio": -0.9736723187982703
+      },
+      {
+        "leftNs": 78001,
+        "rightNs": 133842,
+        "logRatio": -0.5399383526624696
+      },
+      {
+        "leftNs": 78111,
+        "rightNs": 75925,
+        "logRatio": 0.02838488106651468
+      },
+      {
+        "leftNs": 146625,
+        "rightNs": 213394,
+        "logRatio": -0.3752619152850621
+      },
+      {
+        "leftNs": 79294,
+        "rightNs": 101022,
+        "logRatio": -0.24217585116830725
+      },
+      {
+        "leftNs": 92286,
+        "rightNs": 130261,
+        "logRatio": -0.3446476793448444
+      },
+      {
+        "leftNs": 75901,
+        "rightNs": 75692,
+        "logRatio": 0.0027573850035542673
+      },
+      {
+        "leftNs": 74637,
+        "rightNs": 75328,
+        "logRatio": -0.009215548832525405
+      },
+      {
+        "leftNs": 114291,
+        "rightNs": 74339,
+        "logRatio": 0.4301121144728517
+      },
+      {
+        "leftNs": 76133,
+        "rightNs": 78063,
+        "logRatio": -0.02503438216893505
+      },
+      {
+        "leftNs": 76268,
+        "rightNs": 76089,
+        "logRatio": 0.002349745431577625
+      },
+      {
+        "leftNs": 77898,
+        "rightNs": 124272,
+        "logRatio": -0.46707243307112006
+      },
+      {
+        "leftNs": 75306,
+        "rightNs": 75090,
+        "logRatio": 0.002872418794571532
+      },
+      {
+        "leftNs": 74763,
+        "rightNs": 133159,
+        "logRatio": -0.5772207927227804
+      },
+      {
+        "leftNs": 77355,
+        "rightNs": 108144,
+        "logRatio": -0.3350584561869663
+      },
+      {
+        "leftNs": 76124,
+        "rightNs": 74712,
+        "logRatio": 0.018722867847364155
+      },
+      {
+        "leftNs": 74948,
+        "rightNs": 75161,
+        "logRatio": -0.0028379396699296576
+      },
+      {
+        "leftNs": 77837,
+        "rightNs": 79019,
+        "logRatio": -0.015071433340177473
+      },
+      {
+        "leftNs": 75068,
+        "rightNs": 74039,
+        "logRatio": 0.013802388027797067
+      },
+      {
+        "leftNs": 78306,
+        "rightNs": 75322,
+        "logRatio": 0.03885197160475022
+      },
+      {
+        "leftNs": 106349,
+        "rightNs": 203363,
+        "logRatio": -0.6482664208088476
+      },
+      {
+        "leftNs": 73793,
+        "rightNs": 75041,
+        "logRatio": -0.01677075467590698
+      },
+      {
+        "leftNs": 76039,
+        "rightNs": 1124323,
+        "logRatio": -2.6936899891592394
+      },
+      {
+        "leftNs": 89753,
+        "rightNs": 85519,
+        "logRatio": 0.04832287951635364
+      },
+      {
+        "leftNs": 76383,
+        "rightNs": 77068,
+        "logRatio": -0.008927990694754612
+      },
+      {
+        "leftNs": 112049,
+        "rightNs": 84576,
+        "logRatio": 0.2812857371979951
+      },
+      {
+        "leftNs": 165295,
+        "rightNs": 233751,
+        "logRatio": -0.34652468989889207
+      },
+      {
+        "leftNs": 196842,
+        "rightNs": 76982,
+        "logRatio": 0.9388297481903032
+      },
+      {
+        "leftNs": 74398,
+        "rightNs": 75276,
+        "logRatio": -0.011732299145310399
+      },
+      {
+        "leftNs": 76748,
+        "rightNs": 79046,
+        "logRatio": -0.02950263399384489
+      },
+      {
+        "leftNs": 74388,
+        "rightNs": 74709,
+        "logRatio": -0.004305928301335268
+      },
+      {
+        "leftNs": 82455,
+        "rightNs": 173985,
+        "logRatio": -0.7467163986212159
+      },
+      {
+        "leftNs": 149907,
+        "rightNs": 79569,
+        "logRatio": 0.6333905320568893
+      },
+      {
+        "leftNs": 75970,
+        "rightNs": 74006,
+        "logRatio": 0.026192354516772678
+      },
+      {
+        "leftNs": 241588,
+        "rightNs": 83808,
+        "logRatio": 1.058705327627647
+      },
+      {
+        "leftNs": 75355,
+        "rightNs": 120446,
+        "logRatio": -0.46899123983748414
+      },
+      {
+        "leftNs": 75666,
+        "rightNs": 75154,
+        "logRatio": 0.0067895765397348005
+      },
+      {
+        "leftNs": 76013,
+        "rightNs": 93670,
+        "logRatio": -0.20887358893096247
+      },
+      {
+        "leftNs": 74720,
+        "rightNs": 73053,
+        "logRatio": 0.022562588805329062
+      },
+      {
+        "leftNs": 74018,
+        "rightNs": 73929,
+        "logRatio": 0.0012031336997146904
+      },
+      {
+        "leftNs": 76830,
+        "rightNs": 74846,
+        "logRatio": 0.02616251965564613
+      },
+      {
+        "leftNs": 78380,
+        "rightNs": 73123,
+        "logRatio": 0.06942583802084497
+      },
+      {
+        "leftNs": 120355,
+        "rightNs": 78002,
+        "logRatio": 0.43371124147189777
+      },
+      {
+        "leftNs": 143899,
+        "rightNs": 77670,
+        "logRatio": 0.6166425821672933
+      },
+      {
+        "leftNs": 80236,
+        "rightNs": 192852,
+        "logRatio": -0.8769507633924822
+      },
+      {
+        "leftNs": 74647,
+        "rightNs": 120192,
+        "logRatio": -0.47632012850994654
+      },
+      {
+        "leftNs": 901598,
+        "rightNs": 252657,
+        "logRatio": 1.2721359067773041
+      },
+      {
+        "leftNs": 84070,
+        "rightNs": 204924,
+        "logRatio": -0.8909893935458968
+      },
+      {
+        "leftNs": 80610,
+        "rightNs": 84191,
+        "logRatio": -0.04346531587875834
+      },
+      {
+        "leftNs": 75694,
+        "rightNs": 74682,
+        "logRatio": 0.01345979781746819
+      },
+      {
+        "leftNs": 119188,
+        "rightNs": 233759,
+        "logRatio": -0.6735885916787538
+      },
+      {
+        "leftNs": 78591,
+        "rightNs": 94106,
+        "logRatio": -0.18016461745168905
+      },
+      {
+        "leftNs": 73815,
+        "rightNs": 75068,
+        "logRatio": -0.016832406442974943
+      },
+      {
+        "leftNs": 89871,
+        "rightNs": 76549,
+        "logRatio": 0.1604442501310017
+      },
+      {
+        "leftNs": 75455,
+        "rightNs": 74920,
+        "logRatio": 0.007115574494625974
+      },
+      {
+        "leftNs": 74109,
+        "rightNs": 74192,
+        "logRatio": -0.0011193452325489817
+      },
+      {
+        "leftNs": 595286,
+        "rightNs": 87716,
+        "logRatio": 1.9149376394538384
+      },
+      {
+        "leftNs": 79958,
+        "rightNs": 124316,
+        "logRatio": -0.44132521425640653
+      },
+      {
+        "leftNs": 81265,
+        "rightNs": 113090,
+        "logRatio": -0.3304685423280963
+      },
+      {
+        "leftNs": 80838,
+        "rightNs": 141297,
+        "logRatio": -0.5584169060408208
+      },
+      {
+        "leftNs": 76408,
+        "rightNs": 76286,
+        "logRatio": 0.0015979675162166027
+      },
+      {
+        "leftNs": 76448,
+        "rightNs": 132580,
+        "logRatio": -0.5505754656698465
+      },
+      {
+        "leftNs": 81096,
+        "rightNs": 75337,
+        "logRatio": 0.07366225609402159
+      },
+      {
+        "leftNs": 74573,
+        "rightNs": 74534,
+        "logRatio": 0.0005231142855715173
+      },
+      {
+        "leftNs": 73986,
+        "rightNs": 76210,
+        "logRatio": -0.02961680156157767
+      },
+      {
+        "leftNs": 74193,
+        "rightNs": 470464,
+        "logRatio": -1.8470496356511912
+      },
+      {
+        "leftNs": 79896,
+        "rightNs": 78000,
+        "logRatio": 0.02401696225124183
+      },
+      {
+        "leftNs": 77471,
+        "rightNs": 90185,
+        "logRatio": -0.15195944333912406
+      },
+      {
+        "leftNs": 81033,
+        "rightNs": 209632,
+        "logRatio": -0.9504971334374838
+      },
+      {
+        "leftNs": 90157,
+        "rightNs": 77842,
+        "logRatio": 0.14687146372028514
+      },
+      {
+        "leftNs": 99925,
+        "rightNs": 186108,
+        "logRatio": -0.6219072457679289
+      },
+      {
+        "leftNs": 299431,
+        "rightNs": 153954,
+        "logRatio": 0.6652301505449416
+      },
+      {
+        "leftNs": 79460,
+        "rightNs": 85322,
+        "logRatio": -0.07117858410463881
+      },
+      {
+        "leftNs": 112990,
+        "rightNs": 75696,
+        "logRatio": 0.4005740003323627
+      },
+      {
+        "leftNs": 75224,
+        "rightNs": 75762,
+        "logRatio": -0.007126518709822438
+      },
+      {
+        "leftNs": 75426,
+        "rightNs": 74283,
+        "logRatio": 0.015269919769673668
+      },
+      {
+        "leftNs": 74167,
+        "rightNs": 74525,
+        "logRatio": -0.004815332254027143
+      },
+      {
+        "leftNs": 73348,
+        "rightNs": 74619,
+        "logRatio": -0.017179928783382873
+      },
+      {
+        "leftNs": 75594,
+        "rightNs": 73998,
+        "logRatio": 0.021338849144641656
+      },
+      {
+        "leftNs": 73291,
+        "rightNs": 73344,
+        "logRatio": -0.000722883381293318
+      },
+      {
+        "leftNs": 80639,
+        "rightNs": 76311,
+        "logRatio": 0.05516530779443184
+      },
+      {
+        "leftNs": 240081,
+        "rightNs": 127409,
+        "logRatio": 0.6335739821166869
+      },
+      {
+        "leftNs": 101888,
+        "rightNs": 82876,
+        "logRatio": 0.20652865598362694
+      },
+      {
+        "leftNs": 73772,
+        "rightNs": 74520,
+        "logRatio": -0.010088289912828147
+      },
+      {
+        "leftNs": 73609,
+        "rightNs": 73499,
+        "logRatio": 0.0014955001835581462
+      },
+      {
+        "leftNs": 111356,
+        "rightNs": 74085,
+        "logRatio": 0.4075191937400597
+      },
+      {
+        "leftNs": 74691,
+        "rightNs": 75112,
+        "logRatio": -0.005620730003715995
+      },
+      {
+        "leftNs": 73693,
+        "rightNs": 74583,
+        "logRatio": -0.012004784165904635
+      },
+      {
+        "leftNs": 100984,
+        "rightNs": 246968,
+        "logRatio": -0.8942966851286169
+      },
+      {
+        "leftNs": 223914,
+        "rightNs": 104334,
+        "logRatio": 0.7636647579361812
+      },
+      {
+        "leftNs": 74866,
+        "rightNs": 74254,
+        "logRatio": 0.008208200591450495
+      },
+      {
+        "leftNs": 74681,
+        "rightNs": 74405,
+        "logRatio": 0.003702565167845024
+      },
+      {
+        "leftNs": 74540,
+        "rightNs": 74506,
+        "logRatio": 0.0004562349957698163
+      },
+      {
+        "leftNs": 78957,
+        "rightNs": 220234,
+        "logRatio": -1.02578721697316
+      },
+      {
+        "leftNs": 95498,
+        "rightNs": 108528,
+        "logRatio": -0.12790289934471144
+      },
+      {
+        "leftNs": 92738,
+        "rightNs": 188430,
+        "logRatio": -0.7089482720710841
+      },
+      {
+        "leftNs": 89739,
+        "rightNs": 91552,
+        "logRatio": -0.02000165968482446
+      },
+      {
+        "leftNs": 94487,
+        "rightNs": 89188,
+        "logRatio": 0.05771575751091785
+      },
+      {
+        "leftNs": 97506,
+        "rightNs": 471924,
+        "logRatio": -1.5769040410998558
+      },
+      {
+        "leftNs": 101251,
+        "rightNs": 136318,
+        "logRatio": -0.29738780913079205
+      },
+      {
+        "leftNs": 89891,
+        "rightNs": 90203,
+        "logRatio": -0.003464860707593718
+      },
+      {
+        "leftNs": 131845,
+        "rightNs": 103831,
+        "logRatio": 0.23886241280252912
+      },
+      {
+        "leftNs": 91236,
+        "rightNs": 91818,
+        "logRatio": -0.0063588008026543436
+      },
+      {
+        "leftNs": 97741,
+        "rightNs": 162497,
+        "logRatio": -0.5083384170455434
+      },
+      {
+        "leftNs": 90204,
+        "rightNs": 90319,
+        "logRatio": -0.0012740760518751902
+      },
+      {
+        "leftNs": 92664,
+        "rightNs": 90312,
+        "logRatio": 0.02570970567079901
+      },
+      {
+        "leftNs": 91949,
+        "rightNs": 91496,
+        "logRatio": 0.004938820036473997
+      },
+      {
+        "leftNs": 89698,
+        "rightNs": 93118,
+        "logRatio": -0.037419033817106005
+      },
+      {
+        "leftNs": 100147,
+        "rightNs": 94867,
+        "logRatio": 0.05416319591085373
+      },
+      {
+        "leftNs": 143179,
+        "rightNs": 503370,
+        "logRatio": -1.2572298904417392
+      },
+      {
+        "leftNs": 88887,
+        "rightNs": 90927,
+        "logRatio": -0.022691086675891158
+      },
+      {
+        "leftNs": 91686,
+        "rightNs": 193708,
+        "logRatio": -0.7479821746898113
+      },
+      {
+        "leftNs": 91567,
+        "rightNs": 88277,
+        "logRatio": 0.03659134673235263
+      },
+      {
+        "leftNs": 94909,
+        "rightNs": 91964,
+        "logRatio": 0.03152134166765866
+      },
+      {
+        "leftNs": 93314,
+        "rightNs": 127687,
+        "logRatio": -0.3136118065731385
+      },
+      {
+        "leftNs": 91064,
+        "rightNs": 91347,
+        "logRatio": -0.003102885539335932
+      },
+      {
+        "leftNs": 89829,
+        "rightNs": 91245,
+        "logRatio": -0.015640333400109625
+      },
+      {
+        "leftNs": 271235,
+        "rightNs": 361227,
+        "logRatio": -0.2865209657932681
+      },
+      {
+        "leftNs": 114183,
+        "rightNs": 1874315,
+        "logRatio": -2.798196113826017
+      },
+      {
+        "leftNs": 89457,
+        "rightNs": 87243,
+        "logRatio": 0.025060734264191104
+      },
+      {
+        "leftNs": 82102,
+        "rightNs": 85434,
+        "logRatio": -0.03978177132931131
+      },
+      {
+        "leftNs": 154563,
+        "rightNs": 98951,
+        "logRatio": 0.4459770021020182
+      },
+      {
+        "leftNs": 79964,
+        "rightNs": 129662,
+        "logRatio": -0.48335453119197114
+      },
+      {
+        "leftNs": 83411,
+        "rightNs": 128829,
+        "logRatio": -0.43470574845430965
+      },
+      {
+        "leftNs": 79315,
+        "rightNs": 79197,
+        "logRatio": 0.0014888465453366546
+      },
+      {
+        "leftNs": 79564,
+        "rightNs": 78252,
+        "logRatio": 0.016627341043748686
+      },
+      {
+        "leftNs": 115021,
+        "rightNs": 116103,
+        "logRatio": -0.009363007775321926
+      },
+      {
+        "leftNs": 132769,
+        "rightNs": 90225,
+        "logRatio": 0.38630422552864635
+      },
+      {
+        "leftNs": 76914,
+        "rightNs": 75787,
+        "logRatio": 0.014761140575995833
+      },
+      {
+        "leftNs": 78944,
+        "rightNs": 80792,
+        "logRatio": -0.023139210377309573
+      },
+      {
+        "leftNs": 76642,
+        "rightNs": 75728,
+        "logRatio": 0.011997256191620226
+      },
+      {
+        "leftNs": 74231,
+        "rightNs": 74628,
+        "logRatio": -0.005333919228845533
+      },
+      {
+        "leftNs": 76511,
+        "rightNs": 84920,
+        "logRatio": -0.10427511548980538
+      },
+      {
+        "leftNs": 113366,
+        "rightNs": 128748,
+        "logRatio": -0.12723548273820642
+      },
+      {
+        "leftNs": 81178,
+        "rightNs": 113975,
+        "logRatio": -0.3393348516022421
+      },
+      {
+        "leftNs": 75614,
+        "rightNs": 75589,
+        "logRatio": 0.0003306812725647853
+      },
+      {
+        "leftNs": 78087,
+        "rightNs": 77384,
+        "logRatio": 0.009043548845467483
+      },
+      {
+        "leftNs": 77465,
+        "rightNs": 126983,
+        "logRatio": -0.4942269977828021
+      },
+      {
+        "leftNs": 75705,
+        "rightNs": 74378,
+        "logRatio": 0.0176840092735678
+      },
+      {
+        "leftNs": 73066,
+        "rightNs": 74846,
+        "logRatio": -0.024069526947362575
+      },
+      {
+        "leftNs": 84134,
+        "rightNs": 108557,
+        "logRatio": -0.2548646147591097
+      },
+      {
+        "leftNs": 93453,
+        "rightNs": 89444,
+        "logRatio": 0.043845904989122886
+      },
+      {
+        "leftNs": 93887,
+        "rightNs": 91877,
+        "logRatio": 0.021641205471833687
+      },
+      {
+        "leftNs": 92056,
+        "rightNs": 98283,
+        "logRatio": -0.06545398469646668
+      },
+      {
+        "leftNs": 129340,
+        "rightNs": 214260,
+        "logRatio": -0.5047456348159653
+      },
+      {
+        "leftNs": 94049,
+        "rightNs": 93190,
+        "logRatio": 0.009175503250736764
+      },
+      {
+        "leftNs": 90735,
+        "rightNs": 92002,
+        "logRatio": -0.0138671457161964
+      },
+      {
+        "leftNs": 89479,
+        "rightNs": 91121,
+        "logRatio": -0.01818433274001236
+      },
+      {
+        "leftNs": 520975,
+        "rightNs": 89402,
+        "logRatio": 1.762559002663267
+      },
+      {
+        "leftNs": 93342,
+        "rightNs": 94811,
+        "logRatio": -0.01561526895181542
+      },
+      {
+        "leftNs": 91523,
+        "rightNs": 88513,
+        "logRatio": 0.03344087293294277
+      },
+      {
+        "leftNs": 100833,
+        "rightNs": 433007,
+        "logRatio": -1.4572882111413739
+      },
+      {
+        "leftNs": 95233,
+        "rightNs": 95420,
+        "logRatio": -0.0019616797004775965
+      },
+      {
+        "leftNs": 92507,
+        "rightNs": 92397,
+        "logRatio": 0.001189806742706554
+      },
+      {
+        "leftNs": 94181,
+        "rightNs": 92467,
+        "logRatio": 0.018366638615844654
+      },
+      {
+        "leftNs": 91942,
+        "rightNs": 89529,
+        "logRatio": 0.026595348315587956
+      },
+      {
+        "leftNs": 211657,
+        "rightNs": 128208,
+        "logRatio": 0.5013130948546547
+      },
+      {
+        "leftNs": 91383,
+        "rightNs": 88801,
+        "logRatio": 0.02866155434116277
+      },
+      {
+        "leftNs": 88890,
+        "rightNs": 326876,
+        "logRatio": -1.3021812438343467
+      },
+      {
+        "leftNs": 115508,
+        "rightNs": 236241,
+        "logRatio": -0.7155126787776475
+      },
+      {
+        "leftNs": 91042,
+        "rightNs": 321900,
+        "logRatio": -1.2629199998024891
+      },
+      {
+        "leftNs": 131334,
+        "rightNs": 97115,
+        "logRatio": 0.30184785347497634
+      },
+      {
+        "leftNs": 89885,
+        "rightNs": 91924,
+        "logRatio": -0.022431073196280196
+      },
+      {
+        "leftNs": 89266,
+        "rightNs": 126166,
+        "logRatio": -0.3459778238784018
+      },
+      {
+        "leftNs": 91224,
+        "rightNs": 282300,
+        "logRatio": -1.1296523149043862
+      },
+      {
+        "leftNs": 91129,
+        "rightNs": 94559,
+        "logRatio": -0.03694789319272941
+      },
+      {
+        "leftNs": 88939,
+        "rightNs": 121217,
+        "logRatio": -0.3096315863411639
+      },
+      {
+        "leftNs": 79588,
+        "rightNs": 80891,
+        "logRatio": -0.016239241703993608
+      },
+      {
+        "leftNs": 75935,
+        "rightNs": 126760,
+        "logRatio": -0.5124178236404866
+      },
+      {
+        "leftNs": 76792,
+        "rightNs": 77084,
+        "logRatio": -0.0037952682744383736
+      },
+      {
+        "leftNs": 76727,
+        "rightNs": 76298,
+        "logRatio": 0.005606941661827487
+      },
+      {
+        "leftNs": 76106,
+        "rightNs": 114266,
+        "logRatio": -0.4064019583463262
+      },
+      {
+        "leftNs": 182806,
+        "rightNs": 374206,
+        "logRatio": -0.7163809666792432
+      },
+      {
+        "leftNs": 83906,
+        "rightNs": 95613,
+        "logRatio": -0.13061166945309696
+      },
+      {
+        "leftNs": 75872,
+        "rightNs": 76147,
+        "logRatio": -0.0036179727530485633
+      },
+      {
+        "leftNs": 77627,
+        "rightNs": 140139,
+        "logRatio": -0.5907194823784434
+      },
+      {
+        "leftNs": 75804,
+        "rightNs": 74885,
+        "logRatio": 0.01219745826020479
+      },
+      {
+        "leftNs": 74629,
+        "rightNs": 75131,
+        "logRatio": -0.006704084938401457
+      },
+      {
+        "leftNs": 78467,
+        "rightNs": 73663,
+        "logRatio": 0.06317751638217135
+      },
+      {
+        "leftNs": 73839,
+        "rightNs": 75821,
+        "logRatio": -0.026488251825708766
+      },
+      {
+        "leftNs": 107258,
+        "rightNs": 206903,
+        "logRatio": -0.6570129373038464
+      },
+      {
+        "leftNs": 109897,
+        "rightNs": 80347,
+        "logRatio": 0.3131888086594253
+      },
+      {
+        "leftNs": 73920,
+        "rightNs": 73915,
+        "logRatio": 0.00006764298037558539
+      },
+      {
+        "leftNs": 121640,
+        "rightNs": 73410,
+        "logRatio": 0.5050056966864739
+      },
+      {
+        "leftNs": 78611,
+        "rightNs": 118872,
+        "logRatio": -0.41353564520143377
+      },
+      {
+        "leftNs": 72817,
+        "rightNs": 73429,
+        "logRatio": -0.008369508533268047
+      },
+      {
+        "leftNs": 73094,
+        "rightNs": 73549,
+        "logRatio": -0.006205566718277562
+      },
+      {
+        "leftNs": 75510,
+        "rightNs": 108310,
+        "logRatio": -0.36073238803231156
+      },
+      {
+        "leftNs": 73992,
+        "rightNs": 73133,
+        "logRatio": 0.011677277974467297
+      },
+      {
+        "leftNs": 73007,
+        "rightNs": 73990,
+        "logRatio": -0.013374621975301142
+      },
+      {
+        "leftNs": 74729,
+        "rightNs": 73807,
+        "logRatio": 0.01241465828903852
+      },
+      {
+        "leftNs": 116038,
+        "rightNs": 166686,
+        "logRatio": -0.36219407935798736
+      },
+      {
+        "leftNs": 197716,
+        "rightNs": 133522,
+        "logRatio": 0.39256539933419
+      }
+    ],
+    "control": [
+      {
+        "leftNs": 253195,
+        "rightNs": 132507,
+        "logRatio": 0.647524468620164
+      },
+      {
+        "leftNs": 107358,
+        "rightNs": 177906,
+        "logRatio": -0.5050862767780897
+      },
+      {
+        "leftNs": 118561,
+        "rightNs": 99965,
+        "logRatio": 0.1706074713363184
+      },
+      {
+        "leftNs": 111533,
+        "rightNs": 206877,
+        "logRatio": -0.6178039025213199
+      },
+      {
+        "leftNs": 81108,
+        "rightNs": 87030,
+        "logRatio": -0.07047128689520499
+      },
+      {
+        "leftNs": 127263,
+        "rightNs": 83838,
+        "logRatio": 0.4173694459863729
+      },
+      {
+        "leftNs": 86539,
+        "rightNs": 120252,
+        "logRatio": -0.3289943614843441
+      },
+      {
+        "leftNs": 250088,
+        "rightNs": 106319,
+        "logRatio": 0.8553688471321198
+      },
+      {
+        "leftNs": 167835,
+        "rightNs": 118099,
+        "logRatio": 0.3514580981608343
+      },
+      {
+        "leftNs": 115585,
+        "rightNs": 119687,
+        "logRatio": -0.03487381178700705
+      },
+      {
+        "leftNs": 89324,
+        "rightNs": 105226,
+        "logRatio": -0.16384020928383486
+      },
+      {
+        "leftNs": 78254,
+        "rightNs": 79521,
+        "logRatio": -0.01606119139733059
+      },
+      {
+        "leftNs": 96396,
+        "rightNs": 105761,
+        "logRatio": -0.09271712444964919
+      },
+      {
+        "leftNs": 178961,
+        "rightNs": 151791,
+        "logRatio": 0.16466333034077513
+      },
+      {
+        "leftNs": 105022,
+        "rightNs": 113284,
+        "logRatio": -0.07572808803646425
+      },
+      {
+        "leftNs": 96687,
+        "rightNs": 112244,
+        "logRatio": -0.14919611605731073
+      },
+      {
+        "leftNs": 154471,
+        "rightNs": 113861,
+        "logRatio": 0.30502797025416933
+      },
+      {
+        "leftNs": 144856,
+        "rightNs": 186803,
+        "logRatio": -0.2543144401046145
+      },
+      {
+        "leftNs": 94981,
+        "rightNs": 97482,
+        "logRatio": -0.025990873977794544
+      },
+      {
+        "leftNs": 95477,
+        "rightNs": 108332,
+        "logRatio": -0.12631520510928562
+      },
+      {
+        "leftNs": 255256,
+        "rightNs": 737893,
+        "logRatio": -1.0615318645042444
+      },
+      {
+        "leftNs": 179338,
+        "rightNs": 142123,
+        "logRatio": 0.23257941360785933
+      },
+      {
+        "leftNs": 99656,
+        "rightNs": 103688,
+        "logRatio": -0.039662134537282345
+      },
+      {
+        "leftNs": 185201,
+        "rightNs": 98471,
+        "logRatio": 0.6316796331801185
+      },
+      {
+        "leftNs": 235308,
+        "rightNs": 115380,
+        "logRatio": 0.7126642654766367
+      },
+      {
+        "leftNs": 100832,
+        "rightNs": 252019,
+        "logRatio": -0.9160487159197583
+      },
+      {
+        "leftNs": 139765,
+        "rightNs": 105112,
+        "logRatio": 0.28493599246168866
+      },
+      {
+        "leftNs": 90120,
+        "rightNs": 102953,
+        "logRatio": -0.13313045784458055
+      },
+      {
+        "leftNs": 105118,
+        "rightNs": 142222,
+        "logRatio": -0.30230568839610694
+      },
+      {
+        "leftNs": 87653,
+        "rightNs": 85957,
+        "logRatio": 0.01953866660904748
+      },
+      {
+        "leftNs": 85240,
+        "rightNs": 217632,
+        "logRatio": -0.9373347557628119
+      },
+      {
+        "leftNs": 125121,
+        "rightNs": 97497,
+        "logRatio": 0.24945966079277834
+      },
+      {
+        "leftNs": 88423,
+        "rightNs": 162566,
+        "logRatio": -0.6089519563599315
+      },
+      {
+        "leftNs": 100485,
+        "rightNs": 356362,
+        "logRatio": -1.26593860551052
+      },
+      {
+        "leftNs": 90983,
+        "rightNs": 152721,
+        "logRatio": -0.5179400514486284
+      },
+      {
+        "leftNs": 84252,
+        "rightNs": 89815,
+        "logRatio": -0.06393969139768686
+      },
+      {
+        "leftNs": 84717,
+        "rightNs": 325669,
+        "logRatio": -1.3465652382378777
+      },
+      {
+        "leftNs": 476618,
+        "rightNs": 207295,
+        "logRatio": 0.8325724319539306
+      },
+      {
+        "leftNs": 114537,
+        "rightNs": 331269,
+        "logRatio": -1.062032819246776
+      },
+      {
+        "leftNs": 157984,
+        "rightNs": 265180,
+        "logRatio": -0.5179150786101203
+      },
+      {
+        "leftNs": 86702,
+        "rightNs": 90255,
+        "logRatio": -0.04016204576924231
+      },
+      {
+        "leftNs": 635234,
+        "rightNs": 99723,
+        "logRatio": 1.8515970925101035
+      },
+      {
+        "leftNs": 95798,
+        "rightNs": 89045,
+        "logRatio": 0.0730999480041996
+      },
+      {
+        "leftNs": 138257,
+        "rightNs": 276965,
+        "logRatio": -0.6947768723813781
+      },
+      {
+        "leftNs": 93311,
+        "rightNs": 299298,
+        "logRatio": -1.1655017324242636
+      },
+      {
+        "leftNs": 151005,
+        "rightNs": 92608,
+        "logRatio": 0.4889374178404776
+      },
+      {
+        "leftNs": 85367,
+        "rightNs": 87341,
+        "logRatio": -0.022860388245077645
+      },
+      {
+        "leftNs": 121492,
+        "rightNs": 167688,
+        "logRatio": -0.3222566929268416
+      },
+      {
+        "leftNs": 90647,
+        "rightNs": 87467,
+        "logRatio": 0.03571126296425022
+      },
+      {
+        "leftNs": 87821,
+        "rightNs": 86713,
+        "logRatio": 0.012696837120406033
+      },
+      {
+        "leftNs": 92292,
+        "rightNs": 88534,
+        "logRatio": 0.0415708048366172
+      },
+      {
+        "leftNs": 93397,
+        "rightNs": 156794,
+        "logRatio": -0.518073617073455
+      },
+      {
+        "leftNs": 126626,
+        "rightNs": 99584,
+        "logRatio": 0.24023635075644156
+      },
+      {
+        "leftNs": 88319,
+        "rightNs": 488561,
+        "logRatio": -1.7105090757433719
+      },
+      {
+        "leftNs": 238349,
+        "rightNs": 101087,
+        "logRatio": 0.8577544539314887
+      },
+      {
+        "leftNs": 95655,
+        "rightNs": 87696,
+        "logRatio": 0.08687168013158401
+      },
+      {
+        "leftNs": 85034,
+        "rightNs": 94425,
+        "logRatio": -0.10475469208687715
+      },
+      {
+        "leftNs": 125052,
+        "rightNs": 573660,
+        "logRatio": -1.5233072355271189
+      },
+      {
+        "leftNs": 145018,
+        "rightNs": 99311,
+        "logRatio": 0.3786015323031553
+      },
+      {
+        "leftNs": 249338,
+        "rightNs": 180706,
+        "logRatio": 0.3219380044559533
+      },
+      {
+        "leftNs": 104275,
+        "rightNs": 89182,
+        "logRatio": 0.1563524145821109
+      },
+      {
+        "leftNs": 93569,
+        "rightNs": 87001,
+        "logRatio": 0.07277951920325045
+      },
+      {
+        "leftNs": 92882,
+        "rightNs": 124183,
+        "logRatio": -0.29042641380569273
+      },
+      {
+        "leftNs": 113695,
+        "rightNs": 451562,
+        "logRatio": -1.3791932590580482
+      },
+      {
+        "leftNs": 336391,
+        "rightNs": 1128634,
+        "logRatio": -1.210489157024411
+      },
+      {
+        "leftNs": 90045,
+        "rightNs": 97044,
+        "logRatio": -0.07485493852976924
+      },
+      {
+        "leftNs": 125751,
+        "rightNs": 118217,
+        "logRatio": 0.06178184257712495
+      },
+      {
+        "leftNs": 130619,
+        "rightNs": 88170,
+        "logRatio": 0.39301791955083254
+      },
+      {
+        "leftNs": 111325,
+        "rightNs": 316276,
+        "logRatio": -1.0441613988933596
+      },
+      {
+        "leftNs": 84257,
+        "rightNs": 89335,
+        "logRatio": -0.058521696550701864
+      },
+      {
+        "leftNs": 219928,
+        "rightNs": 112791,
+        "logRatio": 0.6677636714129372
+      },
+      {
+        "leftNs": 252232,
+        "rightNs": 100545,
+        "logRatio": 0.9197439104296199
+      },
+      {
+        "leftNs": 86556,
+        "rightNs": 92807,
+        "logRatio": -0.06973046467232434
+      },
+      {
+        "leftNs": 85714,
+        "rightNs": 85262,
+        "logRatio": 0.005287304101080824
+      },
+      {
+        "leftNs": 86136,
+        "rightNs": 97171,
+        "logRatio": -0.12054487052713024
+      },
+      {
+        "leftNs": 82935,
+        "rightNs": 82242,
+        "logRatio": 0.008391047980706863
+      },
+      {
+        "leftNs": 80880,
+        "rightNs": 82903,
+        "logRatio": -0.02470467495278527
+      },
+      {
+        "leftNs": 217885,
+        "rightNs": 133850,
+        "logRatio": 0.48724763069777133
+      },
+      {
+        "leftNs": 92548,
+        "rightNs": 160270,
+        "logRatio": -0.5491324641600484
+      },
+      {
+        "leftNs": 118630,
+        "rightNs": 200681,
+        "logRatio": -0.525707176988229
+      },
+      {
+        "leftNs": 84450,
+        "rightNs": 92850,
+        "logRatio": -0.09482564454490575
+      },
+      {
+        "leftNs": 85339,
+        "rightNs": 81679,
+        "logRatio": 0.043834628974308565
+      },
+      {
+        "leftNs": 80941,
+        "rightNs": 80368,
+        "logRatio": 0.00710440719444918
+      },
+      {
+        "leftNs": 82384,
+        "rightNs": 80107,
+        "logRatio": 0.02802800228627408
+      },
+      {
+        "leftNs": 94799,
+        "rightNs": 152009,
+        "logRatio": -0.47218086893758493
+      },
+      {
+        "leftNs": 94820,
+        "rightNs": 91683,
+        "logRatio": 0.033643382529823546
+      },
+      {
+        "leftNs": 81913,
+        "rightNs": 82510,
+        "logRatio": -0.007261789694796657
+      },
+      {
+        "leftNs": 80895,
+        "rightNs": 83680,
+        "logRatio": -0.033847982859312724
+      },
+      {
+        "leftNs": 179456,
+        "rightNs": 169618,
+        "logRatio": 0.05638120273035144
+      },
+      {
+        "leftNs": 239576,
+        "rightNs": 984354,
+        "logRatio": -1.413114894173763
+      },
+      {
+        "leftNs": 267801,
+        "rightNs": 98705,
+        "logRatio": 0.9981085636624168
+      },
+      {
+        "leftNs": 229118,
+        "rightNs": 113521,
+        "logRatio": 0.7022493128504781
+      },
+      {
+        "leftNs": 82660,
+        "rightNs": 80511,
+        "logRatio": 0.026341988031544795
+      },
+      {
+        "leftNs": 350395,
+        "rightNs": 862185,
+        "logRatio": -0.9004087752520618
+      },
+      {
+        "leftNs": 119308,
+        "rightNs": 265858,
+        "logRatio": -0.8012539469618403
+      },
+      {
+        "leftNs": 141064,
+        "rightNs": 86359,
+        "logRatio": 0.4907006619609815
+      },
+      {
+        "leftNs": 81489,
+        "rightNs": 250029,
+        "logRatio": -1.1211088693222822
+      },
+      {
+        "leftNs": 81266,
+        "rightNs": 84635,
+        "logRatio": -0.04062016774109458
+      },
+      {
+        "leftNs": 209106,
+        "rightNs": 667773,
+        "logRatio": -1.1611069949978396
+      },
+      {
+        "leftNs": 244990,
+        "rightNs": 98076,
+        "logRatio": 0.9154747050631944
+      },
+      {
+        "leftNs": 114848,
+        "rightNs": 229154,
+        "logRatio": -0.6907847516525537
+      },
+      {
+        "leftNs": 257303,
+        "rightNs": 458301,
+        "logRatio": -0.577271794728451
+      },
+      {
+        "leftNs": 316183,
+        "rightNs": 647056,
+        "logRatio": -0.7161116841892013
+      },
+      {
+        "leftNs": 189127,
+        "rightNs": 312201,
+        "logRatio": -0.5012284640820255
+      },
+      {
+        "leftNs": 218118,
+        "rightNs": 288595,
+        "logRatio": -0.2799881204211677
+      },
+      {
+        "leftNs": 225256,
+        "rightNs": 323745,
+        "logRatio": -0.3627186356754343
+      },
+      {
+        "leftNs": 80029,
+        "rightNs": 83238,
+        "logRatio": -0.039314905340012904
+      },
+      {
+        "leftNs": 77176,
+        "rightNs": 76087,
+        "logRatio": 0.014211105451434275
+      },
+      {
+        "leftNs": 76171,
+        "rightNs": 77359,
+        "logRatio": -0.015476111657637192
+      },
+      {
+        "leftNs": 74736,
+        "rightNs": 75270,
+        "logRatio": -0.007119745286688409
+      },
+      {
+        "leftNs": 181492,
+        "rightNs": 77580,
+        "logRatio": 0.8499019135866727
+      },
+      {
+        "leftNs": 79334,
+        "rightNs": 122918,
+        "logRatio": -0.4378506780553123
+      },
+      {
+        "leftNs": 77686,
+        "rightNs": 75737,
+        "logRatio": 0.025408248459170685
+      },
+      {
+        "leftNs": 86069,
+        "rightNs": 78270,
+        "logRatio": 0.09498491232704294
+      },
+      {
+        "leftNs": 75025,
+        "rightNs": 74873,
+        "logRatio": 0.002028046432876293
+      },
+      {
+        "leftNs": 73888,
+        "rightNs": 75951,
+        "logRatio": -0.02753796233996407
+      },
+      {
+        "leftNs": 80303,
+        "rightNs": 113707,
+        "logRatio": -0.3478179842294924
+      },
+      {
+        "leftNs": 96221,
+        "rightNs": 131338,
+        "logRatio": -0.31112652392644435
+      },
+      {
+        "leftNs": 201046,
+        "rightNs": 109268,
+        "logRatio": 0.6097301574672859
+      },
+      {
+        "leftNs": 76514,
+        "rightNs": 77611,
+        "logRatio": -0.014235439095760905
+      },
+      {
+        "leftNs": 123789,
+        "rightNs": 78018,
+        "logRatio": 0.46163893401690576
+      },
+      {
+        "leftNs": 75956,
+        "rightNs": 76438,
+        "logRatio": -0.006325729454731776
+      },
+      {
+        "leftNs": 76250,
+        "rightNs": 77386,
+        "logRatio": -0.014788470194690467
+      },
+      {
+        "leftNs": 77054,
+        "rightNs": 113410,
+        "logRatio": -0.38650309606728034
+      },
+      {
+        "leftNs": 76510,
+        "rightNs": 76354,
+        "logRatio": 0.0020410306436503037
+      },
+      {
+        "leftNs": 75726,
+        "rightNs": 76148,
+        "logRatio": -0.005557252538993809
+      },
+      {
+        "leftNs": 74985,
+        "rightNs": 75365,
+        "logRatio": -0.0050548827288491895
+      },
+      {
+        "leftNs": 76041,
+        "rightNs": 76773,
+        "logRatio": -0.009580347334115906
+      },
+      {
+        "leftNs": 75392,
+        "rightNs": 76101,
+        "logRatio": -0.009360236796704138
+      },
+      {
+        "leftNs": 77219,
+        "rightNs": 78635,
+        "logRatio": -0.018171352203400656
+      },
+      {
+        "leftNs": 74559,
+        "rightNs": 75298,
+        "logRatio": -0.009862815757920251
+      },
+      {
+        "leftNs": 213765,
+        "rightNs": 81035,
+        "logRatio": 0.9699961206832023
+      },
+      {
+        "leftNs": 82708,
+        "rightNs": 79159,
+        "logRatio": 0.04385784452670001
+      },
+      {
+        "leftNs": 75940,
+        "rightNs": 75716,
+        "logRatio": 0.002954056059683279
+      },
+      {
+        "leftNs": 224487,
+        "rightNs": 75106,
+        "logRatio": 1.0949173499927265
+      },
+      {
+        "leftNs": 81738,
+        "rightNs": 78408,
+        "logRatio": 0.041593047045100015
+      },
+      {
+        "leftNs": 74819,
+        "rightNs": 74742,
+        "logRatio": 0.0010296802883533905
+      },
+      {
+        "leftNs": 85639,
+        "rightNs": 109491,
+        "logRatio": -0.24570156723104455
+      },
+      {
+        "leftNs": 75287,
+        "rightNs": 74961,
+        "logRatio": 0.0043394988496636856
+      },
+      {
+        "leftNs": 116564,
+        "rightNs": 74762,
+        "logRatio": 0.44413074388457263
+      },
+      {
+        "leftNs": 317874,
+        "rightNs": 984319,
+        "logRatio": -1.1302949536602196
+      },
+      {
+        "leftNs": 78772,
+        "rightNs": 82558,
+        "logRatio": -0.04694347286367587
+      },
+      {
+        "leftNs": 77899,
+        "rightNs": 79929,
+        "logRatio": -0.025725624788753402
+      },
+      {
+        "leftNs": 78369,
+        "rightNs": 78053,
+        "logRatio": 0.0040403578764899965
+      },
+      {
+        "leftNs": 76780,
+        "rightNs": 78868,
+        "logRatio": -0.026831379331369677
+      },
+      {
+        "leftNs": 169669,
+        "rightNs": 119535,
+        "logRatio": 0.3502402647258234
+      },
+      {
+        "leftNs": 77730,
+        "rightNs": 77840,
+        "logRatio": -0.0014141546356213502
+      },
+      {
+        "leftNs": 141797,
+        "rightNs": 76103,
+        "logRatio": 0.6223087714116665
+      },
+      {
+        "leftNs": 78453,
+        "rightNs": 122891,
+        "logRatio": -0.4487980642563528
+      },
+      {
+        "leftNs": 75862,
+        "rightNs": 75389,
+        "logRatio": 0.006254524491640979
+      },
+      {
+        "leftNs": 75571,
+        "rightNs": 74236,
+        "logRatio": 0.01782340399334253
+      },
+      {
+        "leftNs": 107052,
+        "rightNs": 84618,
+        "logRatio": 0.2351676877814885
+      },
+      {
+        "leftNs": 75726,
+        "rightNs": 75161,
+        "logRatio": 0.0074890830983529106
+      },
+      {
+        "leftNs": 614560,
+        "rightNs": 74388,
+        "logRatio": 2.111611926089812
+      },
+      {
+        "leftNs": 88157,
+        "rightNs": 81117,
+        "logRatio": 0.08322675887699883
+      },
+      {
+        "leftNs": 214962,
+        "rightNs": 131265,
+        "logRatio": 0.4932430876646179
+      },
+      {
+        "leftNs": 78068,
+        "rightNs": 97363,
+        "logRatio": -0.22086601991135107
+      },
+      {
+        "leftNs": 76454,
+        "rightNs": 78155,
+        "logRatio": -0.022004781562159206
+      },
+      {
+        "leftNs": 337136,
+        "rightNs": 106366,
+        "logRatio": 1.1536004328057081
+      },
+      {
+        "leftNs": 108754,
+        "rightNs": 90345,
+        "logRatio": 0.185452775737768
+      },
+      {
+        "leftNs": 85999,
+        "rightNs": 83627,
+        "logRatio": 0.027969233823549166
+      },
+      {
+        "leftNs": 75360,
+        "rightNs": 74252,
+        "logRatio": 0.014811916921130874
+      },
+      {
+        "leftNs": 75380,
+        "rightNs": 75550,
+        "logRatio": -0.002252700879759159
+      },
+      {
+        "leftNs": 78105,
+        "rightNs": 1264797,
+        "logRatio": -2.7846128386929685
+      },
+      {
+        "leftNs": 187785,
+        "rightNs": 193018,
+        "logRatio": -0.027485757425015276
+      },
+      {
+        "leftNs": 82535,
+        "rightNs": 79568,
+        "logRatio": 0.03661044382712166
+      },
+      {
+        "leftNs": 83056,
+        "rightNs": 79681,
+        "logRatio": 0.041483915686480216
+      },
+      {
+        "leftNs": 124119,
+        "rightNs": 86729,
+        "logRatio": 0.3584524682342701
+      },
+      {
+        "leftNs": 78179,
+        "rightNs": 77747,
+        "logRatio": 0.005541104181951883
+      },
+      {
+        "leftNs": 76675,
+        "rightNs": 77288,
+        "logRatio": -0.0079629942148932
+      },
+      {
+        "leftNs": 87264,
+        "rightNs": 126212,
+        "logRatio": -0.36902502608667
+      },
+      {
+        "leftNs": 79173,
+        "rightNs": 77642,
+        "logRatio": 0.019526813720160144
+      },
+      {
+        "leftNs": 181588,
+        "rightNs": 76994,
+        "logRatio": 0.8580128879490271
+      },
+      {
+        "leftNs": 79073,
+        "rightNs": 94250,
+        "logRatio": -0.1755793499001492
+      },
+      {
+        "leftNs": 327864,
+        "rightNs": 78829,
+        "logRatio": 1.425317938787756
+      },
+      {
+        "leftNs": 153844,
+        "rightNs": 592972,
+        "logRatio": -1.3492080783624552
+      },
+      {
+        "leftNs": 87485,
+        "rightNs": 81003,
+        "logRatio": 0.07698115907296137
+      },
+      {
+        "leftNs": 75434,
+        "rightNs": 75165,
+        "logRatio": 0.0035724046784257136
+      },
+      {
+        "leftNs": 76726,
+        "rightNs": 79717,
+        "logRatio": -0.038242228943230545
+      },
+      {
+        "leftNs": 116737,
+        "rightNs": 146761,
+        "logRatio": -0.2288818719967617
+      },
+      {
+        "leftNs": 86101,
+        "rightNs": 128823,
+        "logRatio": -0.4029183433887482
+      },
+      {
+        "leftNs": 74821,
+        "rightNs": 77478,
+        "logRatio": -0.03489543085156764
+      },
+      {
+        "leftNs": 187496,
+        "rightNs": 79222,
+        "logRatio": 0.8615034738245193
+      },
+      {
+        "leftNs": 76314,
+        "rightNs": 76275,
+        "logRatio": 0.0005111770946689981
+      },
+      {
+        "leftNs": 73922,
+        "rightNs": 76008,
+        "logRatio": -0.027828114659977875
+      },
+      {
+        "leftNs": 74886,
+        "rightNs": 74473,
+        "logRatio": 0.005530313574829365
+      },
+      {
+        "leftNs": 74359,
+        "rightNs": 77653,
+        "logRatio": -0.04334546907613505
+      },
+      {
+        "leftNs": 1992939,
+        "rightNs": 204418,
+        "logRatio": 2.2771987955448765
+      },
+      {
+        "leftNs": 114402,
+        "rightNs": 82410,
+        "logRatio": 0.32801177253507036
+      },
+      {
+        "leftNs": 77917,
+        "rightNs": 79646,
+        "logRatio": -0.021947657817366857
+      },
+      {
+        "leftNs": 75888,
+        "rightNs": 75493,
+        "logRatio": 0.005218632410357681
+      },
+      {
+        "leftNs": 75763,
+        "rightNs": 76427,
+        "logRatio": -0.008725990055000368
+      },
+      {
+        "leftNs": 76010,
+        "rightNs": 77083,
+        "logRatio": -0.014017852812801594
+      },
+      {
+        "leftNs": 74868,
+        "rightNs": 73871,
+        "logRatio": 0.013406234172383177
+      },
+      {
+        "leftNs": 75034,
+        "rightNs": 448560,
+        "logRatio": -1.7881011076702844
+      },
+      {
+        "leftNs": 103127,
+        "rightNs": 212118,
+        "logRatio": -0.7211814851929941
+      },
+      {
+        "leftNs": 78508,
+        "rightNs": 155593,
+        "logRatio": -0.6840430931619771
+      },
+      {
+        "leftNs": 75999,
+        "rightNs": 74625,
+        "logRatio": 0.018244610592262123
+      },
+      {
+        "leftNs": 74285,
+        "rightNs": 108580,
+        "logRatio": -0.3795781813879887
+      },
+      {
+        "leftNs": 101821,
+        "rightNs": 77355,
+        "logRatio": 0.2748111535081217
+      },
+      {
+        "leftNs": 116755,
+        "rightNs": 138722,
+        "logRatio": -0.17239420827558005
+      },
+      {
+        "leftNs": 79005,
+        "rightNs": 77208,
+        "logRatio": 0.02300806299862743
+      },
+      {
+        "leftNs": 75023,
+        "rightNs": 126320,
+        "logRatio": -0.5210236367570205
+      },
+      {
+        "leftNs": 76223,
+        "rightNs": 92159,
+        "logRatio": -0.1898520917750303
+      },
+      {
+        "leftNs": 75364,
+        "rightNs": 75405,
+        "logRatio": -0.000543878396894048
+      },
+      {
+        "leftNs": 74883,
+        "rightNs": 77874,
+        "logRatio": -0.03916524046432097
+      },
+      {
+        "leftNs": 95475,
+        "rightNs": 179485,
+        "logRatio": -0.6312272058653561
+      },
+      {
+        "leftNs": 186701,
+        "rightNs": 146830,
+        "logRatio": 0.24023295174488168
+      },
+      {
+        "leftNs": 81778,
+        "rightNs": 128177,
+        "logRatio": -0.4494038624346209
+      },
+      {
+        "leftNs": 76505,
+        "rightNs": 78533,
+        "logRatio": -0.026162820444364146
+      },
+      {
+        "leftNs": 74850,
+        "rightNs": 78720,
+        "logRatio": -0.050411141878360655
+      },
+      {
+        "leftNs": 95447,
+        "rightNs": 82780,
+        "logRatio": 0.1423846332891369
+      },
+      {
+        "leftNs": 78608,
+        "rightNs": 131831,
+        "logRatio": -0.5170473238416311
+      },
+      {
+        "leftNs": 126582,
+        "rightNs": 79567,
+        "logRatio": 0.4642908854798138
+      },
+      {
+        "leftNs": 76963,
+        "rightNs": 76321,
+        "logRatio": 0.00837665710712353
+      },
+      {
+        "leftNs": 75847,
+        "rightNs": 78380,
+        "logRatio": -0.03285063950600388
+      },
+      {
+        "leftNs": 114359,
+        "rightNs": 78528,
+        "logRatio": 0.37588737401123856
+      },
+      {
+        "leftNs": 75341,
+        "rightNs": 74731,
+        "logRatio": 0.008129475978049576
+      },
+      {
+        "leftNs": 75126,
+        "rightNs": 75111,
+        "logRatio": 0.0001996844991559673
+      },
+      {
+        "leftNs": 76113,
+        "rightNs": 84373,
+        "logRatio": -0.10302836707174838
+      },
+      {
+        "leftNs": 77131,
+        "rightNs": 75916,
+        "logRatio": 0.01587780911100504
+      },
+      {
+        "leftNs": 73650,
+        "rightNs": 75073,
+        "logRatio": -0.019136830579262888
+      },
+      {
+        "leftNs": 75661,
+        "rightNs": 74139,
+        "logRatio": 0.020321126505126904
+      },
+      {
+        "leftNs": 87617,
+        "rightNs": 180663,
+        "logRatio": -0.7236583743213156
+      },
+      {
+        "leftNs": 421233,
+        "rightNs": 76614,
+        "logRatio": 1.7044062970985578
+      },
+      {
+        "leftNs": 874195,
+        "rightNs": 284217,
+        "logRatio": 1.123565431993579
+      },
+      {
+        "leftNs": 132998,
+        "rightNs": 87929,
+        "logRatio": 0.4138044198712777
+      },
+      {
+        "leftNs": 76984,
+        "rightNs": 76886,
+        "logRatio": 0.001273802732839679
+      },
+      {
+        "leftNs": 225299,
+        "rightNs": 164394,
+        "logRatio": 0.3151624232962326
+      },
+      {
+        "leftNs": 87928,
+        "rightNs": 79095,
+        "logRatio": 0.10586863611605653
+      },
+      {
+        "leftNs": 89561,
+        "rightNs": 78007,
+        "logRatio": 0.13812139111457064
+      },
+      {
+        "leftNs": 86518,
+        "rightNs": 91309,
+        "logRatio": -0.05389687409014393
+      },
+      {
+        "leftNs": 92838,
+        "rightNs": 183493,
+        "logRatio": -0.6813204808924491
+      },
+      {
+        "leftNs": 75302,
+        "rightNs": 104708,
+        "logRatio": -0.3296688288664061
+      },
+      {
+        "leftNs": 442566,
+        "rightNs": 1274706,
+        "logRatio": -1.057881236899455
+      },
+      {
+        "leftNs": 82822,
+        "rightNs": 80317,
+        "logRatio": 0.03071242193392523
+      },
+      {
+        "leftNs": 78110,
+        "rightNs": 80378,
+        "logRatio": -0.02862241727789588
+      },
+      {
+        "leftNs": 204804,
+        "rightNs": 110019,
+        "logRatio": 0.6214003460751146
+      },
+      {
+        "leftNs": 87711,
+        "rightNs": 77712,
+        "logRatio": 0.12103763350343608
+      },
+      {
+        "leftNs": 77880,
+        "rightNs": 75582,
+        "logRatio": 0.02995102090577805
+      },
+      {
+        "leftNs": 114567,
+        "rightNs": 77301,
+        "logRatio": 0.3934529125772499
+      },
+      {
+        "leftNs": 134842,
+        "rightNs": 164085,
+        "logRatio": -0.1962808635900543
+      },
+      {
+        "leftNs": 78093,
+        "rightNs": 90295,
+        "logRatio": -0.14518166375673455
+      },
+      {
+        "leftNs": 75865,
+        "rightNs": 75290,
+        "logRatio": 0.007608121115173505
+      },
+      {
+        "leftNs": 78366,
+        "rightNs": 75408,
+        "logRatio": 0.03847678964206422
+      },
+      {
+        "leftNs": 76258,
+        "rightNs": 83039,
+        "logRatio": -0.0851880489390623
+      },
+      {
+        "leftNs": 75194,
+        "rightNs": 105700,
+        "logRatio": -0.34053345233761106
+      },
+      {
+        "leftNs": 74161,
+        "rightNs": 77643,
+        "logRatio": -0.04588299190583003
+      },
+      {
+        "leftNs": 76794,
+        "rightNs": 347080,
+        "logRatio": -1.5084287888235792
+      },
+      {
+        "leftNs": 120147,
+        "rightNs": 92811,
+        "logRatio": 0.258150825831482
+      },
+      {
+        "leftNs": 78259,
+        "rightNs": 94647,
+        "logRatio": -0.19013034265106082
+      },
+      {
+        "leftNs": 76525,
+        "rightNs": 74926,
+        "logRatio": 0.02111652503780214
+      },
+      {
+        "leftNs": 75603,
+        "rightNs": 83773,
+        "logRatio": -0.10261479492995376
+      },
+      {
+        "leftNs": 75287,
+        "rightNs": 74905,
+        "logRatio": 0.005086833169741311
+      },
+      {
+        "leftNs": 74391,
+        "rightNs": 299460,
+        "logRatio": -1.3926458859296496
+      },
+      {
+        "leftNs": 91228,
+        "rightNs": 163104,
+        "logRatio": -0.5810261666537279
+      },
+      {
+        "leftNs": 75337,
+        "rightNs": 74145,
+        "logRatio": 0.015948746559044533
+      },
+      {
+        "leftNs": 77004,
+        "rightNs": 125460,
+        "logRatio": -0.48812961411221867
+      },
+      {
+        "leftNs": 84034,
+        "rightNs": 95813,
+        "logRatio": -0.1311768962901096
+      },
+      {
+        "leftNs": 77862,
+        "rightNs": 77900,
+        "logRatio": -0.0004879238935541081
+      },
+      {
+        "leftNs": 139143,
+        "rightNs": 79407,
+        "logRatio": 0.5609156557045529
+      },
+      {
+        "leftNs": 102087,
+        "rightNs": 79100,
+        "logRatio": 0.2551125161395168
+      },
+      {
+        "leftNs": 76061,
+        "rightNs": 75509,
+        "logRatio": 0.007283795480200013
+      },
+      {
+        "leftNs": 75220,
+        "rightNs": 75059,
+        "logRatio": 0.002142682099256273
+      },
+      {
+        "leftNs": 77413,
+        "rightNs": 82339,
+        "logRatio": -0.061690146353868075
+      },
+      {
+        "leftNs": 342616,
+        "rightNs": 111205,
+        "logRatio": 1.1252349416580585
+      },
+      {
+        "leftNs": 75493,
+        "rightNs": 75716,
+        "logRatio": -0.0029495620191048607
+      },
+      {
+        "leftNs": 81365,
+        "rightNs": 126770,
+        "logRatio": -0.4434292158380576
+      },
+      {
+        "leftNs": 75594,
+        "rightNs": 77842,
+        "logRatio": -0.02930421632185335
+      },
+      {
+        "leftNs": 74448,
+        "rightNs": 75903,
+        "logRatio": -0.01935531420987157
+      },
+      {
+        "leftNs": 80394,
+        "rightNs": 76312,
+        "logRatio": 0.052109346691619
+      },
+      {
+        "leftNs": 73777,
+        "rightNs": 74426,
+        "logRatio": -0.008758313240916533
+      },
+      {
+        "leftNs": 155027,
+        "rightNs": 101806,
+        "logRatio": 0.42053025382184994
+      },
+      {
+        "leftNs": 74960,
+        "rightNs": 73971,
+        "logRatio": 0.013281513427584508
+      },
+      {
+        "leftNs": 168270,
+        "rightNs": 73641,
+        "logRatio": 0.8263678963393626
+      },
+      {
+        "leftNs": 76663,
+        "rightNs": 74974,
+        "logRatio": 0.022277806257561258
+      },
+      {
+        "leftNs": 75943,
+        "rightNs": 80490,
+        "logRatio": -0.05814989421001548
+      },
+      {
+        "leftNs": 74904,
+        "rightNs": 75026,
+        "logRatio": -0.0016274264913838086
+      },
+      {
+        "leftNs": 75720,
+        "rightNs": 75326,
+        "logRatio": 0.0052169656080342285
+      },
+      {
+        "leftNs": 74775,
+        "rightNs": 75686,
+        "logRatio": -0.012109598268956502
+      },
+      {
+        "leftNs": 96826,
+        "rightNs": 77215,
+        "logRatio": 0.2263218145836991
+      },
+      {
+        "leftNs": 118000,
+        "rightNs": 1092557,
+        "logRatio": -2.2255914750561128
+      },
+      {
+        "leftNs": 79727,
+        "rightNs": 84022,
+        "logRatio": -0.052470370498757316
+      },
+      {
+        "leftNs": 77419,
+        "rightNs": 77083,
+        "logRatio": 0.004349465116303202
+      },
+      {
+        "leftNs": 138372,
+        "rightNs": 82114,
+        "logRatio": 0.5218371849045966
+      },
+      {
+        "leftNs": 174559,
+        "rightNs": 76565,
+        "logRatio": 0.8241227401119047
+      },
+      {
+        "leftNs": 85745,
+        "rightNs": 210344,
+        "logRatio": -0.8973665104328488
+      },
+      {
+        "leftNs": 75697,
+        "rightNs": 78980,
+        "logRatio": -0.04245612631928453
+      },
+      {
+        "leftNs": 75896,
+        "rightNs": 120470,
+        "logRatio": -0.4620367771881856
+      },
+      {
+        "leftNs": 78746,
+        "rightNs": 76491,
+        "logRatio": 0.029054395912198983
+      },
+      {
+        "leftNs": 74835,
+        "rightNs": 74803,
+        "logRatio": 0.00042769885306946165
+      },
+      {
+        "leftNs": 75280,
+        "rightNs": 75044,
+        "logRatio": 0.0031398870957596867
+      },
+      {
+        "leftNs": 73717,
+        "rightNs": 75937,
+        "logRatio": -0.029670611697277215
+      },
+      {
+        "leftNs": 74928,
+        "rightNs": 74057,
+        "logRatio": 0.011692585472640533
+      },
+      {
+        "leftNs": 75972,
+        "rightNs": 75377,
+        "logRatio": 0.007862662657977294
+      },
+      {
+        "leftNs": 76045,
+        "rightNs": 75011,
+        "logRatio": 0.01369050087585903
+      },
+      {
+        "leftNs": 74419,
+        "rightNs": 74841,
+        "logRatio": -0.0056545775750651076
+      },
+      {
+        "leftNs": 98397,
+        "rightNs": 78458,
+        "logRatio": 0.22644686602794992
+      },
+      {
+        "leftNs": 74807,
+        "rightNs": 77032,
+        "logRatio": -0.029309456448456006
+      },
+      {
+        "leftNs": 75308,
+        "rightNs": 74252,
+        "logRatio": 0.014121657515488686
+      },
+      {
+        "leftNs": 163130,
+        "rightNs": 226611,
+        "logRatio": -0.3286874621568082
+      },
+      {
+        "leftNs": 156165,
+        "rightNs": 142885,
+        "logRatio": 0.08887302967803083
+      },
+      {
+        "leftNs": 386581,
+        "rightNs": 217233,
+        "logRatio": 0.5763709089412721
+      },
+      {
+        "leftNs": 360510,
+        "rightNs": 140700,
+        "logRatio": 0.9408897314709748
+      },
+      {
+        "leftNs": 83098,
+        "rightNs": 239496,
+        "logRatio": -1.0585160810670313
+      },
+      {
+        "leftNs": 186581,
+        "rightNs": 982291,
+        "logRatio": -1.661022137318725
+      },
+      {
+        "leftNs": 85234,
+        "rightNs": 226465,
+        "logRatio": -0.9771899923320406
+      },
+      {
+        "leftNs": 79476,
+        "rightNs": 80898,
+        "logRatio": -0.017734012589149813
+      },
+      {
+        "leftNs": 76144,
+        "rightNs": 80309,
+        "logRatio": -0.053255409994621736
+      },
+      {
+        "leftNs": 202564,
+        "rightNs": 75218,
+        "logRatio": 0.9906653219807443
+      },
+      {
+        "leftNs": 183456,
+        "rightNs": 96632,
+        "logRatio": 0.6410649074229949
+      },
+      {
+        "leftNs": 77272,
+        "rightNs": 295704,
+        "logRatio": -1.342027289113482
+      },
+      {
+        "leftNs": 77049,
+        "rightNs": 78757,
+        "logRatio": -0.021925579547680096
+      },
+      {
+        "leftNs": 75506,
+        "rightNs": 81655,
+        "logRatio": -0.07829093123264098
+      },
+      {
+        "leftNs": 75241,
+        "rightNs": 73873,
+        "logRatio": 0.018348892545520936
+      },
+      {
+        "leftNs": 183946,
+        "rightNs": 95712,
+        "logRatio": 0.6532985538274062
+      },
+      {
+        "leftNs": 75272,
+        "rightNs": 76498,
+        "logRatio": -0.016156376995421072
+      },
+      {
+        "leftNs": 75163,
+        "rightNs": 74153,
+        "logRatio": 0.0135285623014881
+      },
+      {
+        "leftNs": 75729,
+        "rightNs": 75039,
+        "logRatio": 0.009153199848835966
+      },
+      {
+        "leftNs": 74061,
+        "rightNs": 73594,
+        "logRatio": 0.006325577287172718
+      },
+      {
+        "leftNs": 74215,
+        "rightNs": 75757,
+        "logRatio": -0.020564563284203453
+      },
+      {
+        "leftNs": 83086,
+        "rightNs": 187055,
+        "logRatio": -0.8115264753098995
+      },
+      {
+        "leftNs": 74378,
+        "rightNs": 74111,
+        "logRatio": 0.0035962298588620226
+      },
+      {
+        "leftNs": 121373,
+        "rightNs": 74814,
+        "logRatio": 0.48386341537534505
+      },
+      {
+        "leftNs": 74640,
+        "rightNs": 75944,
+        "logRatio": -0.017319670040409026
+      },
+      {
+        "leftNs": 73760,
+        "rightNs": 73408,
+        "logRatio": 0.004783657741432788
+      },
+      {
+        "leftNs": 102811,
+        "rightNs": 74840,
+        "logRatio": 0.31753984978171845
+      },
+      {
+        "leftNs": 76796,
+        "rightNs": 78215,
+        "logRatio": -0.0183088895498244
+      },
+      {
+        "leftNs": 187702,
+        "rightNs": 76947,
+        "logRatio": 0.8917387256665833
+      },
+      {
+        "leftNs": 289651,
+        "rightNs": 100610,
+        "logRatio": 1.0574250936753171
+      },
+      {
+        "leftNs": 76363,
+        "rightNs": 77674,
+        "logRatio": -0.01702229537017188
+      },
+      {
+        "leftNs": 138343,
+        "rightNs": 126949,
+        "logRatio": 0.08595067763651346
+      },
+      {
+        "leftNs": 143591,
+        "rightNs": 146998,
+        "logRatio": -0.02345000068869142
+      },
+      {
+        "leftNs": 84230,
+        "rightNs": 76995,
+        "logRatio": 0.08981066764689605
+      },
+      {
+        "leftNs": 78777,
+        "rightNs": 100321,
+        "logRatio": -0.24175396885048236
+      },
+      {
+        "leftNs": 114381,
+        "rightNs": 76019,
+        "logRatio": 0.4085516721946143
+      },
+      {
+        "leftNs": 74256,
+        "rightNs": 75862,
+        "logRatio": -0.021397317769790855
+      },
+      {
+        "leftNs": 73986,
+        "rightNs": 74449,
+        "logRatio": -0.006238441089916489
+      },
+      {
+        "leftNs": 125704,
+        "rightNs": 76564,
+        "logRatio": 0.49580294450396745
+      },
+      {
+        "leftNs": 73729,
+        "rightNs": 74853,
+        "logRatio": -0.015129981313324591
+      },
+      {
+        "leftNs": 74267,
+        "rightNs": 74416,
+        "logRatio": -0.0020042647764533677
+      },
+      {
+        "leftNs": 76068,
+        "rightNs": 74986,
+        "logRatio": 0.014326247644776417
+      },
+      {
+        "leftNs": 75924,
+        "rightNs": 83051,
+        "logRatio": -0.08972203697325803
+      },
+      {
+        "leftNs": 97199,
+        "rightNs": 191248,
+        "logRatio": -0.6768105917879979
+      },
+      {
+        "leftNs": 75459,
+        "rightNs": 74971,
+        "logRatio": 0.00648809029947439
+      },
+      {
+        "leftNs": 73519,
+        "rightNs": 74579,
+        "logRatio": -0.014315090026388776
+      },
+      {
+        "leftNs": 113122,
+        "rightNs": 74761,
+        "logRatio": 0.41417052369655577
+      },
+      {
+        "leftNs": 72969,
+        "rightNs": 73424,
+        "logRatio": -0.006216164230878717
+      },
+      {
+        "leftNs": 74449,
+        "rightNs": 76197,
+        "logRatio": -0.023207764632473673
+      },
+      {
+        "leftNs": 73815,
+        "rightNs": 104591,
+        "logRatio": -0.34849554287793094
+      },
+      {
+        "leftNs": 89916,
+        "rightNs": 76492,
+        "logRatio": 0.16168974096944624
+      },
+      {
+        "leftNs": 74547,
+        "rightNs": 75919,
+        "logRatio": -0.018237183502830528
+      },
+      {
+        "leftNs": 78719,
+        "rightNs": 74265,
+        "logRatio": 0.058244771929782446
+      },
+      {
+        "leftNs": 84492,
+        "rightNs": 96915,
+        "logRatio": -0.13717745035324205
+      },
+      {
+        "leftNs": 128324,
+        "rightNs": 85904,
+        "logRatio": 0.40132792202197726
+      },
+      {
+        "leftNs": 77646,
+        "rightNs": 76333,
+        "logRatio": 0.017054687003219767
+      },
+      {
+        "leftNs": 76821,
+        "rightNs": 74639,
+        "logRatio": 0.02881488146908251
+      },
+      {
+        "leftNs": 88391,
+        "rightNs": 150478,
+        "logRatio": -0.5320467395958255
+      },
+      {
+        "leftNs": 74786,
+        "rightNs": 76780,
+        "logRatio": -0.02631348788532072
+      },
+      {
+        "leftNs": 74924,
+        "rightNs": 209520,
+        "logRatio": -1.0283449337658106
+      },
+      {
+        "leftNs": 75093,
+        "rightNs": 76274,
+        "logRatio": -0.015604774689940919
+      },
+      {
+        "leftNs": 73516,
+        "rightNs": 73405,
+        "logRatio": 0.0015110164118040102
+      },
+      {
+        "leftNs": 74902,
+        "rightNs": 78753,
+        "logRatio": -0.050135779781865064
+      },
+      {
+        "leftNs": 77243,
+        "rightNs": 388259,
+        "logRatio": -1.6147163459148919
+      },
+      {
+        "leftNs": 78660,
+        "rightNs": 184650,
+        "logRatio": -0.8533273742949087
+      },
+      {
+        "leftNs": 101411,
+        "rightNs": 78298,
+        "logRatio": 0.2586595066493721
+      },
+      {
+        "leftNs": 82732,
+        "rightNs": 396453,
+        "logRatio": -1.5669510289112318
+      },
+      {
+        "leftNs": 75169,
+        "rightNs": 77998,
+        "logRatio": -0.03694427341378449
+      },
+      {
+        "leftNs": 74651,
+        "rightNs": 181811,
+        "logRatio": -0.890143766220803
+      },
+      {
+        "leftNs": 74177,
+        "rightNs": 75917,
+        "logRatio": -0.023186509165743895
+      },
+      {
+        "leftNs": 124630,
+        "rightNs": 73476,
+        "logRatio": 0.5283905255544677
+      },
+      {
+        "leftNs": 79161,
+        "rightNs": 74462,
+        "logRatio": 0.061194825154384666
+      },
+      {
+        "leftNs": 85392,
+        "rightNs": 187855,
+        "logRatio": -0.7884179690557976
+      },
+      {
+        "leftNs": 315360,
+        "rightNs": 76091,
+        "logRatio": 1.4217848509708888
+      },
+      {
+        "leftNs": 79652,
+        "rightNs": 119310,
+        "logRatio": -0.40405800199128017
+      },
+      {
+        "leftNs": 618284,
+        "rightNs": 99937,
+        "logRatio": 1.8224079113692042
+      },
+      {
+        "leftNs": 76058,
+        "rightNs": 1620383,
+        "logRatio": -3.0589216129126164
+      },
+      {
+        "leftNs": 238664,
+        "rightNs": 85938,
+        "logRatio": 1.021430599019975
+      },
+      {
+        "leftNs": 83599,
+        "rightNs": 358055,
+        "logRatio": -1.4546550475889133
+      },
+      {
+        "leftNs": 78214,
+        "rightNs": 74711,
+        "logRatio": 0.045821322673492655
+      },
+      {
+        "leftNs": 83531,
+        "rightNs": 76676,
+        "logRatio": 0.08562906846691815
+      },
+      {
+        "leftNs": 74512,
+        "rightNs": 74169,
+        "logRatio": 0.004613913122555444
+      },
+      {
+        "leftNs": 73743,
+        "rightNs": 73713,
+        "logRatio": 0.00040690104728079255
+      },
+      {
+        "leftNs": 77292,
+        "rightNs": 116265,
+        "logRatio": -0.4082816110488305
+      },
+      {
+        "leftNs": 73888,
+        "rightNs": 73321,
+        "logRatio": 0.0077033714501627834
+      },
+      {
+        "leftNs": 73061,
+        "rightNs": 74066,
+        "logRatio": -0.013661878943121016
+      },
+      {
+        "leftNs": 73396,
+        "rightNs": 112156,
+        "logRatio": -0.42402132108953233
+      },
+      {
+        "leftNs": 74868,
+        "rightNs": 75404,
+        "logRatio": -0.0071337610880161904
+      },
+      {
+        "leftNs": 84233,
+        "rightNs": 76783,
+        "logRatio": 0.09260350697212345
+      },
+      {
+        "leftNs": 74631,
+        "rightNs": 75742,
+        "logRatio": -0.014776857760486383
+      },
+      {
+        "leftNs": 73391,
+        "rightNs": 73660,
+        "logRatio": -0.0036585987181962927
+      },
+      {
+        "leftNs": 73389,
+        "rightNs": 73101,
+        "logRatio": 0.003932014076831732
+      },
+      {
+        "leftNs": 75896,
+        "rightNs": 82186,
+        "logRatio": -0.07962098916438701
+      },
+      {
+        "leftNs": 73124,
+        "rightNs": 73238,
+        "logRatio": -0.0015577817063649661
+      },
+      {
+        "leftNs": 72902,
+        "rightNs": 73337,
+        "logRatio": -0.00594918295375974
+      },
+      {
+        "leftNs": 78021,
+        "rightNs": 130903,
+        "logRatio": -0.5174785696887247
+      },
+      {
+        "leftNs": 77230,
+        "rightNs": 75055,
+        "logRatio": 0.028566804469032998
+      },
+      {
+        "leftNs": 76150,
+        "rightNs": 134039,
+        "logRatio": -0.5654257230405452
+      },
+      {
+        "leftNs": 74457,
+        "rightNs": 75185,
+        "logRatio": -0.009729965430018256
+      },
+      {
+        "leftNs": 93844,
+        "rightNs": 143315,
+        "logRatio": -0.42341117567924
+      },
+      {
+        "leftNs": 87996,
+        "rightNs": 132700,
+        "logRatio": -0.4107995824384991
+      },
+      {
+        "leftNs": 91503,
+        "rightNs": 91657,
+        "logRatio": -0.0016815902630421878
+      },
+      {
+        "leftNs": 115502,
+        "rightNs": 97899,
+        "logRatio": 0.165351510849544
+      },
+      {
+        "leftNs": 89445,
+        "rightNs": 94006,
+        "logRatio": -0.04973469877702488
+      },
+      {
+        "leftNs": 89302,
+        "rightNs": 131131,
+        "logRatio": -0.3841729394860044
+      },
+      {
+        "leftNs": 165381,
+        "rightNs": 91869,
+        "logRatio": 0.5878882536780979
+      },
+      {
+        "leftNs": 93253,
+        "rightNs": 89305,
+        "logRatio": 0.04325875223175322
+      },
+      {
+        "leftNs": 89081,
+        "rightNs": 90318,
+        "logRatio": -0.013790707915873007
+      },
+      {
+        "leftNs": 212752,
+        "rightNs": 94999,
+        "logRatio": 0.8062608028850007
+      },
+      {
+        "leftNs": 90607,
+        "rightNs": 449210,
+        "logRatio": -1.6009590116577692
+      },
+      {
+        "leftNs": 94456,
+        "rightNs": 89433,
+        "logRatio": 0.05464437601936289
+      },
+      {
+        "leftNs": 94660,
+        "rightNs": 86907,
+        "logRatio": 0.08545294309188929
+      },
+      {
+        "leftNs": 95281,
+        "rightNs": 141785,
+        "logRatio": -0.39748140533596676
+      },
+      {
+        "leftNs": 89794,
+        "rightNs": 87719,
+        "logRatio": 0.02337963435524933
+      },
+      {
+        "leftNs": 232011,
+        "rightNs": 93647,
+        "logRatio": 0.9072523901282036
+      },
+      {
+        "leftNs": 93005,
+        "rightNs": 89875,
+        "logRatio": 0.03423343910770346
+      },
+      {
+        "leftNs": 95673,
+        "rightNs": 96479,
+        "logRatio": -0.008389241091863514
+      },
+      {
+        "leftNs": 94151,
+        "rightNs": 89805,
+        "logRatio": 0.047259223350241575
+      },
+      {
+        "leftNs": 123030,
+        "rightNs": 98922,
+        "logRatio": 0.21809656726498103
+      },
+      {
+        "leftNs": 102164,
+        "rightNs": 151326,
+        "logRatio": -0.39285708482373377
+      },
+      {
+        "leftNs": 93699,
+        "rightNs": 94750,
+        "logRatio": -0.011154327133700494
+      },
+      {
+        "leftNs": 89841,
+        "rightNs": 91432,
+        "logRatio": -0.01755408532768041
+      },
+      {
+        "leftNs": 90378,
+        "rightNs": 90919,
+        "logRatio": -0.005968125294964972
+      },
+      {
+        "leftNs": 116250,
+        "rightNs": 100250,
+        "logRatio": 0.14807597828078717
+      },
+      {
+        "leftNs": 158204,
+        "rightNs": 148205,
+        "logRatio": 0.06528888897947094
+      },
+      {
+        "leftNs": 202295,
+        "rightNs": 98917,
+        "logRatio": 0.7154459134436774
+      },
+      {
+        "leftNs": 84010,
+        "rightNs": 82193,
+        "logRatio": 0.021865699091634393
+      },
+      {
+        "leftNs": 159877,
+        "rightNs": 79577,
+        "logRatio": 0.6976796632198711
+      },
+      {
+        "leftNs": 98090,
+        "rightNs": 83731,
+        "logRatio": 0.15827614528059952
+      },
+      {
+        "leftNs": 83716,
+        "rightNs": 104472,
+        "logRatio": -0.2214889747903747
+      },
+      {
+        "leftNs": 76765,
+        "rightNs": 81260,
+        "logRatio": -0.0569050834487183
+      },
+      {
+        "leftNs": 76876,
+        "rightNs": 77594,
+        "logRatio": -0.009296370440072498
+      },
+      {
+        "leftNs": 77501,
+        "rightNs": 78639,
+        "logRatio": -0.0145769200812235
+      },
+      {
+        "leftNs": 97873,
+        "rightNs": 80133,
+        "logRatio": 0.19998296562434068
+      },
+      {
+        "leftNs": 75614,
+        "rightNs": 78269,
+        "logRatio": -0.03451016022190571
+      },
+      {
+        "leftNs": 113319,
+        "rightNs": 76326,
+        "logRatio": 0.39519320995365403
+      },
+      {
+        "leftNs": 74758,
+        "rightNs": 75086,
+        "logRatio": -0.0043778933273155
+      },
+      {
+        "leftNs": 75014,
+        "rightNs": 74964,
+        "logRatio": 0.0006667644834894731
+      },
+      {
+        "leftNs": 115373,
+        "rightNs": 74689,
+        "logRatio": 0.4348375322887053
+      },
+      {
+        "leftNs": 74792,
+        "rightNs": 74722,
+        "logRatio": 0.0009363672313572797
+      },
+      {
+        "leftNs": 77843,
+        "rightNs": 154230,
+        "logRatio": -0.6837510170043484
+      },
+      {
+        "leftNs": 89846,
+        "rightNs": 78017,
+        "logRatio": 0.1411703419362334
+      },
+      {
+        "leftNs": 87572,
+        "rightNs": 227353,
+        "logRatio": -0.9540425635523951
+      },
+      {
+        "leftNs": 73799,
+        "rightNs": 75195,
+        "logRatio": -0.018739558004454832
+      },
+      {
+        "leftNs": 73905,
+        "rightNs": 75376,
+        "logRatio": -0.01970843729364924
+      },
+      {
+        "leftNs": 73756,
+        "rightNs": 73589,
+        "logRatio": 0.00226678979956578
+      },
+      {
+        "leftNs": 75083,
+        "rightNs": 74090,
+        "logRatio": 0.013313597870263585
+      },
+      {
+        "leftNs": 74409,
+        "rightNs": 76040,
+        "logRatio": -0.0216826153552541
+      },
+      {
+        "leftNs": 89614,
+        "rightNs": 98443,
+        "logRatio": -0.09396614269986148
+      },
+      {
+        "leftNs": 124599,
+        "rightNs": 91682,
+        "logRatio": 0.30677451290175217
+      },
+      {
+        "leftNs": 92201,
+        "rightNs": 96233,
+        "logRatio": -0.04280135770080906
+      },
+      {
+        "leftNs": 426723,
+        "rightNs": 120654,
+        "logRatio": 1.2632081455082094
+      },
+      {
+        "leftNs": 89678,
+        "rightNs": 95037,
+        "logRatio": -0.05804081246084452
+      },
+      {
+        "leftNs": 141969,
+        "rightNs": 88767,
+        "logRatio": 0.4695937646009639
+      },
+      {
+        "leftNs": 89873,
+        "rightNs": 93526,
+        "logRatio": -0.039841909841041905
+      },
+      {
+        "leftNs": 183297,
+        "rightNs": 110396,
+        "logRatio": 0.5070338867970672
+      },
+      {
+        "leftNs": 91205,
+        "rightNs": 92777,
+        "logRatio": -0.01708904410708577
+      },
+      {
+        "leftNs": 178739,
+        "rightNs": 127013,
+        "logRatio": 0.3416371977943471
+      },
+      {
+        "leftNs": 106001,
+        "rightNs": 501485,
+        "logRatio": -1.554125168655645
+      },
+      {
+        "leftNs": 91886,
+        "rightNs": 91297,
+        "logRatio": 0.006430749903839078
+      },
+      {
+        "leftNs": 100168,
+        "rightNs": 148195,
+        "logRatio": -0.39168019773456136
+      },
+      {
+        "leftNs": 90166,
+        "rightNs": 90936,
+        "logRatio": -0.008503546508658456
+      },
+      {
+        "leftNs": 89654,
+        "rightNs": 94144,
+        "logRatio": -0.0488677079644536
+      },
+      {
+        "leftNs": 94244,
+        "rightNs": 98562,
+        "logRatio": -0.044798627962865385
+      },
+      {
+        "leftNs": 90720,
+        "rightNs": 89540,
+        "logRatio": 0.01309238716662237
+      },
+      {
+        "leftNs": 350321,
+        "rightNs": 171603,
+        "logRatio": 0.7136662076035402
+      },
+      {
+        "leftNs": 95386,
+        "rightNs": 96837,
+        "logRatio": -0.015097335494455882
+      },
+      {
+        "leftNs": 93557,
+        "rightNs": 108337,
+        "logRatio": -0.14667586302585645
+      },
+      {
+        "leftNs": 92234,
+        "rightNs": 90737,
+        "logRatio": 0.016363613948567262
+      },
+      {
+        "leftNs": 90491,
+        "rightNs": 91227,
+        "logRatio": -0.008100507650095365
+      },
+      {
+        "leftNs": 118394,
+        "rightNs": 97990,
+        "logRatio": 0.1891526128424471
+      },
+      {
+        "leftNs": 119971,
+        "rightNs": 92354,
+        "logRatio": 0.2616210277207167
+      },
+      {
+        "leftNs": 2139160,
+        "rightNs": 135622,
+        "logRatio": 2.758296903359541
+      },
+      {
+        "leftNs": 85046,
+        "rightNs": 89259,
+        "logRatio": -0.04834996933410905
+      },
+      {
+        "leftNs": 77837,
+        "rightNs": 76463,
+        "logRatio": 0.01780993283846442
+      },
+      {
+        "leftNs": 76326,
+        "rightNs": 79720,
+        "logRatio": -0.04350685494246514
+      },
+      {
+        "leftNs": 76870,
+        "rightNs": 75396,
+        "logRatio": 0.019361460152230447
+      },
+      {
+        "leftNs": 74500,
+        "rightNs": 73693,
+        "logRatio": 0.010891310348293753
+      },
+      {
+        "leftNs": 79079,
+        "rightNs": 77621,
+        "logRatio": 0.01860934366482763
+      },
+      {
+        "leftNs": 147860,
+        "rightNs": 177610,
+        "logRatio": -0.18332425515028145
+      },
+      {
+        "leftNs": 77416,
+        "rightNs": 79984,
+        "logRatio": -0.03263313709257319
+      },
+      {
+        "leftNs": 76301,
+        "rightNs": 75981,
+        "logRatio": 0.0042027353332997385
+      },
+      {
+        "leftNs": 116122,
+        "rightNs": 76117,
+        "logRatio": 0.4223697323742374
+      },
+      {
+        "leftNs": 74594,
+        "rightNs": 75032,
+        "logRatio": -0.005854614185927563
+      },
+      {
+        "leftNs": 73522,
+        "rightNs": 74706,
+        "logRatio": -0.01597572903886114
+      },
+      {
+        "leftNs": 82874,
+        "rightNs": 104406,
+        "logRatio": -0.2309657629932764
+      },
+      {
+        "leftNs": 73731,
+        "rightNs": 74087,
+        "logRatio": -0.004816743404681112
+      },
+      {
+        "leftNs": 99127,
+        "rightNs": 104108,
+        "logRatio": -0.04902696555541839
+      },
+      {
+        "leftNs": 74805,
+        "rightNs": 73882,
+        "logRatio": 0.01241550177574157
+      },
+      {
+        "leftNs": 73448,
+        "rightNs": 74411,
+        "logRatio": -0.013026107531358272
+      },
+      {
+        "leftNs": 76190,
+        "rightNs": 108501,
+        "logRatio": -0.35352916904298515
+      },
+      {
+        "leftNs": 73753,
+        "rightNs": 74898,
+        "logRatio": -0.015405515538264074
+      },
+      {
+        "leftNs": 72945,
+        "rightNs": 74643,
+        "logRatio": -0.023011016133560536
+      },
+      {
+        "leftNs": 72860,
+        "rightNs": 74445,
+        "logRatio": -0.021520806127096063
+      },
+      {
+        "leftNs": 75988,
+        "rightNs": 73481,
+        "logRatio": 0.03354856368313577
+      },
+      {
+        "leftNs": 74185,
+        "rightNs": 73190,
+        "logRatio": 0.01350317378962112
+      },
+      {
+        "leftNs": 73766,
+        "rightNs": 73121,
+        "logRatio": 0.008782317641233956
+      },
+      {
+        "leftNs": 115457,
+        "rightNs": 79519,
+        "logRatio": 0.3729021794542683
+      },
+      {
+        "leftNs": 137706,
+        "rightNs": 145870,
+        "logRatio": -0.05759483632803823
+      },
+      {
+        "leftNs": 160675,
+        "rightNs": 137034,
+        "logRatio": 0.15915462103710967
+      }
+    ],
+    "adjustedLogRatios": [
+      -0.30226008824042605,
+      1.8790399328677054,
+      -0.5404877612560821,
+      0.26688123657256524,
+      0.1475031222090153,
+      -0.42250761457740366,
+      1.1525504665405109,
+      -1.8502302053558435,
+      -0.005993872709623982,
+      0.17233871257833036,
+      0.1223648089565649,
+      -0.019652025332516757,
+      -0.3668057613383917,
+      -0.12895890618012748,
+      -0.046765126831191606,
+      -0.18035629028087716,
+      0.03428463008676014,
+      0.6419813431135151,
+      0.2409212925071569,
+      0.1465051721167555,
+      1.6901798828111114,
+      -0.11814096383903602,
+      0.019410523183471626,
+      -0.5719211914783744,
+      0.9342582519964594,
+      0.5665022695468866,
+      0.3158725919423603,
+      -0.4037972889719227,
+      0.34601962030570016,
+      -0.057380217564617586,
+      0.9380646140614445,
+      -0.5715983730404343,
+      0.7134570876935153,
+      0.9054971787763106,
+      1.1199307685184858,
+      0.0860045537152809,
+      1.3346730229061308,
+      -0.7250652502570931,
+      0.9768997436542063,
+      0.13300789603524993,
+      -0.06947815177537153,
+      -3.3516747946342784,
+      0.4807060386821116,
+      1.1504318033111451,
+      1.1049903101942566,
+      0.16366642226031902,
+      0.036762933932236855,
+      -1.2169855052440257,
+      0.08672148378409308,
+      -0.024307111138383353,
+      -0.2388528257481442,
+      2.368434854291867,
+      -0.2640932621897057,
+      1.7604983984536706,
+      -1.0617768749073804,
+      -0.26720445540317345,
+      0.10554594477283552,
+      1.5243343114616448,
+      0.16384498059214958,
+      -0.008634699113172717,
+      -0.601813969242711,
+      -0.05023170948676943,
+      -0.3770921829148785,
+      2.1116236731245532,
+      1.767435131239,
+      -0.3703434328882871,
+      -0.08910702992389127,
+      -0.21228969204660764,
+      -1.4914684131125502,
+      1.5359692812708257,
+      2.0322789042882423,
+      -1.1724221228022682,
+      0.9784215025596126,
+      -0.009740512052591906,
+      -0.24559072086535033,
+      0.00024785951781521737,
+      0.02525507220990764,
+      -0.952314665977026,
+      -0.5364290959267559,
+      0.5555469745343659,
+      -0.4276962461539253,
+      -0.12357290482065914,
+      0.011430222325782498,
+      0.3991097092838494,
+      0.13002783387366001,
+      -0.6582231756594883,
+      0.10094619328374088,
+      0.062045672325172795,
+      0.11949331034069621,
+      1.0793655622251106,
+      -0.7830010282093579,
+      -0.8141979262309088,
+      0.04120536441096834,
+      1.3282173533117825,
+      0.5397642969831112,
+      -0.4393531743746641,
+      1.2332094284792972,
+      -0.2842597641945372,
+      0.6674008445768775,
+      -0.6906731324667106,
+      0.7344307988275236,
+      0.5698440481372775,
+      1.4647469901400427,
+      1.0439566013008725,
+      -0.3852785874760405,
+      0.5584414451365245,
+      -0.1840963596018662,
+      -0.01720635322895263,
+      0.6189883735985591,
+      0.004900679886957419,
+      -1.2591130509770505,
+      0.48355703885938195,
+      -0.06066258565164408,
+      -0.4241294404529867,
+      -0.0060344831686730376,
+      0.03393481671087031,
+      0.3548501096102258,
+      1.055407231876032,
+      0.805798689604876,
+      0.15039990505163348,
+      -0.4510449737119632,
+      -0.10227949101028175,
+      0.02097726686354592,
+      0.40952429276386,
+      0.11631271783152117,
+      -0.012886371615933371,
+      0.009839580852185443,
+      -0.36417334429380377,
+      0.03895108916360502,
+      -0.47244472823213407,
+      0.42548490348419654,
+      -1.107483558054056,
+      -0.9215344105045246,
+      -0.000560943938686984,
+      -1.0799477549356074,
+      -0.39941318661290753,
+      0.023097366437345637,
+      0.2375442705498427,
+      0.009816132301512858,
+      -0.460379440513193,
+      1.2218090280219227,
+      -0.0933478332400472,
+      -0.01232610808844314,
+      0.24132804354427834,
+      0.04640338318634689,
+      -0.6091824164298771,
+      -0.08595967478609517,
+      -0.6283522663678898,
+      0.6714741753028115,
+      0.010615798268251705,
+      -0.025543126216099762,
+      -0.21420110891528213,
+      0.009582797878292526,
+      -2.099183341692089,
+      -0.6389584623330367,
+      1.9733291179471557,
+      -0.40872458977661447,
+      0.04288431850972868,
+      -1.1535611465067999,
+      -0.23091648420914715,
+      -0.35369241400184637,
+      -0.045624363801954046,
+      -0.016071728001252793,
+      2.34698805997812,
+      -0.6468961021035061,
+      0.13396518886181405,
+      -0.01770043998382006,
+      -0.3512100050444286,
+      0.015109542621456754,
+      0.014815412307311598,
+      0.368935534335832,
+      -0.04532655342903918,
+      -0.834930848966759,
+      0.7992770591789636,
+      -1.779724309278135,
+      1.7431446417436172,
+      -0.12325766566308788,
+      0.025926289526814257,
+      0.677522436503995,
+      1.0180427354482355,
+      0.1854539127535206,
+      0.06065888582715781,
+      -0.8612235167494421,
+      -0.4246665760610772,
+      0.03851853831880106,
+      -0.012903631157453181,
+      0.48782547262410036,
+      -2.7395484690939442,
+      -0.1747981310147433,
+      -0.11988075974293153,
+      0.019587608368424735,
+      -0.033354142173790687,
+      -0.15755340401588763,
+      -0.0015257990196706778,
+      1.753762353798442,
+      -0.06244838835072919,
+      1.1666237428585953,
+      -0.018577206248558728,
+      0.4025146643677241,
+      0.6038468161892201,
+      0.20810158931874945,
+      -0.06697535406754392,
+      0.5502858500637411,
+      0.6907403909293972,
+      0.041257198998488294,
+      0.5350360697758869,
+      0.2736179503978775,
+      -0.7011654391310396,
+      1.3495993960075876,
+      0.0367776923375917,
+      -0.3826190129300621,
+      1.0727372084154756,
+      0.5664956549914532,
+      -0.13087628469652618,
+      0.0055116564817803745,
+      0.042529253979876926,
+      -0.3885696392507508,
+      -0.013598110921189725,
+      0.003473720867152921,
+      1.3857112949095718,
+      -0.013098144964589584,
+      0.02435236220434213,
+      -0.5213088565800439,
+      0.7405553876953406,
+      -2.1949274297080557,
+      -1.5471292208338898,
+      -1.5665911028321045,
+      0.010029483768525712,
+      0.5900063271370459,
+      -1.722228481380166,
+      0.054021526088502,
+      0.19305759904329872,
+      0.2740825790390028,
+      0.38244576590768087,
+      1.139070787133481,
+      0.17808077733220587,
+      -0.5615852336366831,
+      -1.960518337756429,
+      0.46208832593226123,
+      -0.014433692988259231,
+      -0.3370546390563515,
+      0.7801423075011966,
+      -0.9287834716242941,
+      -0.0018154457491701458,
+      -0.5267240160227327,
+      0.5794968468847048,
+      0.3678962508096287,
+      0.6128966610268677,
+      1.52162690243138,
+      -0.8633849444481216,
+      2.093690835884043,
+      -0.0080474911952804,
+      0.6348042099069553,
+      0.05348801303343126,
+      1.4061731834741638,
+      0.7632082692363751,
+      0.004276441330963478,
+      0.4972673825021454,
+      1.5910022992778896,
+      0.05983115350021586,
+      -1.2074954373701021,
+      -0.24393863886523193,
+      -0.00046050717465144324,
+      0.3897046527305135,
+      -0.9285062941607376,
+      -1.1099857455936095,
+      0.01959220080406225,
+      -0.31195914300915906,
+      -0.6010665887995236,
+      0.03093495514224425,
+      0.4811853470378971,
+      0.05528510162632499,
+      -0.39840908968463545,
+      -0.2641408797440198,
+      -0.8088266222322187,
+      -0.05712516916849082,
+      -0.273582939634361,
+      -0.054733817260013834,
+      0.2286362667828258,
+      0.3746990089613299,
+      -1.0952159369988557,
+      2.6957327143797656,
+      -0.6473732636563091,
+      -0.0038876779919573977,
+      0.0351768916858326,
+      -0.8121322040589373,
+      0.5237775229039827,
+      -0.05207517209237233,
+      0.47497197448292494,
+      -0.1446129811143769,
+      -0.006678454778387332,
+      0.005093896460682991,
+      0.43527342647324385,
+      0.0007913736481888964,
+      -0.003922836656654821,
+      -0.25047582016987135,
+      0.0022596141195199916,
+      0.484096998508602,
+      0.4697364038005847,
+      0.032011535070209915,
+      1.2196548468164603,
+      -0.262500304703229,
+      -0.2658373294171166,
+      -1.4898546260753212,
+      0.5945772947896361,
+      1.6895310409927495,
+      0.547604531035021,
+      -0.9559383062091205,
+      -0.48668294266784784,
+      -0.9622804409142296,
+      -1.016326822708057,
+      1.0998514379451747,
+      -0.3227220997971643,
+      0.08104831623619525,
+      -0.02756444137804634,
+      -0.2231864393545545,
+      -0.008878005173513979,
+      -0.011178816869910475,
+      -0.476225632919956,
+      -0.0034531584926011855,
+      -0.556656229438577,
+      0.47646801912293324,
+      0.015126637988502133,
+      -0.48670135504527473,
+      0.0022482367002315522,
+      0.009018730286364279,
+      -0.2786878781769682,
+      -0.6299575312590232,
+      -0.9085094803424902,
+      -3.7511150828345565,
+      0.06534517488652553,
+      -0.09487866833126807,
+      0.3047357378866865,
+      -0.4363353575457881,
+      1.1805837170407856,
+      -0.4202839713399247,
+      -0.008105316224054034,
+      0.001932512788581221,
+      -1.2425193431251833,
+      0.6485205133702139,
+      0.028196619293226047,
+      1.0443790799828705,
+      -0.3792692028642261,
+      0.6836001683277326,
+      -0.21536167923043686,
+      0.03687767883171784,
+      -0.41296738999684107,
+      0.032378683886524845,
+      0.09263360265331864,
+      0.7822067843498287,
+      0.45495284119784707,
+      -0.8587135798896517,
+      -0.534564900439729,
+      1.4093133571305463,
+      -1.292317315567874,
+      -0.060520002881978105,
+      -0.01535508365161432,
+      -0.14154185208292835,
+      -0.15385112956636832,
+      1.0115125273228356,
+      0.17604902482094262,
+      0.005604558082821964,
+      0.04901643454931608,
+      3.5296539853687303,
+      0.41200216003850215,
+      -0.5891280489774684,
+      1.008534122870411,
+      0.038542240930001095,
+      0.33956830055095655,
+      0.09684876525976549,
+      -0.5278674112688962,
+      -0.09081162671596234,
+      -1.0586316665953936,
+      -1.397767888719647,
+      0.25209855865215614,
+      -2.772905044806688,
+      3.2057930766329017,
+      -1.643337844787904,
+      2.119885198133855,
+      -0.11699990677813146,
+      0.31494493186544453,
+      -0.011740431832377881,
+      0.014863018722392875,
+      0.40346627879480335,
+      -0.024883300233545656,
+      0.035000728087762674,
+      0.423298437708239,
+      0.06229906888244803,
+      0.5409704751445634,
+      0.2213055137441133,
+      -0.006429691194631854,
+      -0.0024365138932735857,
+      0.4871401829044467,
+      -0.0040629482973510295,
+      -0.006055601212144894,
+      -0.3768181154398922,
+      0.7350979534671481,
+      0.5736339236319956,
+      0.01343253059786328,
+      0.4238674106750098,
+      -0.614987634534661,
+      -0.12622130908166926,
+      -0.8742997829206282,
+      0.029733039092200424,
+      0.44188869699692224,
+      -2.164792294777954,
+      -0.3406465613625453,
+      0.010325847208279289,
+      -0.5673983900824715,
+      1.594600210855115,
+      -0.5629827930649063,
+      -0.08672701914376447,
+      0.42319111100676576,
+      -0.018440814318775332,
+      -0.9446714239453096,
+      0.01992975680315027,
+      -1.2488406493498756,
+      -0.06995031002613274,
+      -0.9660787419547924,
+      0.4294484315560864,
+      0.04267566880135915,
+      -0.29605772124545804,
+      0.00286523975562904,
+      -0.1637163116808968,
+      -0.351809854772739,
+      -3.5136420272696944,
+      0.003195035172556711,
+      -0.7374614345491823,
+      0.28770085682141866,
+      -0.2618655564015965,
+      -0.37780066500559134,
+      0.010785216985409152,
+      0.031204261124972186,
+      -0.2093459733996626,
+      0.4208143857505521,
+      -0.3804320693776582,
+      -0.01876131704999407,
+      0.011330491708130754,
+      -0.4401714515175508,
+      -0.10521148272116265,
+      0.556515534266142,
+      -0.4805051935384755,
+      0.9543732448249599,
+      0.027783106849922315,
+      -0.47451856048915286,
+      0.015417219474002021,
+      -0.03738312481762616,
+      -0.23318199940385562,
+      0.13781204768898436,
+      -0.2851333074299185,
+      -0.02265262699565762,
+      -1.7679537803241747,
+      0.06721631571158128,
+      -0.4834609103171603,
+      0.021657577101029543,
+      1.2555251158661997,
+      0.0014737751552703487,
+      -0.3081963248614043,
+      0.09683695751427113,
+      -0.008392429604316675,
+      0.39287000447726794,
+      0.02687018512450311,
+      0.07546305628004155,
+      0.5461117228175201,
+      0.015569167174540401,
+      -2.015847451437887,
+      -0.7004153432831915,
+      -1.1162441367766327,
+      0.28548423952640906,
+      -0.014330565546184832,
+      -0.5351304367208489,
+      -1.391273342625103,
+      -2.7952447965522706,
+      -0.2612816170070548,
+      -0.034049174542458024,
+      -0.46891096869802146,
+      -0.02315672842666882,
+      -0.005284368686466266,
+      -0.42501130201115384,
+      -0.5330567115289617,
+      -0.09797853236052377,
+      -0.007820708086348303,
+      -1.0130892147526809,
+      0.018052072446132352,
+      0.009271644100459685,
+      0.29414327937544776,
+      -0.021671508421027656,
+      -0.607985971748428,
+      0.3007733068836837,
+      0.013093750511733858,
+      0.858534865729459,
+      -0.3981301296631697,
+      0.014641507600292489,
+      0.015315239408818501,
+      -0.3942809517154473,
+      -0.001825895815153824,
+      -0.022156939616535098,
+      -0.36048752116522975,
+      -0.3045992430299491,
+      0.23341077829708032
+    ]
+  }
+}

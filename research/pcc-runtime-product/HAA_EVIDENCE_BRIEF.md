@@ -106,6 +106,11 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
   both worlds; after explicit approval, withheld releases become generic,
   one-shot denials with no result or posterior commit. The unchanged probe,
   15/15 focused tests, and the complete 304/304 suite pass.
+- A prospectively frozen timing differential then tested whether the corrected
+  path retained a large result-dependent latency signal. Across 500 adjusted
+  pairs, the median ratio was 1.00052, direction was 251/249, and all four
+  leakage gates failed; an independent repeat again failed all gates at ratio
+  1.00510. This is a bounded negative result, not a constant-time guarantee.
 
 ## Honest boundary
 
@@ -136,6 +141,8 @@ node research/pcc-runtime-product/run_preapproval_metadata_probe.mjs \
   --output /tmp/preapproval_metadata_replay.json
 node research/pcc-runtime-product/run_denial_oracle_probe.mjs \
   --output /tmp/denial_oracle_replay.json
+node research/pcc-runtime-product/run_timing_oracle_probe.mjs \
+  --output /tmp/timing_oracle_replay.json
 npm test
 ```
 
