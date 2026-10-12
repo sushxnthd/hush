@@ -118,6 +118,12 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
   authorization. The unchanged probe now gives the same pre-consumption denial
   in both worlds, a balanced 512/512 threshold remains usable, a deterministic
   rerun is byte-identical, and the complete suite passes 306/306 tests.
+- Hiding each scalar digest still left the number of internal ledgers visible.
+  Since equal recovered values co-account, two private fields produced one
+  public diagnostic row when equal and two when unequal—an equality oracle with
+  zero approvals and consumptions. The preserved failure is corrected by one
+  conservative aggregate PCC diagnostic row. The unchanged differential is now
+  relation-independent, reruns byte-identically, and 307/307 tests pass.
 
 ## Honest boundary
 
@@ -152,6 +158,8 @@ node research/pcc-runtime-product/run_timing_oracle_probe.mjs \
   --output /tmp/timing_oracle_replay.json
 node research/pcc-runtime-product/run_selective_refusal_probe.mjs \
   --output /tmp/selective_refusal_replay.json
+node research/pcc-runtime-product/run_ledger_cardinality_probe.mjs \
+  --output /tmp/ledger_cardinality_replay.json
 npm test
 ```
 

@@ -170,9 +170,27 @@ export class ContextKernel extends BaseContextKernel{
   }
 
   partitionExposure(){
-    return super.partitionExposure().map(row=>String(row.field).startsWith('pcc:')
-      ?{...row,field:'pcc:derived'}
-      :row);
+    const rows=super.partitionExposure();
+    const ordinary=rows.filter(row=>!String(row.field).startsWith('pcc:'));
+    const pcc=rows.filter(row=>String(row.field).startsWith('pcc:'));
+    if(!pcc.length) return ordinary;
+    // PCC ledger identity and multiplicity are both private: equal recovered
+    // scalars deliberately co-account, so exposing the number of ledgers would
+    // reveal cross-field equality even when every digest is redacted.
+    const sameDomain=pcc.every(row=>canonicalize(row.domain)===canonicalize(pcc[0].domain));
+    const summary={
+      field:'pcc:derived',
+      ...(sameDomain?{domain:structuredClone(pcc[0].domain)}:{}),
+      initialCandidates:Math.max(...pcc.map(row=>row.initialCandidates)),
+      remainingCandidates:Math.min(...pcc.map(row=>row.remainingCandidates)),
+      totalKnowledgeBits:Math.max(...pcc.map(row=>row.totalKnowledgeBits)),
+      maxKnowledgeBits:Math.min(...pcc.map(row=>row.maxKnowledgeBits)),
+      minRemaining:Math.max(...pcc.map(row=>row.minRemaining)),
+      fragments:Math.max(...pcc.map(row=>row.fragments)),
+      aggregation:'conservative-pcc-summary',
+      ledgerCountWithheld:true
+    };
+    return [...ordinary,summary];
   }
 
   _prepareConstraintPartitionTransaction(rows){

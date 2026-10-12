@@ -283,6 +283,28 @@ test('public PCC partition footprint does not expose the scalar digest',()=>{
   const pcc=k.partitionExposure().find(row=>String(row.field).startsWith('pcc:'));
   assert.equal(pcc.field,'pcc:derived');
   assert.equal(pcc.remainingCandidates,624);
+  assert.equal(pcc.ledgerCountWithheld,true);
+});
+
+test('public PCC partition footprint does not expose equal-value ledger coalescing',()=>{
+  const observe=second=>{
+    const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-pcc-ledger-cardinality-'));
+    const k=new ContextKernel({dir,passphrase:'ledger cardinality regression'});
+    for(const [suffix,value] of [['a',500],['b',second]]){
+      k.put(`finance.${suffix}`,value,{category:`finance-${suffix}`,domain:{type:'integer',min:0,max:1023}});
+      k.registerConstraintContract({
+        id:`finance.${suffix}`,privateRef:{category:`finance-${suffix}`},
+        extractor:{kind:'number',min:0,max:1023,integer:true},
+        release:{op:'compare',label:suffix,operator:'lte',arg:511}
+      });
+      k.prepareConstraintRelease({contractId:`finance.${suffix}`,agent:'assistant',sink:'model.example'});
+    }
+    return k.partitionExposure().filter(row=>row.field==='pcc:derived');
+  };
+  const equal=observe(500),unequal=observe(501);
+  assert.deepEqual(equal,unequal);
+  assert.equal(equal.length,1);
+  assert.equal(equal[0].ledgerCountWithheld,true);
 });
 
 test('standing consent cannot turn result-dependent refusal into an equality oracle',()=>{
