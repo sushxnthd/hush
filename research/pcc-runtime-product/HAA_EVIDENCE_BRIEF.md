@@ -43,6 +43,12 @@ locally, disclose only a bounded result, then broker the approved action.
    failure was preserved. PCC now uses the shared realized-posterior firewall;
    it denied the identifying pair at 10 bits and retained exactly 30 candidates
    in every case of a new 256-case scheduling cohort.
+8. **Strongest-control accounting boundary.** Exhaustive enumeration over
+   1,561,584 uniform deterministic release cases found that PCC cardinality,
+   realized posterior min-entropy and a history-aware specialization are the
+   same charge; 37,478,016 weighted budget decisions had zero disagreements.
+   A two-secret skewed prior is the minimal boundary. This falsifies accounting
+   alone as PCC's differentiator in the uniform finite regime.
 
 ## Decisive product result
 
@@ -154,6 +160,13 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
   passes byte-identically, and all 313 repository tests pass. This contract
   still depends on correct adapter identity assignment and has not been tested
   against a live provider.
+- Exact finite-domain accounting is not itself a defensible differentiator
+  against a matched posterior-risk control. In the uniform deterministic regime,
+  exhaustive enumeration found zero charge disagreements across 1,561,584 cases
+  and zero decision disagreements across 37,478,016 weighted decisions. A
+  non-uniform `(0.9, 0.1)` prior breaks the identity (1.0 cardinality bit versus
+  0.152003 min-entropy bits), identifying calibration under skewed priors—not
+  the uniform formula—as the next accounting-level discriminator.
 
 ## Honest boundary
 
@@ -291,6 +304,9 @@ python3 research/pcc-runtime-product/verify_agentdam_external_freeze.py \
 node research/pcc-runtime-product/run_agentdam_semantic_judge_dryrun.mjs \
   --output /tmp/agentdam_semantic_judge.json
 node --test test/agentdam-semantic-judge-contract.test.js
+python3 research/pcc-runtime-product/verify_matched_control_equivalence.py \
+  --max-domain 12 \
+  --output /tmp/matched-control-equivalence.json
 npm test
 ```
 
@@ -299,7 +315,9 @@ Public review package: https://github.com/sushxnthd/hush/pull/35
 ## Next experiment
 
 Build and freeze a human-labeled semantic development calibration set and the
-faithful OCELOT-style and MNC-style matched controls. Then, without opening
+faithful OCELOT-style and MNC-style matched controls, including non-uniform
+calibration, calibrated operator bounds and scope/lifetime enforcement rather
+than re-testing the now-equivalent uniform charge formula. Then, without opening
 the 36 frozen tasks, obtain a genuinely compatible zero-spend Python 3.10/3.11,
 Docker/Playwright, standalone-site and local-model environment and complete a
 startup check. The final study must retain model, tool, browser-action,
