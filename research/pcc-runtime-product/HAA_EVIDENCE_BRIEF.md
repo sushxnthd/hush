@@ -205,6 +205,17 @@ This is adapter capability, not external validation: module/page doubles were
 synthetic and AgentDAM outcomes remain unopened. See
 `AGENTDAM_TRACE_ADAPTER_RESULT.md`.
 
+The overlay has now also executed the pinned upstream `run_agentdam.test()` loop
+and `PromptAgent.next_action()` method under dependency-isolated local fixtures.
+Both raw and PCC arms followed PromptAgent's actual parse-retry path, retained
+two model calls plus the action/provider/receipt boundaries, completed the
+synthetic task, and passed all 8/8 gates; only raw contained the protected
+canary. A second invocation was byte-identical (canonical evaluation digest
+`5b4d16b8d98b3e739a72aff549a89e9d254841dfcd50f67e06b2b0fe29e883eb`).
+This closes runner-control-flow integration uncertainty, not external validity:
+heavy dependencies were replaced by local doubles and no benchmark outcome was
+opened. See `AGENTDAM_RUNNER_LOOP_SMOKE_RESULT.md`.
+
 ## Reproduce
 
 ```bash
@@ -243,6 +254,14 @@ node research/pcc-runtime-product/evaluate_agentdam_adapter_dryrun.mjs \
   --manifest /tmp/agentdam-adapter-manifest.json \
   --traces /tmp/agentdam-adapter-traces.json \
   --output /tmp/agentdam-adapter-result.json
+python3 research/pcc-runtime-product/run_agentdam_runner_loop_smoke.py \
+  --checkout /tmp/agentdam \
+  --manifest /tmp/agentdam-runner-manifest.json \
+  --traces /tmp/agentdam-runner-traces.json
+node research/pcc-runtime-product/evaluate_agentdam_runner_loop_smoke.mjs \
+  --manifest /tmp/agentdam-runner-manifest.json \
+  --traces /tmp/agentdam-runner-traces.json \
+  --output /tmp/agentdam-runner-result.json
 npm test
 ```
 
@@ -250,9 +269,9 @@ Public review package: https://github.com/sushxnthd/hush/pull/35
 
 ## Next experiment
 
-Freeze licensed AgentDAM subset IDs/hashes, pinned local model, semantic judge
-and faithful matched-control specifications. Then connect the verified overlay
-at the real runner loop and complete a no-outcome smoke test before opening any
-task outcome. The final study must retain model, tool, browser-action, provider,
+Freeze licensed AgentDAM subset IDs/hashes, pinned local model, semantic judge,
+exact timing capture and faithful matched-control specifications. Then complete
+a clean-environment dependency/browser startup check without opening task
+outcomes. The final study must retain model, tool, browser-action, provider,
 error, retry, timing and receipt traces in one fixed denominator.
 
