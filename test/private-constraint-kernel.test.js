@@ -166,13 +166,11 @@ test('PCC bundle denies a two-boolean vector that identifies an exact finite-dom
     release:{op:'compare',label:id,operator,arg:500}
   });
   const prepared=k.prepareConstraintReleaseBundle({contractIds:['finance.gte','finance.lte'],maxBits:2,agent:'assistant',sink:'model.example'});
-  assert.equal(prepared.decision,'ask');
-  k.approveConstraintReleaseBundle(prepared.bundleId);
-  const denied=k.consumeConstraintReleaseBundle({bundleId:prepared.bundleId,agent:'assistant',sink:'model.example'});
-  assert.equal(denied.decision,'deny');
-  assert.equal(denied.derivedDisclosure,false);
-  assert.equal(Object.hasOwn(denied,'constraints'),false);
-  assert.throws(()=>k.consumeConstraintReleaseBundle({bundleId:prepared.bundleId,agent:'assistant',sink:'model.example'}),/already consumed/);
+  assert.equal(prepared.decision,'deny');
+  assert.equal(prepared.derivedDisclosure,false);
+  assert.equal(prepared.inferenceProtection.allFeasibleBranchesAuthorized,false);
+  assert.throws(()=>k.approveConstraintReleaseBundle(prepared.bundleId),/was denied/);
+  assert.throws(()=>k.consumeConstraintReleaseBundle({bundleId:prepared.bundleId,agent:'assistant',sink:'model.example'}),/was denied/);
   assert.equal(k.partitionExposure().find(row=>row.field==='finance.balance').remainingCandidates,1024);
 });
 
@@ -206,11 +204,9 @@ test('semantically equivalent extractor aliases share one PCC posterior ledger',
   const released=k.consumeConstraintRelease({releaseId:first.releaseId,agent:'assistant',sink:'model.example'});
   assert.equal(released.constraint.value,true);
   const second=k.prepareConstraintRelease({contractId:'finance.upper',agent:'assistant',sink:'model.example'});
-  assert.equal(second.decision,'ask');
-  k.approveConstraintRelease(second.releaseId);
-  const denied=k.consumeConstraintRelease({releaseId:second.releaseId,agent:'assistant',sink:'model.example'});
-  assert.equal(denied.decision,'deny');
-  assert.equal(Object.hasOwn(denied,'constraint'),false);
+  assert.equal(second.decision,'deny');
+  assert.equal(second.derivedDisclosure,false);
+  assert.throws(()=>k.approveConstraintRelease(second.releaseId),/was denied/);
   const ledgers=k.partitionExposure().filter(row=>String(row.field).startsWith('pcc:'));
   assert.equal(ledgers.length,1);
   assert.equal(ledgers[0].remainingCandidates,524);
@@ -246,11 +242,9 @@ test('semantically equivalent private-field aliases share one PCC posterior ledg
   k.approveConstraintRelease(first.releaseId);
   assert.equal(k.consumeConstraintRelease({releaseId:first.releaseId,agent:'assistant',sink:'model.example'}).constraint.value,true);
   const second=k.prepareConstraintRelease({contractId:'finance.upper',agent:'assistant',sink:'model.example'});
-  assert.equal(second.decision,'ask');
-  k.approveConstraintRelease(second.releaseId);
-  const denied=k.consumeConstraintRelease({releaseId:second.releaseId,agent:'assistant',sink:'model.example'});
-  assert.equal(denied.decision,'deny');
-  assert.equal(Object.hasOwn(denied,'constraint'),false);
+  assert.equal(second.decision,'deny');
+  assert.equal(second.derivedDisclosure,false);
+  assert.throws(()=>k.approveConstraintRelease(second.releaseId),/was denied/);
   const ledgers=k.partitionExposure().filter(row=>String(row.field).startsWith('pcc:'));
   assert.equal(ledgers.length,1);
   assert.equal(ledgers[0].remainingCandidates,524);
@@ -289,4 +283,44 @@ test('public PCC partition footprint does not expose the scalar digest',()=>{
   const pcc=k.partitionExposure().find(row=>String(row.field).startsWith('pcc:'));
   assert.equal(pcc.field,'pcc:derived');
   assert.equal(pcc.remainingCandidates,624);
+});
+
+test('standing consent cannot turn result-dependent refusal into an equality oracle',()=>{
+  const observe=secret=>{
+    const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-pcc-selective-refusal-'));
+    const k=new ContextKernel({dir,passphrase:'selective refusal regression'});
+    k.put('finance.balance',secret,{category:'finance',domain:{type:'integer',min:0,max:1023}});
+    k.registerConstraintContract({
+      id:'finance.exact-guess',privateRef:{category:'finance'},
+      extractor:{kind:'number',min:0,max:1023,integer:true},
+      release:{op:'compare',label:'Private balance equals public guess',operator:'eq',arg:500}
+    });
+    k.setConsentRule({mode:'always',capability:'context.compute',agent:'assistant',sink:'model.example',category:'finance'});
+    const prepared=k.prepareConstraintRelease({contractId:'finance.exact-guess',agent:'assistant',sink:'model.example'});
+    return {decision:prepared.decision,derivedDisclosure:prepared.derivedDisclosure,inferenceProtection:prepared.inferenceProtection};
+  };
+  const equal=observe(500),unequal=observe(501);
+  assert.deepEqual(equal,unequal);
+  assert.equal(equal.decision,'deny');
+  assert.equal(equal.derivedDisclosure,false);
+  assert.equal(equal.inferenceProtection.allFeasibleBranchesAuthorized,false);
+});
+
+test('feasible-branch authorization preserves balanced comparisons under standing consent',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-pcc-balanced-'));
+  const k=new ContextKernel({dir,passphrase:'balanced branch regression'});
+  k.put('finance.balance',500,{category:'finance',domain:{type:'integer',min:0,max:1023}});
+  k.registerConstraintContract({
+    id:'finance.lower-half',privateRef:{category:'finance'},
+    extractor:{kind:'number',min:0,max:1023,integer:true},
+    release:{op:'compare',label:'Private balance in lower half',operator:'lte',arg:511}
+  });
+  k.setConsentRule({mode:'always',capability:'context.compute',agent:'assistant',sink:'model.example',category:'finance'});
+  const prepared=k.prepareConstraintRelease({contractId:'finance.lower-half',agent:'assistant',sink:'model.example'});
+  assert.equal(prepared.decision,'approved');
+  assert.equal(prepared.inferenceProtection.allFeasibleBranchesAuthorized,true);
+  const released=k.consumeConstraintRelease({releaseId:prepared.releaseId,agent:'assistant',sink:'model.example'});
+  assert.equal(released.decision,'allow');
+  assert.equal(released.constraint.value,true);
+  assert.equal(released.receipt.inferenceProtection.afterCandidates,512);
 });

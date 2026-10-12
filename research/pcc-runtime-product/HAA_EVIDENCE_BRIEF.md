@@ -111,6 +111,13 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
   pairs, the median ratio was 1.00052, direction was 251/249, and all four
   leakage gates failed; an independent repeat again failed all gates at ratio
   1.00510. This is a bounded negative result, not a constant-time guarantee.
+- Delaying firewall refusal until consumption was still unsafe under standing
+  consent: `secret == 500` produced a generic denial while the false world
+  released `false`, so the refusal itself revealed the protected bit. The
+  preserved frozen failure motivated result-independent feasible-branch
+  authorization. The unchanged probe now gives the same pre-consumption denial
+  in both worlds, a balanced 512/512 threshold remains usable, a deterministic
+  rerun is byte-identical, and the complete suite passes 306/306 tests.
 
 ## Honest boundary
 
@@ -143,6 +150,8 @@ node research/pcc-runtime-product/run_denial_oracle_probe.mjs \
   --output /tmp/denial_oracle_replay.json
 node research/pcc-runtime-product/run_timing_oracle_probe.mjs \
   --output /tmp/timing_oracle_replay.json
+node research/pcc-runtime-product/run_selective_refusal_probe.mjs \
+  --output /tmp/selective_refusal_replay.json
 npm test
 ```
 

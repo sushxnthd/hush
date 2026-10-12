@@ -37,11 +37,12 @@ function safeConstraintReleaseMetadata(release){
     consent:release.consent??null,
     rawSourceIncluded:false,
     rawPrivatePathIncluded:false,
-    derivedDisclosure:true
+    derivedDisclosure:!release.deniedAt
     ,inferenceProtection:release.partitionTransaction?{
-      accounting:'realized-partition',
+      accounting:'feasible-branch-preflight',
       beforeCandidates:release.partitionTransaction.summary.beforeCandidates,
       maxKnowledgeBits:release.partitionTransaction.summary.maxKnowledgeBits,
+      allFeasibleBranchesAuthorized:!release.partitionTransaction.denied,
       realizedAccountingWithheldUntilConsumption:true
     }:null
   };
@@ -68,11 +69,12 @@ function safeConstraintBundleMetadata(bundle){
     consent:bundle.consent??null,
     rawSourceIncluded:false,
     rawPrivatePathIncluded:false,
-    derivedDisclosure:true
+    derivedDisclosure:!bundle.deniedAt
     ,inferenceProtection:{
-      accounting:'realized-partition',
+      accounting:'feasible-branch-preflight',
       beforeCandidates:bundle.partitionTransaction.summary.beforeCandidates,
       maxKnowledgeBits:bundle.partitionTransaction.summary.maxKnowledgeBits,
+      allFeasibleBranchesAuthorized:!bundle.partitionTransaction.denied,
       realizedAccountingWithheldUntilConsumption:true
     }
   };
@@ -202,6 +204,50 @@ export class ContextKernel extends BaseContextKernel{
     }
     const beforeEntry=partitionFieldEntry(firewall,field);
     const snapshot=firewall.snapshot();
+
+    // Authorization must not depend on the private result. Explore every
+    // feasible result path from the current public posterior and fail closed
+    // if any path would exceed the budget. Otherwise a requester with standing
+    // consent can learn the predicate from allow-versus-refuse alone.
+    let frontier=[snapshot];
+    for(const row of programs){
+      const next=[];
+      for(const branchSnapshot of frontier){
+        for(const result of [false,true]){
+          const branch=new PartitionAwareReconstructionFirewall({
+            maxKnowledgeBits:snapshot.maxKnowledgeBits,
+            minRemaining:snapshot.minRemaining,
+            maxDomainSize:snapshot.maxDomainSize,
+            maxFragments:snapshot.maxFragments
+          });
+          branch.restore(branchSnapshot);
+          const assessment=branch.evaluate({field,program:row,result});
+          // A zero-candidate branch is logically impossible given the current
+          // posterior and is not part of the authorization surface.
+          if(assessment.afterCandidates===0) continue;
+          if(assessment.decision!=='allow'){
+            return {
+              field,
+              beforeDigest:partitionEntryDigest(beforeEntry),
+              programs,
+              denied:true,
+              denialReason:'At least one feasible result branch exceeds the partition privacy limit.',
+              summary:{
+                beforeCandidates:beforeEntry?.intervals?.reduce((sum,[lo,hi])=>sum+hi-lo+1,0)??assessment.beforeCandidates,
+                afterCandidates:assessment.afterCandidates??null,
+                totalKnowledgeBits:assessment.totalKnowledgeBits??null,
+                maxKnowledgeBits:assessment.maxKnowledgeBits??snapshot.maxKnowledgeBits
+              }
+            };
+          }
+          branch.commit(assessment);
+          next.push(branch.snapshot());
+        }
+      }
+      if(next.length<1) throw new Error('Constraint comparison has no feasible result branch');
+      frontier=next;
+    }
+
     const trial=new PartitionAwareReconstructionFirewall({
       maxKnowledgeBits:snapshot.maxKnowledgeBits,
       minRemaining:snapshot.minRemaining,
@@ -305,13 +351,13 @@ export class ContextKernel extends BaseContextKernel{
       outputBytes:Buffer.byteLength(serialized),
       createdAt:now,
       expiresAt:now+Math.min(ttl,MAX_CONSTRAINT_TTL),
-      approvedAt:verdict.decision==='allow'?now:null,
-      deniedAt:verdict.decision==='deny'?now:null,
+      approvedAt:verdict.decision==='allow'&&!partitionTransaction?.denied?now:null,
+      deniedAt:verdict.decision==='deny'||partitionTransaction?.denied?now:null,
       consumedAt:null,
       consent:consentSummary(verdict)
       ,partitionTransaction
     };
-    if(verdict.decision==='allow'&&verdict.rule?.mode==='once'){
+    if(verdict.decision==='allow'&&!partitionTransaction?.denied&&verdict.rule?.mode==='once'){
       this.consentRegistry.evaluate(request,{consume:true});
       release.consent={...release.consent,consumed:true};
       this._persistState();
@@ -476,13 +522,13 @@ export class ContextKernel extends BaseContextKernel{
       outputBytes:Buffer.byteLength(serialized),
       createdAt:now,
       expiresAt:now+Math.min(ttl,MAX_CONSTRAINT_TTL),
-      approvedAt:verdict.decision==='allow'?now:null,
-      deniedAt:verdict.decision==='deny'?now:null,
+      approvedAt:verdict.decision==='allow'&&!partitionTransaction.denied?now:null,
+      deniedAt:verdict.decision==='deny'||partitionTransaction.denied?now:null,
       consumedAt:null,
       consent:consentSummary(verdict)
       ,partitionTransaction
     };
-    if(verdict.decision==='allow'&&verdict.rule?.mode==='once'){
+    if(verdict.decision==='allow'&&!partitionTransaction.denied&&verdict.rule?.mode==='once'){
       this.consentRegistry.evaluate(request,{consume:true});
       bundle.consent={...bundle.consent,consumed:true};
       this._persistState();
