@@ -184,6 +184,16 @@ privacy score is not boundary-equivalent to PCC's claim. A common fail-closed
 boundary tracer/evaluator is now a frozen prerequisite; see
 `AGENTDAM_EVALUATOR_AUDIT_2026-10-12.md`.
 
+That prerequisite now has a first implementation. A 12-case, six-arm synthetic
+dry run preserved all 72 expected records, passed 11/11 frozen gates, detected
+private data in retry and error paths, failed closed on missing traces and
+boundary arrays, invalidated duplicate records, and retained task exceptions in
+the denominator. A byte-identical repeat reproduced result SHA-256
+`523d8d8e34e4ff292790207120f7eadc8b7fb395455b8aaab2fad0ca3234d1f8`.
+This validates evaluator mechanics only; the actual AgentDAM adapter and matched
+controls remain unfinished and no task outcome has been opened. See
+`AGENTDAM_BOUNDARY_EVALUATOR_RESULT.md`.
+
 ## Reproduce
 
 ```bash
