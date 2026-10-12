@@ -138,6 +138,68 @@ class BoundaryTrace:
 
         page.on("request", capture)
 
+    @contextlib.contextmanager
+    def patch_runner_module(self, runner_module: Any, agent_module: Any) -> Iterator[None]:
+        """Attach this one-case trace to AgentDAM's released runner symbols.
+
+        The runner source is left unchanged. Constructor, action-description and
+        evaluator symbols are wrapped for the lifetime of one case and restored
+        even when the runner raises.
+        """
+        original_env = runner_module.ScriptBrowserEnv
+        original_describe = runner_module.get_action_description
+        original_router = runner_module.evaluator_router
+
+        def traced_env(*args: Any, **kwargs: Any) -> Any:
+            env = original_env(*args, **kwargs)
+            self.attach_page(env.page)
+            for method_name in ("reset", "step"):
+                original_method = getattr(env, method_name)
+
+                def traced_method(*method_args: Any, _method=original_method, _name=method_name, **method_kwargs: Any) -> Any:
+                    try:
+                        return _method(*method_args, **method_kwargs)
+                    except Exception as exc:
+                        self.error(f"environment.{_name}", exc)
+                        raise
+
+                setattr(env, method_name, traced_method)
+            return env
+
+        def traced_describe(action: Any, *args: Any, **kwargs: Any) -> str:
+            try:
+                description = original_describe(action, *args, **kwargs)
+            except Exception as exc:
+                self.error("action_description", exc)
+                raise
+            self.record_action(description, action)
+            return description
+
+        def traced_router(*args: Any, **kwargs: Any) -> Any:
+            evaluator = original_router(*args, **kwargs)
+
+            def traced_evaluator(*eval_args: Any, **eval_kwargs: Any) -> Any:
+                try:
+                    score = evaluator(*eval_args, **eval_kwargs)
+                except Exception as exc:
+                    self.error("evaluator", exc)
+                    raise
+                self.receipt({"taskScore": _safe(score)})
+                return score
+
+            return traced_evaluator
+
+        runner_module.ScriptBrowserEnv = traced_env
+        runner_module.get_action_description = traced_describe
+        runner_module.evaluator_router = traced_router
+        try:
+            with self.patch_agent_module(agent_module):
+                yield
+        finally:
+            runner_module.ScriptBrowserEnv = original_env
+            runner_module.get_action_description = original_describe
+            runner_module.evaluator_router = original_router
+
     def receipt(self, payload: Any) -> None:
         self.add("receipt", payload)
 
