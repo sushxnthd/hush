@@ -303,6 +303,42 @@ test('removing and recreating one logical path cannot reset PCC composition',()=
   assert.equal(second.derivedDisclosure,false);
 });
 
+test('durable connector privacy identity survives source-id rotation',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-pcc-connector-rotation-'));
+  const passphrase='connector privacy identity regression';
+  let k=new ContextKernel({dir,passphrase});
+  const snapshot=id=>({provider:'generic',collection:'budgets',replace:true,items:[{
+    id,privacyKey:'travel-budget',label:'Travel budget',category:'finance',value:500,
+    domain:{type:'integer',min:0,max:1023}
+  }]});
+  k.ingestConnectorSnapshot(snapshot('provider-id-a'));
+  for(const [id,operator] of [['finance.lower','gte'],['finance.upper','lte']]) k.registerConstraintContract({
+    id,privateRef:{category:'finance'},extractor:{kind:'number',min:0,max:1023,integer:true},
+    release:{op:'compare',label:id,operator,arg:500}
+  });
+  const first=k.prepareConstraintRelease({contractId:'finance.lower',agent:'assistant',sink:'model.example'});
+  k.approveConstraintRelease(first.releaseId);
+  assert.equal(k.consumeConstraintRelease({releaseId:first.releaseId,agent:'assistant',sink:'model.example'}).constraint.value,true);
+  k.ingestConnectorSnapshot(snapshot('provider-id-b'));
+  k=new ContextKernel({dir,passphrase});
+  const second=k.prepareConstraintRelease({contractId:'finance.upper',agent:'assistant',sink:'model.example'});
+  assert.equal(second.decision,'deny');
+  assert.equal(second.derivedDisclosure,false);
+});
+
+test('connector comparison without durable privacy identity fails closed',()=>{
+  const k=new ContextKernel({dir:fs.mkdtempSync(path.join(os.tmpdir(),'hush-pcc-connector-keyless-')),passphrase:'connector keyless regression'});
+  k.ingestConnectorSnapshot({provider:'generic',collection:'budgets',items:[{id:'provider-id',category:'finance',value:500}]});
+  k.registerConstraintContract({
+    id:'finance.compare',privateRef:{category:'finance'},extractor:{kind:'number',min:0,max:1023,integer:true},
+    release:{op:'compare',label:'compare',operator:'gte',arg:500}
+  });
+  assert.throws(
+    ()=>k.prepareConstraintRelease({contractId:'finance.compare',agent:'assistant',sink:'model.example'}),
+    /require a durable privacyKey/
+  );
+});
+
 test('equal-valued field aliases with conflicting domains fail closed',()=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-pcc-field-domain-alias-'));
   const k=new ContextKernel({dir,passphrase:'field alias domain regression test'});
