@@ -196,7 +196,7 @@ export class ContextKernel extends BaseContextKernel{
   _prepareConstraintPartitionTransaction(rows){
     const firewall=this.runtime.partitionFirewall;
     if(!firewall) throw new Error('Constraint comparison releases require the partition inference firewall');
-    if(firewall.snapshot().fields.some(item=>String(item.field).startsWith('pcc:')&&!String(item.field).startsWith('pcc:v3:'))){
+    if(firewall.snapshot().fields.some(item=>String(item.field).startsWith('pcc:')&&!String(item.field).startsWith('pcc:v4:'))){
       throw new Error('Legacy PCC privacy identity state requires explicit migration before comparison releases');
     }
     let field=null,domain=null;
@@ -207,14 +207,23 @@ export class ContextKernel extends BaseContextKernel{
       if(extractor.kind!=='number'||extractor.integer!==true||!Number.isSafeInteger(extractor.min)||!Number.isSafeInteger(extractor.max)) throw new Error('Constraint comparison releases require a bounded integer extractor');
       if(!['eq','neq','lt','lte','gt','gte'].includes(release.operator)||!Number.isSafeInteger(Number(release.arg))) throw new Error('Constraint comparison release is not analyzable by the inference firewall');
       // Composition identity must be structural and result-independent.
-      // Same-path extractor aliases share the default logical path/field identity;
-      // intentional aliases across fields or records must declare one trusted
-      // public privacyGroup. Current private-value equality and replaceable
-      // storage-record identifiers are never inputs.
-      const identity=contract.privacyGroup
-        ?{scope:'declared',privacyGroup:contract.privacyGroup}
-        :{scope:'logical-path-field',path,privateField:contract.privateField||'$self'};
-      const candidateField=`pcc:v3:${sha256(canonicalize(identity))}`;
+      // Same-path extractor aliases share the default logical path/field identity.
+      // Connector-backed records instead require a trusted, adapter-supplied,
+      // value-independent privacyKey that survives provider source-id rotation.
+      // Intentional aliases may still declare one trusted public privacyGroup.
+      const recordId=this.pathToId.get(path);
+      const record=recordId?this.store.get(recordId):null;
+      const source=record?.source;
+      let identity;
+      if(contract.privacyGroup){
+        identity={scope:'declared',privacyGroup:contract.privacyGroup};
+      }else if(source?.provider&&source?.collection){
+        if(!source.privacyKey) throw new Error('Connector-backed constraint comparisons require a durable privacyKey');
+        identity={scope:'connector-privacy-key',provider:source.provider,collection:source.collection,privacyKey:source.privacyKey,privateField:contract.privateField||'$self'};
+      }else{
+        identity={scope:'logical-path-field',path,privateField:contract.privateField||'$self'};
+      }
+      const candidateField=`pcc:v4:${sha256(canonicalize(identity))}`;
       if(field!==null&&candidateField!==field) throw new Error('Constraint bundle contracts must share one bounded private field and extractor');
       field=candidateField;
       domain={type:'integer',min:extractor.min,max:extractor.max};
