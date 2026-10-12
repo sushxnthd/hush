@@ -1,0 +1,7 @@
+{
+  "recomputed_aggregate_sha256": "efb39c22f79a028a15618f71051c04292c6e6bbbea4b4a0fbfe597b95a6babb9",
+  "robust_false_safe_match": true,
+  "source_result_canonical_sha256": "b38c3a57fe7a4ba8e85b6b7445e01e1c42838c45f4d51a03652acb9a226b1b36",
+  "status": "PASS",
+  "totals_match": true
+}
