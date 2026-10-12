@@ -190,9 +190,20 @@ private data in retry and error paths, failed closed on missing traces and
 boundary arrays, invalidated duplicate records, and retained task exceptions in
 the denominator. A byte-identical repeat reproduced result SHA-256
 `523d8d8e34e4ff292790207120f7eadc8b7fb395455b8aaab2fad0ca3234d1f8`.
-This validates evaluator mechanics only; the actual AgentDAM adapter and matched
-controls remain unfinished and no task outcome has been opened. See
+This validates evaluator mechanics only; no task outcome has been opened. See
 `AGENTDAM_BOUNDARY_EVALUATOR_RESULT.md`.
+
+The next prerequisite now also passes. A dependency-free overlay verifies the
+exact pinned AgentDAM revision, three integration-file blob IDs, and the model,
+action and receipt source anchors before it runs. In a frozen raw/PCC synthetic
+integration, all 12 traces were valid; raw disclosed the protected canary in
+6/6 cases, PCC in 0/6, both retained 6/6 task successes, and forced errors and
+retries remained visible. All 9/9 gates passed and a second execution was
+byte-identical (canonical result digest
+`df129bfc94be6dfbf45e27252239cad66f2c2a1a5b05847e0ff67d96dcb11f99`).
+This is adapter capability, not external validation: module/page doubles were
+synthetic and AgentDAM outcomes remain unopened. See
+`AGENTDAM_TRACE_ADAPTER_RESULT.md`.
 
 ## Reproduce
 
@@ -224,6 +235,14 @@ node research/pcc-runtime-product/run_value_identity_authorization_probe.mjs \
   --output /tmp/value_identity_authorization_replay.json
 node research/pcc-runtime-product/run_connector_privacy_key_correction.mjs \
   --output /tmp/connector_privacy_key_correction.json
+python3 research/pcc-runtime-product/run_agentdam_adapter_dryrun.py \
+  --checkout /tmp/agentdam \
+  --manifest /tmp/agentdam-adapter-manifest.json \
+  --traces /tmp/agentdam-adapter-traces.json
+node research/pcc-runtime-product/evaluate_agentdam_adapter_dryrun.mjs \
+  --manifest /tmp/agentdam-adapter-manifest.json \
+  --traces /tmp/agentdam-adapter-traces.json \
+  --output /tmp/agentdam-adapter-result.json
 npm test
 ```
 
@@ -231,10 +250,9 @@ Public review package: https://github.com/sushxnthd/hush/pull/35
 
 ## Next experiment
 
-Build and synthetic-dry-run the frozen fail-closed AgentDAM boundary adapter
-before opening any task outcomes. It must retain model, MCP, browser-action,
-provider, error, retry, timing, and receipt traces in one fixed denominator and
-apply the same exact plus semantic/inference evaluator to raw context, AgentDAM's
-privacy prompt, strict redaction, PCC, OCELOT-style budgeting, and MNC-style
-scoped-declassifier controls.
+Freeze licensed AgentDAM subset IDs/hashes, pinned local model, semantic judge
+and faithful matched-control specifications. Then connect the verified overlay
+at the real runner loop and complete a no-outcome smoke test before opening any
+task outcome. The final study must retain model, tool, browser-action, provider,
+error, retry, timing and receipt traces in one fixed denominator.
 
