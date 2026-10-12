@@ -143,6 +143,17 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
   aliases. Old value-derived and record-derived ledgers fail closed. The
   unchanged probe passes byte-identically; 30/30 focused and 311/311 full tests
   pass.
+- Real connectors add another lifecycle boundary: provider source IDs can
+  rotate even when the logical private record does not. The frozen adversarial
+  condition rotated `budget-a` to `budget-b`; the pre-correction runtime reset
+  composition, released both bounding predicates, and recovered the exact
+  secret `500`. The preserved failure falsifies provider source ID as a durable
+  privacy identity. A trusted adapter-supplied, value-independent `privacyKey`
+  now anchors connector PCC accounting; missing or duplicate keys fail closed,
+  older PCC state requires explicit migration, the unchanged correction probe
+  passes byte-identically, and all 313 repository tests pass. This contract
+  still depends on correct adapter identity assignment and has not been tested
+  against a live provider.
 
 ## Honest boundary
 
@@ -181,6 +192,8 @@ node research/pcc-runtime-product/run_ledger_cardinality_probe.mjs \
   --output /tmp/ledger_cardinality_replay.json
 node research/pcc-runtime-product/run_value_identity_authorization_probe.mjs \
   --output /tmp/value_identity_authorization_replay.json
+node research/pcc-runtime-product/run_connector_privacy_key_correction.mjs \
+  --output /tmp/connector_privacy_key_correction.json
 npm test
 ```
 
