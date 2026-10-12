@@ -157,6 +157,17 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
 
 ## Honest boundary
 
+A primary-source prior-art audit dated 12 October 2026 rejects broad novelty
+claims for “compute before disclose,” typed/scoped semantic declassification,
+and cumulative inference budgeting. OCELOT already describes runtime posterior-
+risk budgets and a tamper-evident declassification ledger; MNC already describes
+typed task-sufficient disclosure with recipient/purpose scopes and history-aware
+reuse control; MINIM, Jeeves and adaptive quantitative-information-flow work
+cover additional components. Hush's defensible position is therefore a specific
+implemented and adversarially tested system combination. Whether that exact
+combination is itself novel remains **UNTESTED** pending a deeper review and
+matched comparison. See `PRIOR_ART_AUDIT_2026-10-12.md`.
+
 The runtime experiment is deterministic and synthetic, uses a model proxy, and
 simulates Google's remote endpoint. It does not establish semantic privacy,
 side-channel safety, live-provider reliability, named-competitor superiority,
