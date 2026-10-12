@@ -268,9 +268,9 @@ test('equal values in structurally independent fields do not share authorization
   assert.equal(second.decision,'ask');
 });
 
-test('legacy value-derived PCC ledgers fail closed instead of resetting privacy state',()=>{
+test('legacy PCC identity ledgers fail closed instead of resetting privacy state',()=>{
   const {k}=setup();
-  k.runtime.partitionFirewall.registerField('pcc:legacy-value-derived-key',{type:'integer',min:0,max:500});
+  k.runtime.partitionFirewall.registerField('pcc:v2:record-derived-key',{type:'integer',min:0,max:500});
   k.registerConstraintContract({
     id:'flight.legacy-migration',privateRef:{category:'flight'},
     extractor:{kind:'number',anchors:['maximum','groundspeed'],units:['mph'],min:0,max:500,integer:true},
@@ -280,6 +280,27 @@ test('legacy value-derived PCC ledgers fail closed instead of resetting privacy 
     ()=>k.prepareConstraintRelease({contractId:'flight.legacy-migration',agent:'assistant',sink:'model.example'}),
     /requires explicit migration/
   );
+});
+
+test('removing and recreating one logical path cannot reset PCC composition',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hush-pcc-record-recreation-'));
+  const passphrase='record recreation regression';
+  let k=new ContextKernel({dir,passphrase});
+  k.put('finance.balance',500,{category:'finance',domain:{type:'integer',min:0,max:1023}});
+  for(const [id,operator] of [['finance.lower','gte'],['finance.upper','lte']]) k.registerConstraintContract({
+    id,privateRef:{category:'finance'},
+    extractor:{kind:'number',min:0,max:1023,integer:true},
+    release:{op:'compare',label:id,operator,arg:500}
+  });
+  const first=k.prepareConstraintRelease({contractId:'finance.lower',agent:'assistant',sink:'model.example'});
+  k.approveConstraintRelease(first.releaseId);
+  assert.equal(k.consumeConstraintRelease({releaseId:first.releaseId,agent:'assistant',sink:'model.example'}).constraint.value,true);
+  k.remove('finance.balance');
+  k.put('finance.balance',500,{category:'finance',domain:{type:'integer',min:0,max:1023}});
+  k=new ContextKernel({dir,passphrase});
+  const second=k.prepareConstraintRelease({contractId:'finance.upper',agent:'assistant',sink:'model.example'});
+  assert.equal(second.decision,'deny');
+  assert.equal(second.derivedDisclosure,false);
 });
 
 test('equal-valued field aliases with conflicting domains fail closed',()=>{

@@ -1,0 +1,63 @@
+{
+  "study": "PCC structural-identity lifecycle differential",
+  "domain": {
+    "type": "integer",
+    "min": 0,
+    "max": 1023
+  },
+  "secret": 500,
+  "conditions": {
+    "unchanged": {
+      "storageIdentityPreserved": true,
+      "firstReleased": {
+        "decision": "allow",
+        "value": true
+      },
+      "secondPrepared": {
+        "decision": "deny",
+        "derivedDisclosure": false
+      },
+      "secondReleased": null,
+      "jointInference": {
+        "candidateCount": 0,
+        "recoveredValue": null
+      }
+    },
+    "inPlaceUpdate": {
+      "storageIdentityPreserved": true,
+      "firstReleased": {
+        "decision": "allow",
+        "value": true
+      },
+      "secondPrepared": {
+        "decision": "deny",
+        "derivedDisclosure": false
+      },
+      "secondReleased": null,
+      "jointInference": {
+        "candidateCount": 0,
+        "recoveredValue": null
+      }
+    },
+    "removeRecreate": {
+      "storageIdentityPreserved": false,
+      "firstReleased": {
+        "decision": "allow",
+        "value": true
+      },
+      "secondPrepared": {
+        "decision": "deny",
+        "derivedDisclosure": false
+      },
+      "secondReleased": null,
+      "jointInference": {
+        "candidateCount": 0,
+        "recoveredValue": null
+      }
+    }
+  },
+  "gates": {
+    "all_lifecycle_paths_deny_identifying_second_predicate": true
+  },
+  "verdict": "PASS"
+}

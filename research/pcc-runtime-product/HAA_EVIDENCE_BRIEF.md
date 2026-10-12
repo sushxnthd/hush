@@ -134,6 +134,15 @@ exact source field. A full rerun reproduced the discrete outcome digest exactly:
   The unchanged equality differential passes while extractor aliases and
   explicitly grouped field aliases remain protected; 29/29 focused tests and
   the complete 310/310 suite pass.
+- The first structural correction still used the replaceable encrypted storage
+  record identifier. A frozen lifecycle differential showed that deleting and
+  recreating the same logical path allocated a fresh PCC ledger: `s >= 500`
+  and `s <= 500` were both released and uniquely recovered `500`, while
+  unchanged and in-place-update controls denied the second query. PCC now uses
+  logical path plus private field, with explicit `privacyGroup` for cross-path
+  aliases. Old value-derived and record-derived ledgers fail closed. The
+  unchanged probe passes byte-identically; 30/30 focused and 311/311 full tests
+  pass.
 
 ## Honest boundary
 

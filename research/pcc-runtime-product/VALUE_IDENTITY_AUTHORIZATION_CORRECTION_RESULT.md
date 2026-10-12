@@ -1,5 +1,9 @@
 # PCC value-identity authorization oracle — correction result
 
+> Historical correction: its record-derived default identity was subsequently
+> superseded by lifecycle-stable logical path/field identity after the frozen
+> record-recreation counterexample.
+
 ## Verdict: PASS for the frozen differential
 
 PCC composition identity is now structural and result-independent:
