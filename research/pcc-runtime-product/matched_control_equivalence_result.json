@@ -1,0 +1,102 @@
+{
+  "budgets": [
+    0.0,
+    0.25,
+    0.5,
+    1.0,
+    2.0,
+    4.0,
+    8.0,
+    16.0
+  ],
+  "byDomain": [
+    {
+      "chargeCases": 4,
+      "domainSize": 2,
+      "weightedBudgetDecisions": 96
+    },
+    {
+      "chargeCases": 24,
+      "domainSize": 3,
+      "weightedBudgetDecisions": 576
+    },
+    {
+      "chargeCases": 100,
+      "domainSize": 4,
+      "weightedBudgetDecisions": 2400
+    },
+    {
+      "chargeCases": 360,
+      "domainSize": 5,
+      "weightedBudgetDecisions": 8640
+    },
+    {
+      "chargeCases": 1204,
+      "domainSize": 6,
+      "weightedBudgetDecisions": 28896
+    },
+    {
+      "chargeCases": 3864,
+      "domainSize": 7,
+      "weightedBudgetDecisions": 92736
+    },
+    {
+      "chargeCases": 12100,
+      "domainSize": 8,
+      "weightedBudgetDecisions": 290400
+    },
+    {
+      "chargeCases": 37320,
+      "domainSize": 9,
+      "weightedBudgetDecisions": 895680
+    },
+    {
+      "chargeCases": 114004,
+      "domainSize": 10,
+      "weightedBudgetDecisions": 2736096
+    },
+    {
+      "chargeCases": 346104,
+      "domainSize": 11,
+      "weightedBudgetDecisions": 8306496
+    },
+    {
+      "chargeCases": 1046500,
+      "domainSize": 12,
+      "weightedBudgetDecisions": 25116000
+    }
+  ],
+  "chargeCases": 1561584,
+  "chargeDisagreements": 0,
+  "claimBoundary": "Uniform finite feasible states, deterministic binary releases, identical history, weights, budgets and feasible-branch authorization.",
+  "classification": "DISCRIMINATION / SURPRISE",
+  "decisionDisagreements": 0,
+  "gateStatus": "PASS",
+  "gates": {
+    "all_uniform_charges_agree": true,
+    "all_weighted_budget_decisions_agree": true,
+    "max_error_within_tolerance": true,
+    "nonuniform_prior_breaks_equivalence": true,
+    "repeated_disclosures_are_free": true
+  },
+  "maxAbsError": 3.885780586188048e-16,
+  "maxDomain": 12,
+  "nonuniformBoundary": {
+    "absoluteDifferenceBits": 0.84799690655495,
+    "cardinalityChargeBits": 1.0,
+    "prior": [
+      0.9,
+      0.1
+    ],
+    "statewiseMinEntropyReductionBits": 0.15200309344505006
+  },
+  "repeatedDisclosureDisagreements": 0,
+  "resultSha256": "2a18589d806943f63616ea51e147fe3c42be946127e9ea5e62af8204cabf8328",
+  "study": "finite-domain matched-control accounting equivalence",
+  "weightedBudgetDecisions": 37478016,
+  "weights": [
+    0.5,
+    1.0,
+    2.0
+  ]
+}
