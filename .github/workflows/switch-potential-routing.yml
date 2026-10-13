@@ -19,7 +19,10 @@ jobs:
       - name: Execute frozen verifier
         run: python research/pcc-runtime-product/verify_switch_potential_routing.py --output research/pcc-runtime-product/switch_potential_routing_result.json
       - name: Independent audit
-        run: python research/pcc-runtime-product/audit_switch_potential_routing.py research/pcc-runtime-product/switch_potential_routing_result.json | tee research/pcc-runtime-product/switch_potential_routing_audit.json
+        shell: bash
+        run: |
+          set -o pipefail
+          python research/pcc-runtime-product/audit_switch_potential_routing.py research/pcc-runtime-product/switch_potential_routing_result.json | tee research/pcc-runtime-product/switch_potential_routing_audit.json
       - uses: actions/upload-artifact@v4
         with:
           name: switch-potential-routing-frozen-result
