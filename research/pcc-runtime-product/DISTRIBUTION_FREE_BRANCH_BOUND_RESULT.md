@@ -49,6 +49,14 @@ log2(1 + (k-1)(n-k) delta),
 
 which tends to zero.
 
+The equality structure is also forced for a proper non-singleton branch:
+equality in the two final inequalities requires `a=b=1`, while equality in
+the mass-capacity step requires every outside state to have mass `m`. Hence
+`q=r=m`, all other branch states have zero mass, and the one selected branch
+state plus every outside state have mass `1/(n-k+1)`. Strictly positive priors
+therefore attain equality only at the endpoint cases `k=1` or `k=n`; otherwise
+they approach but do not attain the supremum.
+
 ## Frozen evidence and preserved failure
 
 | Check | Result |
