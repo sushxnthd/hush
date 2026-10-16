@@ -1,0 +1,115 @@
+{
+  "all_gates_pass": true,
+  "classified_instances": 57120,
+  "gates": {
+    "every_nontrivial_policy_output_fiber_is_mixed": true,
+    "monitor_exact": true,
+    "no_sound_complete_output_only_verifier": true,
+    "nonzero_matched_pairs": true,
+    "trace_semantic_control_exact": true
+  },
+  "matched_safe_unsafe_pairs": 560064,
+  "mixed_safety_fibers": 816,
+  "monitor_mismatches": 0,
+  "per_shape": [
+    {
+      "actions": 1,
+      "instances": 32,
+      "matched_pairs": 22,
+      "mixed_fibers": 6,
+      "resources": 1
+    },
+    {
+      "actions": 2,
+      "instances": 128,
+      "matched_pairs": 182,
+      "mixed_fibers": 14,
+      "resources": 1
+    },
+    {
+      "actions": 3,
+      "instances": 512,
+      "matched_pairs": 1342,
+      "mixed_fibers": 30,
+      "resources": 1
+    },
+    {
+      "actions": 1,
+      "instances": 128,
+      "matched_pairs": 182,
+      "mixed_fibers": 14,
+      "resources": 2
+    },
+    {
+      "actions": 2,
+      "instances": 512,
+      "matched_pairs": 1342,
+      "mixed_fibers": 30,
+      "resources": 2
+    },
+    {
+      "actions": 3,
+      "instances": 2048,
+      "matched_pairs": 9302,
+      "mixed_fibers": 62,
+      "resources": 2
+    },
+    {
+      "actions": 1,
+      "instances": 512,
+      "matched_pairs": 1342,
+      "mixed_fibers": 30,
+      "resources": 3
+    },
+    {
+      "actions": 2,
+      "instances": 2048,
+      "matched_pairs": 9302,
+      "mixed_fibers": 62,
+      "resources": 3
+    },
+    {
+      "actions": 3,
+      "instances": 8192,
+      "matched_pairs": 62062,
+      "mixed_fibers": 126,
+      "resources": 3
+    },
+    {
+      "actions": 1,
+      "instances": 2048,
+      "matched_pairs": 9302,
+      "mixed_fibers": 62,
+      "resources": 4
+    },
+    {
+      "actions": 2,
+      "instances": 8192,
+      "matched_pairs": 62062,
+      "mixed_fibers": 126,
+      "resources": 4
+    },
+    {
+      "actions": 3,
+      "instances": 32768,
+      "matched_pairs": 403622,
+      "mixed_fibers": 254,
+      "resources": 4
+    }
+  ],
+  "policy_output_fibers": 840,
+  "ranges": {
+    "actions": [
+      1,
+      3
+    ],
+    "outputs": 2,
+    "resources": [
+      1,
+      4
+    ]
+  },
+  "schema": 1,
+  "sound_complete_output_only_verifiers": 0,
+  "trace_control_mismatches": 0
+}
