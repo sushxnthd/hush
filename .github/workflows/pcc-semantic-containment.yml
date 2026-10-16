@@ -1,0 +1,64 @@
+name: PCC semantic containment
+
+on:
+  push:
+    branches:
+      - breakthrough-engine/pcc-cleanroom-replication
+    paths:
+      - research/pcc-runtime-product/PCC_SEMANTIC_CONTAINMENT_PREREGISTRATION.md
+      - research/pcc-runtime-product/PCC_SEMANTIC_CONTAINMENT_RESULT.md
+      - research/pcc-runtime-product/verify_pcc_semantic_containment.py
+      - research/pcc-runtime-product/audit_pcc_semantic_containment.py
+      - .github/workflows/pcc-semantic-containment.yml
+  workflow_dispatch:
+
+jobs:
+  exact-containment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Syntax check
+        run: |
+          python -m py_compile research/pcc-runtime-product/verify_pcc_semantic_containment.py
+          python -m py_compile research/pcc-runtime-product/audit_pcc_semantic_containment.py
+      - name: Primary exhaustive verifier
+        run: |
+          python research/pcc-runtime-product/verify_pcc_semantic_containment.py \
+            --max-n 7 --max-output 4 \
+            --output pcc-semantic-containment.json
+      - name: Independent partition audit
+        run: |
+          python research/pcc-runtime-product/audit_pcc_semantic_containment.py \
+            --max-n 7 --max-output 4 \
+            --output pcc-semantic-containment-audit.json
+      - name: Deterministic rerun
+        run: |
+          cp pcc-semantic-containment.json /tmp/primary.json
+          cp pcc-semantic-containment-audit.json /tmp/audit.json
+          python research/pcc-runtime-product/verify_pcc_semantic_containment.py \
+            --max-n 7 --max-output 4 \
+            --output pcc-semantic-containment.json
+          python research/pcc-runtime-product/audit_pcc_semantic_containment.py \
+            --max-n 7 --max-output 4 \
+            --output pcc-semantic-containment-audit.json
+          cmp /tmp/primary.json pcc-semantic-containment.json
+          cmp /tmp/audit.json pcc-semantic-containment-audit.json
+      - name: Verify terminal gates
+        run: |
+          python - <<'PY'
+          import json
+          for path in ("pcc-semantic-containment.json", "pcc-semantic-containment-audit.json"):
+              data = json.load(open(path))
+              assert data["status"] == "PASS", (path, data.get("failures"))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pcc-semantic-containment
+          path: |
+            pcc-semantic-containment.json
+            pcc-semantic-containment-audit.json
