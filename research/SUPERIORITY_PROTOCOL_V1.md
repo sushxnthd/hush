@@ -47,6 +47,8 @@ Each task contains two private attributes and twelve public candidates. The task
 
 **Hush.** Exact private attributes remain local. The public candidate set and bounded decision program are evaluated through `PrivateDecisionRuntime`; the caller receives the bounded result and accounting metadata, not the private values or paths.
 
+**Output-channel oracle control.** A strongest channel-matched semantic control is allowed to emit the exact task output selected by the same public task function. It receives zero exact private attributes at the external boundary and has the same observable result as Hush. This arm is not a deployable competitor implementation; it is an oracle control that prevents attributing a frontier advantage to compute location when the comparator candidate class contains the PCC output channel.
+
 ### Primary utility endpoint
 
 Exact agreement with the raw-context oracle.
@@ -104,7 +106,7 @@ The executable returns failure unless all gates pass:
 5. **Governed-retrieval privacy dominance:** Hush has identical utility to governed retrieval with strictly lower exact-private-input exposure.
 6. **Unprotected reconstruction succeeds:** lower 95% confidence bound for exact recovery is at least `99%`.
 7. **Identity/sink rotation resisted:** upper 95% confidence bound for Hush exact recovery is at most `1%`.
-8. **Revision-reset attack resisted:** upper 95% confidence bound for Hush exact recovery is at most `1%`.
+8. **Revision-reset attack resisted:** upper 95% confidence bound for Hush exact recovery is at most `1%`.\n9. **Output-channel containment confirmed:** Hush and the output-channel oracle have identical task accuracy and identical zero exact-private-input exposure. This is a non-superiority gate: it records that compute location alone does not establish a stricter observable privacy–utility frontier.
 
 These thresholds are intentionally hard CI gates rather than descriptive claims.
 
@@ -132,3 +134,23 @@ The internal v1 protocol is only the first stage. A defensible direct competitor
 6. obtain independent reproduction or external review.
 
 Until those conditions are satisfied, repository language must say **“reproducibly superior to the implemented baselines under Protocol v1”**, not “proven better than Charlie/OCELOT/etc.”
+
+
+## Mechanism-identifiability amendment — 16 October 2026
+
+The exact containment proof in
+`research/pcc-runtime-product/PCC_SEMANTIC_CONTAINMENT_RESULT.md` changes the
+interpretation of this benchmark. If a semantic-declassification candidate
+class contains the task-output channel, it can reproduce PCC's observable
+transcript exactly. Therefore:
+
+- comparisons against raw context, governed retrieval, or restricted
+  redaction/abstraction libraries may establish engineering value;
+- they cannot establish an inherent information-theoretic advantage of
+  compute-before-disclose;
+- any strict HUSH claim must concern verifier soundness, trusted execution,
+  lifecycle composition, provider-boundary enforcement, approval/action
+  binding, robustness, or another capability not erased by channel matching.
+
+The output-channel oracle is now mandatory in this suite. Historical novelty is
+not claimed for the containment argument.
