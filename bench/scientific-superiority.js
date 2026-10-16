@@ -98,9 +98,9 @@ function runUtilityExperiment(){
     const rnd=lcg(0x9e3779b9^((seedIndex+1)*2654435761));
     for(const family of taskFamilies())for(let j=0;j<PROFILES_PER_SEED;j++){
       const task=family.make(rnd,seedIndex*PROFILES_PER_SEED+j),fields=privateFields(task.program),truth=chooseOracle(task.program,task.profile);
-      const raw=truth,governed=truth,coarse=chooseOracle(task.program,task.coarse),hush=runHush(task);
-      const rawOk=raw===truth,govOk=governed===truth,coarseOk=coarse===truth,hushOk=hush.result===truth;
-      methods.raw.correct+=rawOk;methods.governed.correct+=govOk;methods.coarse.correct+=coarseOk;methods.hush.correct+=hushOk;
+      const raw=truth,governed=truth,coarse=chooseOracle(task.program,task.coarse),outputOracle=truth,hush=runHush(task);
+      const rawOk=raw===truth,govOk=governed===truth,coarseOk=coarse===truth,outputOracleOk=outputOracle===truth,hushOk=hush.result===truth;
+      methods.raw.correct+=rawOk;methods.governed.correct+=govOk;methods.coarse.correct+=coarseOk;methods.outputOracle.correct+=outputOracleOk;methods.hush.correct+=hushOk;
       methods.raw.exactExposure+=fields.length;methods.governed.exactExposure+=fields.length;
       methods.coarse.exactExposure+=fields.filter(f=>Object.is(task.coarse[f],task.profile[f])).length;
       if(hushOk&&!coarseOk)hushOnlyVsCoarse++;if(coarseOk&&!hushOk)coarseOnlyVsHush++;
