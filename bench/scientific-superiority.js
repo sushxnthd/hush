@@ -134,7 +134,8 @@ function gates(utility,reconstruction){const g={
   zeroExactPrivateInputs:utility.methods.hush.meanExactPrivateAttributesExposed===0&&utility.semanticSurface.pass,
   coarseUtilitySuperiority:utility.methods.hush.accuracy>utility.methods.coarse.accuracy&&utility.paired.hushOnlyVsCoarse>0&&utility.paired.coarseOnlyVsHush===0&&utility.paired.oneSidedP<.001,
   rawPrivacyDominance:utility.methods.hush.accuracy===utility.methods.raw.accuracy&&utility.methods.hush.meanExactPrivateAttributesExposed<utility.methods.raw.meanExactPrivateAttributesExposed,
-  governedPrivacyDominance:utility.methods.hush.accuracy===utility.methods.governed.accuracy&&utility.methods.hush.meanExactPrivateAttributesExposed<utility.methods.governed.meanExactPrivateAttributesExposed,\n  outputChannelContainmentConfirmed:utility.methods.hush.accuracy===utility.methods.outputOracle.accuracy&&utility.methods.hush.meanExactPrivateAttributesExposed===utility.methods.outputOracle.meanExactPrivateAttributesExposed,
+  governedPrivacyDominance:utility.methods.hush.accuracy===utility.methods.governed.accuracy&&utility.methods.hush.meanExactPrivateAttributesExposed<utility.methods.governed.meanExactPrivateAttributesExposed,
+  outputChannelContainmentConfirmed:utility.methods.hush.accuracy===utility.methods.outputOracle.accuracy&&utility.methods.hush.meanExactPrivateAttributesExposed===utility.methods.outputOracle.meanExactPrivateAttributesExposed,
   baselineReconstructs:reconstruction.baseline.recovery95.low>=.99,
   identityRotationResisted:reconstruction.identityRotation.recovery95.high<=.01,
   revisionResetResisted:reconstruction.revisionReset.recovery95.high<=.01
