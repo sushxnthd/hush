@@ -90,7 +90,7 @@ function semanticSurfaceSentinel(){
 }
 
 function runUtilityExperiment(){
-  const methods={raw:{correct:0,exactExposure:0},governed:{correct:0,exactExposure:0},coarse:{correct:0,exactExposure:0},hush:{correct:0,exactExposure:0}};
+  const methods={raw:{correct:0,exactExposure:0},governed:{correct:0,exactExposure:0},coarse:{correct:0,exactExposure:0},outputOracle:{correct:0,exactExposure:0},hush:{correct:0,exactExposure:0}};
   const perFamily=Object.fromEntries(taskFamilies().map(f=>[f.name,{n:0,coarseCorrect:0,hushCorrect:0}]));
   const hushLatency=[];
   let n=0,hushOnlyVsCoarse=0,coarseOnlyVsHush=0;
@@ -134,14 +134,14 @@ function gates(utility,reconstruction){const g={
   zeroExactPrivateInputs:utility.methods.hush.meanExactPrivateAttributesExposed===0&&utility.semanticSurface.pass,
   coarseUtilitySuperiority:utility.methods.hush.accuracy>utility.methods.coarse.accuracy&&utility.paired.hushOnlyVsCoarse>0&&utility.paired.coarseOnlyVsHush===0&&utility.paired.oneSidedP<.001,
   rawPrivacyDominance:utility.methods.hush.accuracy===utility.methods.raw.accuracy&&utility.methods.hush.meanExactPrivateAttributesExposed<utility.methods.raw.meanExactPrivateAttributesExposed,
-  governedPrivacyDominance:utility.methods.hush.accuracy===utility.methods.governed.accuracy&&utility.methods.hush.meanExactPrivateAttributesExposed<utility.methods.governed.meanExactPrivateAttributesExposed,
+  governedPrivacyDominance:utility.methods.hush.accuracy===utility.methods.governed.accuracy&&utility.methods.hush.meanExactPrivateAttributesExposed<utility.methods.governed.meanExactPrivateAttributesExposed,\n  outputChannelContainmentConfirmed:utility.methods.hush.accuracy===utility.methods.outputOracle.accuracy&&utility.methods.hush.meanExactPrivateAttributesExposed===utility.methods.outputOracle.meanExactPrivateAttributesExposed,
   baselineReconstructs:reconstruction.baseline.recovery95.low>=.99,
   identityRotationResisted:reconstruction.identityRotation.recovery95.high<=.01,
   revisionResetResisted:reconstruction.revisionReset.recovery95.high<=.01
 };return {...g,allPassed:Object.values(g).every(Boolean)}}
 
 const utility=runUtilityExperiment(),reconstruction=runReconstructionExperiment(),superiority=gates(utility,reconstruction);
-const report={benchmark:'Hush scientific superiority evaluation v1',protocol:'research/SUPERIORITY_PROTOCOL_V1.md',scope:'Controlled synthetic bounded-decision tasks plus adaptive reconstruction attacks. Evidence against implemented baselines, not a universal or direct named-competitor claim.',utilityPrivacy:utility,adaptiveReconstruction:reconstruction,gates:superiority};
+const report={benchmark:'Hush scientific superiority evaluation v1',protocol:'research/SUPERIORITY_PROTOCOL_V1.md',scope:'Controlled synthetic bounded-decision tasks plus adaptive reconstruction attacks. The outputOracle arm is the channel-matched semantic control: it confirms no inherent observable-channel advantage over a comparator allowed to emit the task output. Remaining evidence concerns implementation assurance, not a universal or direct named-competitor claim.',utilityPrivacy:utility,adaptiveReconstruction:reconstruction,gates:superiority};
 if(process.argv.includes('--json'))console.log(JSON.stringify(report,null,2));else{
   console.log('Hush scientific superiority evaluation v1');console.log(`Tasks: ${utility.n} across ${Object.keys(utility.perFamily).length} families and ${utility.seeds} independent seeds\n`);
   for(const [name,m] of Object.entries(utility.methods))console.log(`${name.padEnd(10)} utility=${pct(m.accuracy)}%  exact-private-inputs/task=${m.meanExactPrivateAttributesExposed.toFixed(3)}`);
