@@ -1,0 +1,32 @@
+name: MCP DELETE complete mediation
+
+on:
+  push:
+    branches: [breakthrough-engine/pcc-cleanroom-replication]
+  pull_request:
+    paths:
+      - src/server.js
+      - research/pcc-runtime-product/run_mcp_delete_mediation_probe.mjs
+      - research/pcc-runtime-product/audit_mcp_delete_mediation.py
+      - research/pcc-runtime-product/MCP_DELETE_COMPLETE_MEDIATION_*.md
+      - research/pcc-runtime-product/mcp_delete_mediation_*.json
+      - .github/workflows/mcp-delete-complete-mediation.yml
+
+jobs:
+  preserve-falsification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Reproduce dynamic bypass twice
+        run: |
+          node research/pcc-runtime-product/run_mcp_delete_mediation_probe.mjs /tmp/run1.json
+          node research/pcc-runtime-product/run_mcp_delete_mediation_probe.mjs /tmp/run2.json
+          cmp /tmp/run1.json /tmp/run2.json
+          cmp /tmp/run1.json research/pcc-runtime-product/mcp_delete_mediation_result.json
+      - name: Reproduce independent source-order audit
+        run: |
+          python3 research/pcc-runtime-product/audit_mcp_delete_mediation.py > /tmp/audit.json
+          cmp /tmp/audit.json research/pcc-runtime-product/mcp_delete_mediation_static_audit.json
