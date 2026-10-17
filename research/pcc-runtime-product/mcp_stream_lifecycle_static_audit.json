@@ -1,0 +1,18 @@
+{
+  "checks": {
+    "abnormal_endings_observed": true,
+    "allow_written_before_pipeline": true,
+    "counterexample_gate": true,
+    "no_lifecycle_terminal_receipt": true,
+    "pipeline_has_no_receipt_append": true,
+    "predispatch_attempt_observed": true,
+    "real_upstream_reached": true,
+    "receipt_projections_identical": true,
+    "signed_chains_valid": true,
+    "three_fixed_scenarios": true
+  },
+  "passed": 10,
+  "schema": "hush.mcp-stream-lifecycle-audit.v1",
+  "status": "PASS",
+  "total": 10
+}

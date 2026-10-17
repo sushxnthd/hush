@@ -1,0 +1,44 @@
+name: mcp-stream-lifecycle
+
+on:
+  push:
+    branches: [breakthrough-engine/mcp-stream-lifecycle-20261018]
+  pull_request:
+    paths:
+      - src/server.js
+      - research/pcc-runtime-product/*MCP_STREAM_LIFECYCLE*.md
+      - research/pcc-runtime-product/*mcp_stream_lifecycle*
+      - .github/workflows/mcp-stream-lifecycle.yml
+  workflow_dispatch:
+
+jobs:
+  adversarial-lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - name: Reproduce lifecycle counterexample twice
+        run: |
+          node research/pcc-runtime-product/run_mcp_stream_lifecycle_probe.mjs /tmp/stream-1.json
+          node research/pcc-runtime-product/run_mcp_stream_lifecycle_probe.mjs /tmp/stream-2.json
+          cmp /tmp/stream-1.json /tmp/stream-2.json
+          cmp /tmp/stream-1.json research/pcc-runtime-product/mcp_stream_lifecycle_result.json
+      - name: Independent source-order audit
+        run: |
+          cp research/pcc-runtime-product/mcp_stream_lifecycle_static_audit.json /tmp/expected-audit.json
+          python research/pcc-runtime-product/audit_mcp_stream_lifecycle.py
+          cmp research/pcc-runtime-product/mcp_stream_lifecycle_static_audit.json /tmp/expected-audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mcp-stream-lifecycle
+          path: |
+            /tmp/stream-1.json
+            research/pcc-runtime-product/mcp_stream_lifecycle_static_audit.json
