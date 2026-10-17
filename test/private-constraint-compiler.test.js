@@ -84,6 +84,15 @@ test('normalization rejects unsafe private paths',()=>{
   );
 });
 
+test('privacy groups are bounded public structural identifiers',()=>{
+  const normalized=normalizeConstraintContract({...speedContract,privacyGroup:'flight.speed'});
+  assert.equal(normalized.privacyGroup,'flight.speed');
+  assert.throws(
+    ()=>normalizeConstraintContract({...speedContract,privacyGroup:'unsafe group'}),
+    error=>error instanceof ConstraintCompilationError&&error.code==='invalid_constraint_contract'
+  );
+});
+
 test('numeric anchors reject unrelated numbers in other source segments',()=>{
   const source='The pilot has 12 years of experience. Maximum planned groundspeed is 110 mph. Their rent increased by 20 percent.';
   const result=compilePrivateConstraint(source,speedContract);

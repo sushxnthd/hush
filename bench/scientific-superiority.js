@@ -90,7 +90,7 @@ function semanticSurfaceSentinel(){
 }
 
 function runUtilityExperiment(){
-  const methods={raw:{correct:0,exactExposure:0},governed:{correct:0,exactExposure:0},coarse:{correct:0,exactExposure:0},hush:{correct:0,exactExposure:0}};
+  const methods={raw:{correct:0,exactExposure:0},governed:{correct:0,exactExposure:0},coarse:{correct:0,exactExposure:0},outputOracle:{correct:0,exactExposure:0},hush:{correct:0,exactExposure:0}};
   const perFamily=Object.fromEntries(taskFamilies().map(f=>[f.name,{n:0,coarseCorrect:0,hushCorrect:0}]));
   const hushLatency=[];
   let n=0,hushOnlyVsCoarse=0,coarseOnlyVsHush=0;
@@ -98,9 +98,9 @@ function runUtilityExperiment(){
     const rnd=lcg(0x9e3779b9^((seedIndex+1)*2654435761));
     for(const family of taskFamilies())for(let j=0;j<PROFILES_PER_SEED;j++){
       const task=family.make(rnd,seedIndex*PROFILES_PER_SEED+j),fields=privateFields(task.program),truth=chooseOracle(task.program,task.profile);
-      const raw=truth,governed=truth,coarse=chooseOracle(task.program,task.coarse),hush=runHush(task);
-      const rawOk=raw===truth,govOk=governed===truth,coarseOk=coarse===truth,hushOk=hush.result===truth;
-      methods.raw.correct+=rawOk;methods.governed.correct+=govOk;methods.coarse.correct+=coarseOk;methods.hush.correct+=hushOk;
+      const raw=truth,governed=truth,coarse=chooseOracle(task.program,task.coarse),outputOracle=truth,hush=runHush(task);
+      const rawOk=raw===truth,govOk=governed===truth,coarseOk=coarse===truth,outputOracleOk=outputOracle===truth,hushOk=hush.result===truth;
+      methods.raw.correct+=rawOk;methods.governed.correct+=govOk;methods.coarse.correct+=coarseOk;methods.outputOracle.correct+=outputOracleOk;methods.hush.correct+=hushOk;
       methods.raw.exactExposure+=fields.length;methods.governed.exactExposure+=fields.length;
       methods.coarse.exactExposure+=fields.filter(f=>Object.is(task.coarse[f],task.profile[f])).length;
       if(hushOk&&!coarseOk)hushOnlyVsCoarse++;if(coarseOk&&!hushOk)coarseOnlyVsHush++;
@@ -135,13 +135,14 @@ function gates(utility,reconstruction){const g={
   coarseUtilitySuperiority:utility.methods.hush.accuracy>utility.methods.coarse.accuracy&&utility.paired.hushOnlyVsCoarse>0&&utility.paired.coarseOnlyVsHush===0&&utility.paired.oneSidedP<.001,
   rawPrivacyDominance:utility.methods.hush.accuracy===utility.methods.raw.accuracy&&utility.methods.hush.meanExactPrivateAttributesExposed<utility.methods.raw.meanExactPrivateAttributesExposed,
   governedPrivacyDominance:utility.methods.hush.accuracy===utility.methods.governed.accuracy&&utility.methods.hush.meanExactPrivateAttributesExposed<utility.methods.governed.meanExactPrivateAttributesExposed,
+  outputChannelContainmentConfirmed:utility.methods.hush.accuracy===utility.methods.outputOracle.accuracy&&utility.methods.hush.meanExactPrivateAttributesExposed===utility.methods.outputOracle.meanExactPrivateAttributesExposed,
   baselineReconstructs:reconstruction.baseline.recovery95.low>=.99,
   identityRotationResisted:reconstruction.identityRotation.recovery95.high<=.01,
   revisionResetResisted:reconstruction.revisionReset.recovery95.high<=.01
 };return {...g,allPassed:Object.values(g).every(Boolean)}}
 
 const utility=runUtilityExperiment(),reconstruction=runReconstructionExperiment(),superiority=gates(utility,reconstruction);
-const report={benchmark:'Hush scientific superiority evaluation v1',protocol:'research/SUPERIORITY_PROTOCOL_V1.md',scope:'Controlled synthetic bounded-decision tasks plus adaptive reconstruction attacks. Evidence against implemented baselines, not a universal or direct named-competitor claim.',utilityPrivacy:utility,adaptiveReconstruction:reconstruction,gates:superiority};
+const report={benchmark:'Hush scientific superiority evaluation v1',protocol:'research/SUPERIORITY_PROTOCOL_V1.md',scope:'Controlled synthetic bounded-decision tasks plus adaptive reconstruction attacks. The outputOracle arm is the channel-matched semantic control: it confirms no inherent observable-channel advantage over a comparator allowed to emit the task output. Remaining evidence concerns implementation assurance, not a universal or direct named-competitor claim.',utilityPrivacy:utility,adaptiveReconstruction:reconstruction,gates:superiority};
 if(process.argv.includes('--json'))console.log(JSON.stringify(report,null,2));else{
   console.log('Hush scientific superiority evaluation v1');console.log(`Tasks: ${utility.n} across ${Object.keys(utility.perFamily).length} families and ${utility.seeds} independent seeds\n`);
   for(const [name,m] of Object.entries(utility.methods))console.log(`${name.padEnd(10)} utility=${pct(m.accuracy)}%  exact-private-inputs/task=${m.meanExactPrivateAttributesExposed.toFixed(3)}`);

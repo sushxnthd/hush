@@ -1,0 +1,43 @@
+{
+  "study": "PCC standing-consent selective-refusal differential",
+  "domain": {
+    "type": "integer",
+    "min": 0,
+    "max": 1023
+  },
+  "publicGuess": 500,
+  "equalWorld": {
+    "actualEquality": true,
+    "transcript": {
+      "prepared": {
+        "decision": "approved"
+      },
+      "consumed": {
+        "decision": "deny",
+        "constraintValue": null,
+        "derivedDisclosure": false
+      },
+      "error": null
+    }
+  },
+  "unequalWorld": {
+    "actualEquality": false,
+    "transcript": {
+      "prepared": {
+        "decision": "approved"
+      },
+      "consumed": {
+        "decision": "allow",
+        "constraintValue": false,
+        "derivedDisclosure": true
+      },
+      "error": null
+    }
+  },
+  "adversaryInference": "privacy denial identifies true; allowed false constraint identifies false",
+  "gates": {
+    "no_new_human_interaction": true,
+    "public_transcript_result_independent": false
+  },
+  "verdict": "FAIL"
+}

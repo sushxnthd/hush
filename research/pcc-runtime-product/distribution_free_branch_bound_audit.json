@@ -1,0 +1,21 @@
+{
+  "canonical_payload_sha256": "85feaadcb0a1b11df18ed5aa7937fd26a65fa47a3b3848964fb4d52afbb806fc",
+  "cases": 2118108,
+  "checks": {
+    "case_count": true,
+    "coverage_counterexample": true,
+    "extremizers": true,
+    "limit_failure_explained": true,
+    "limit_formula": true,
+    "maximum_gap": true,
+    "prior_counts": true,
+    "source_digest": true,
+    "upper_bound": true
+  },
+  "exact_limit_gap_law": "log2(1+(k-1)(n-k)delta)",
+  "positive_limit_failures_explained": 237,
+  "schema": "hush.distribution-free-branch-bound-audit.v1",
+  "source_canonical_sha256": "ab73bcf7984e49eccca22faf8a2446027bf07d73601c6cfeb9541201f02aa295",
+  "status": "PASS",
+  "upper_bound_violations": 0
+}

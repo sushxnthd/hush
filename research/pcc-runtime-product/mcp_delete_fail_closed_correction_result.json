@@ -1,0 +1,21 @@
+{
+  "allGatesPass": true,
+  "allowHeader": "GET, POST",
+  "chainValid": true,
+  "protocol": "mcp-delete-fail-closed-correction-v1",
+  "receipt": {
+    "action": "http_delete",
+    "agent": "mediation-probe",
+    "category": "mcp-transport",
+    "decision": "deny",
+    "purpose": "frozen fail-closed correction",
+    "resource": "/mcp",
+    "responseBoundToReceipt": true,
+    "signed": true,
+    "transportMethod": "DELETE"
+  },
+  "receiptDelta": 1,
+  "responseStatus": 405,
+  "scientificGate": "PASS",
+  "upstreamObservationCount": 0
+}

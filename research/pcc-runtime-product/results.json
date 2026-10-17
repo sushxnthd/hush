@@ -1,0 +1,62 @@
+{
+  "study": "PCC runtime scheduling product translation",
+  "cases": 256,
+  "metrics": {
+    "raw": {
+      "cases": 256,
+      "task_success": 256,
+      "action_success": 256,
+      "cutoff_disclosures": 256,
+      "canary_disclosures": 256,
+      "provider_source_disclosures": 0,
+      "receipt_disclosures": 0,
+      "approvals": 256,
+      "mean_latency_ms": 2.53081976953125
+    },
+    "semantic_exact": {
+      "cases": 256,
+      "task_success": 256,
+      "action_success": 256,
+      "cutoff_disclosures": 256,
+      "canary_disclosures": 0,
+      "provider_source_disclosures": 0,
+      "receipt_disclosures": 0,
+      "approvals": 256,
+      "mean_latency_ms": 2.1968426796875
+    },
+    "strict_redaction": {
+      "cases": 256,
+      "task_success": 0,
+      "action_success": 0,
+      "cutoff_disclosures": 0,
+      "canary_disclosures": 0,
+      "provider_source_disclosures": 0,
+      "receipt_disclosures": 0,
+      "approvals": 0,
+      "mean_latency_ms": 0.12606173828125
+    },
+    "pcc": {
+      "cases": 256,
+      "task_success": 256,
+      "action_success": 256,
+      "cutoff_disclosures": 0,
+      "canary_disclosures": 0,
+      "provider_source_disclosures": 0,
+      "receipt_disclosures": 0,
+      "approvals": 768,
+      "mean_latency_ms": 270.60162204296876
+    }
+  },
+  "gates": {
+    "utility": true,
+    "strict_below_half": true,
+    "raw_exposes_both": true,
+    "semantic_exact_boundary": true,
+    "pcc_model_non_disclosure": true,
+    "pcc_receipt_non_disclosure": true,
+    "provider_minimization": true,
+    "approval_and_one_shot": true
+  },
+  "overall": "PASS",
+  "discrete_sha256": "98735b9f6dbe1c819e6701b6ed2f0000614bc89e9a1ab2693c4d12eaaca3ac9a"
+}

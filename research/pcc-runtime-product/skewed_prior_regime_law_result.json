@@ -1,0 +1,146 @@
+{
+  "byDomain": [
+    {
+      "cases": 132,
+      "domainSize": 2,
+      "priors": 66,
+      "regimes": {
+        "equality": 12,
+        "overcharge": 120,
+        "undercharge": 0
+      }
+    },
+    {
+      "cases": 1320,
+      "domainSize": 3,
+      "priors": 220,
+      "regimes": {
+        "equality": 66,
+        "overcharge": 1164,
+        "undercharge": 90
+      }
+    },
+    {
+      "cases": 6930,
+      "domainSize": 4,
+      "priors": 495,
+      "regimes": {
+        "equality": 438,
+        "overcharge": 5928,
+        "undercharge": 564
+      }
+    },
+    {
+      "cases": 23760,
+      "domainSize": 5,
+      "priors": 792,
+      "regimes": {
+        "equality": 690,
+        "overcharge": 20720,
+        "undercharge": 2350
+      }
+    },
+    {
+      "cases": 57288,
+      "domainSize": 6,
+      "priors": 924,
+      "regimes": {
+        "equality": 5914,
+        "overcharge": 46784,
+        "undercharge": 4590
+      }
+    },
+    {
+      "cases": 99792,
+      "domainSize": 7,
+      "priors": 792,
+      "regimes": {
+        "equality": 126,
+        "overcharge": 86919,
+        "undercharge": 12747
+      }
+    }
+  ],
+  "cases": 189222,
+  "claimBoundary": "Finite positive rational priors; deterministic set-valued releases; statewise min-entropy reduction versus cardinality charge.",
+  "classification": "DISCRIMINATION / SURPRISE",
+  "decompositionDisagreements": 0,
+  "firstExamples": {
+    "equality": {
+      "alphaOverBetaDenominator": 2,
+      "alphaOverBetaNumerator": 2,
+      "branchIndices": [
+        0
+      ],
+      "cardinalityChargeBits": 1.0,
+      "denominator": 2,
+      "domainSize": 2,
+      "gapBits": 0.0,
+      "statewiseMinEntropyReductionBits": 1.0,
+      "weights": [
+        1,
+        1
+      ]
+    },
+    "overcharge": {
+      "alphaOverBetaDenominator": 3,
+      "alphaOverBetaNumerator": 4,
+      "branchIndices": [
+        0
+      ],
+      "cardinalityChargeBits": 1.0,
+      "denominator": 3,
+      "domainSize": 2,
+      "gapBits": 0.4150374992788438,
+      "statewiseMinEntropyReductionBits": 0.5849625007211562,
+      "weights": [
+        1,
+        2
+      ]
+    },
+    "undercharge": {
+      "alphaOverBetaDenominator": 20,
+      "alphaOverBetaNumerator": 18,
+      "branchIndices": [
+        0,
+        1
+      ],
+      "cardinalityChargeBits": 0.5849625007211562,
+      "denominator": 5,
+      "domainSize": 3,
+      "gapBits": -0.15200309344505003,
+      "statewiseMinEntropyReductionBits": 0.7369655941662062,
+      "weights": [
+        1,
+        2,
+        2
+      ]
+    }
+  },
+  "gateStatus": "PASS",
+  "gates": {
+    "all_three_regimes_observed": true,
+    "decomposition_identity": true,
+    "exact_sign_prediction": true,
+    "nonempty_exhaustive_domain": true,
+    "singleton_corollary": true,
+    "uniform_priors_are_equality": true
+  },
+  "law": "C-L=log2(alpha/beta), alpha=n*max(p), beta=k*max_B(p)/P(B)",
+  "maxAbsError": 4.440892098500626e-16,
+  "maxDenominator": 12,
+  "maxDomain": 7,
+  "priors": 3289,
+  "regimeCounts": {
+    "equality": 7246,
+    "overcharge": 161635,
+    "undercharge": 20341
+  },
+  "resultSha256": "99986328104dbd0186195fb8695fbcdd912327dfd7406fd5b89415d5a817c170",
+  "signDisagreements": 0,
+  "singletonCases": 17820,
+  "singletonDisagreements": 0,
+  "study": "skewed-prior cardinality/min-entropy regime law",
+  "uniformCases": 388,
+  "uniformDisagreements": 0
+}

@@ -1,0 +1,38 @@
+name: Floor-certified branch bound
+
+on:
+  push:
+    branches: [breakthrough-engine/pcc-cleanroom-replication]
+    paths:
+      - 'research/pcc-runtime-product/*floor_certified_branch_bound.py'
+      - 'src/floor-certified-branch-charge.js'
+      - 'test/floor-certified-branch-charge.test.js'
+      - '.github/workflows/floor-certified-branch-bound.yml'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify twice
+        run: |
+          python3 research/pcc-runtime-product/verify_floor_certified_branch_bound.py --max-n 7 --max-denominator 18 --output /tmp/result-1.json
+          python3 research/pcc-runtime-product/verify_floor_certified_branch_bound.py --max-n 7 --max-denominator 18 --output /tmp/result-2.json
+          cmp /tmp/result-1.json /tmp/result-2.json
+      - name: Independent audit
+        run: python3 research/pcc-runtime-product/audit_floor_certified_branch_bound.py /tmp/result-1.json --output /tmp/audit.json
+      - name: Runtime tests
+        run: node --test test/floor-certified-branch-charge.test.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: floor-certified-branch-bound
+          path: |
+            /tmp/result-1.json
+            /tmp/audit.json

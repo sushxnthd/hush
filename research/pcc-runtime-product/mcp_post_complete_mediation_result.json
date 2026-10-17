@@ -1,0 +1,369 @@
+{
+  "allArrivalsSawPriorAttempt": true,
+  "allReceiptsSigned": true,
+  "arrivals": [
+    {
+      "authorization": "Bearer server-only-secret",
+      "method": "initialize",
+      "newestReceiptDecision": "approved",
+      "newestReceiptPhase": "attempt",
+      "receiptCountAtArrival": 1,
+      "tool": null
+    },
+    {
+      "authorization": "Bearer server-only-secret",
+      "method": "tools/list",
+      "newestReceiptDecision": "approved",
+      "newestReceiptPhase": "attempt",
+      "receiptCountAtArrival": 3,
+      "tool": null
+    },
+    {
+      "authorization": "Bearer server-only-secret",
+      "method": "resources/list",
+      "newestReceiptDecision": "approved",
+      "newestReceiptPhase": "attempt",
+      "receiptCountAtArrival": 5,
+      "tool": null
+    },
+    {
+      "authorization": "Bearer server-only-secret",
+      "method": "tools/call",
+      "newestReceiptDecision": "approved",
+      "newestReceiptPhase": "attempt",
+      "receiptCountAtArrival": 9,
+      "tool": "search"
+    },
+    {
+      "authorization": "Bearer server-only-secret",
+      "method": "tools/call",
+      "newestReceiptDecision": "approved",
+      "newestReceiptPhase": "attempt",
+      "receiptCountAtArrival": 12,
+      "tool": "search"
+    }
+  ],
+  "baseCommit": "d82712ad5b875c8505a787ab11cf50b1c4db98fe",
+  "cases": [
+    {
+      "arrivalReceiptCounts": [],
+      "httpStatus": 200,
+      "name": "invalid_json",
+      "payload": {
+        "error": {
+          "code": -32700,
+          "decision": null,
+          "message": "Invalid JSON.",
+          "pendingIdPresent": false
+        }
+      },
+      "receiptDecisions": [],
+      "receiptDelta": 0,
+      "receiptPhases": [],
+      "responseReceiptHashMatched": null,
+      "responseReceiptHashPresent": false,
+      "upstreamArrivalDelta": 0
+    },
+    {
+      "arrivalReceiptCounts": [],
+      "httpStatus": 200,
+      "name": "batch",
+      "payload": {
+        "error": {
+          "code": -32040,
+          "decision": null,
+          "message": "JSON-RPC batches are not supported by the Hush alpha proxy.",
+          "pendingIdPresent": false
+        }
+      },
+      "receiptDecisions": [],
+      "receiptDelta": 0,
+      "receiptPhases": [],
+      "responseReceiptHashMatched": null,
+      "responseReceiptHashPresent": false,
+      "upstreamArrivalDelta": 0
+    },
+    {
+      "arrivalReceiptCounts": [],
+      "httpStatus": 200,
+      "name": "invalid_request",
+      "payload": {
+        "error": {
+          "code": -32600,
+          "decision": null,
+          "message": "Invalid JSON-RPC request.",
+          "pendingIdPresent": false
+        }
+      },
+      "receiptDecisions": [],
+      "receiptDelta": 0,
+      "receiptPhases": [],
+      "responseReceiptHashMatched": null,
+      "responseReceiptHashPresent": false,
+      "upstreamArrivalDelta": 0
+    },
+    {
+      "arrivalReceiptCounts": [],
+      "httpStatus": 202,
+      "name": "allowed_notification",
+      "payload": {
+        "empty": true
+      },
+      "receiptDecisions": [],
+      "receiptDelta": 0,
+      "receiptPhases": [],
+      "responseReceiptHashMatched": null,
+      "responseReceiptHashPresent": false,
+      "upstreamArrivalDelta": 0
+    },
+    {
+      "arrivalReceiptCounts": [],
+      "httpStatus": 400,
+      "name": "unsupported_notification",
+      "payload": {
+        "error": {
+          "code": -32600,
+          "decision": null,
+          "message": "Unsupported notification.",
+          "pendingIdPresent": false
+        }
+      },
+      "receiptDecisions": [],
+      "receiptDelta": 0,
+      "receiptPhases": [],
+      "responseReceiptHashMatched": null,
+      "responseReceiptHashPresent": false,
+      "upstreamArrivalDelta": 0
+    },
+    {
+      "arrivalReceiptCounts": [],
+      "httpStatus": 200,
+      "name": "server_discover",
+      "payload": {
+        "resultKeys": [
+          "_meta",
+          "capabilities",
+          "instructions",
+          "resultType",
+          "supportedVersions"
+        ]
+      },
+      "receiptDecisions": [],
+      "receiptDelta": 0,
+      "receiptPhases": [],
+      "responseReceiptHashMatched": null,
+      "responseReceiptHashPresent": false,
+      "upstreamArrivalDelta": 0
+    },
+    {
+      "arrivalReceiptCounts": [],
+      "httpStatus": 200,
+      "name": "ping",
+      "payload": {
+        "resultKeys": []
+      },
+      "receiptDecisions": [],
+      "receiptDelta": 0,
+      "receiptPhases": [],
+      "responseReceiptHashMatched": null,
+      "responseReceiptHashPresent": false,
+      "upstreamArrivalDelta": 0
+    },
+    {
+      "arrivalReceiptCounts": [
+        1
+      ],
+      "httpStatus": 200,
+      "name": "initialize",
+      "payload": {
+        "resultKeys": []
+      },
+      "receiptDecisions": [
+        "approved",
+        "allow"
+      ],
+      "receiptDelta": 2,
+      "receiptPhases": [
+        "attempt",
+        "outcome"
+      ],
+      "responseReceiptHashMatched": true,
+      "responseReceiptHashPresent": true,
+      "upstreamArrivalDelta": 1
+    },
+    {
+      "arrivalReceiptCounts": [
+        3
+      ],
+      "httpStatus": 200,
+      "name": "tools_list",
+      "payload": {
+        "result": {
+          "toolNames": [
+            "search",
+            "hush_begin_private_task",
+            "hush_private_query",
+            "hush_private_decision",
+            "hush_route_task",
+            "hush_propose_memory",
+            "hush_revoke_private_task"
+          ]
+        }
+      },
+      "receiptDecisions": [
+        "approved",
+        "allow"
+      ],
+      "receiptDelta": 2,
+      "receiptPhases": [
+        "attempt",
+        "outcome"
+      ],
+      "responseReceiptHashMatched": true,
+      "responseReceiptHashPresent": true,
+      "upstreamArrivalDelta": 1
+    },
+    {
+      "arrivalReceiptCounts": [
+        5
+      ],
+      "httpStatus": 200,
+      "name": "unknown_method",
+      "payload": {
+        "resultKeys": []
+      },
+      "receiptDecisions": [
+        "approved",
+        "allow"
+      ],
+      "receiptDelta": 2,
+      "receiptPhases": [
+        "attempt",
+        "outcome"
+      ],
+      "responseReceiptHashMatched": true,
+      "responseReceiptHashPresent": true,
+      "upstreamArrivalDelta": 1
+    },
+    {
+      "arrivalReceiptCounts": [],
+      "httpStatus": 200,
+      "name": "denied_tool_call",
+      "payload": {
+        "error": {
+          "code": -32003,
+          "decision": "deny",
+          "message": "Hush blocked this MCP tool call.",
+          "pendingIdPresent": false
+        }
+      },
+      "receiptDecisions": [
+        "deny"
+      ],
+      "receiptDelta": 1,
+      "receiptPhases": [
+        null
+      ],
+      "responseReceiptHashMatched": null,
+      "responseReceiptHashPresent": false,
+      "upstreamArrivalDelta": 0
+    },
+    {
+      "arrivalReceiptCounts": [],
+      "httpStatus": 200,
+      "name": "approval_required_tool_call",
+      "payload": {
+        "error": {
+          "code": -32001,
+          "decision": "ask",
+          "message": "Hush requires approval for this MCP tool call.",
+          "pendingIdPresent": true
+        }
+      },
+      "receiptDecisions": [],
+      "receiptDelta": 0,
+      "receiptPhases": [],
+      "responseReceiptHashMatched": null,
+      "responseReceiptHashPresent": false,
+      "upstreamArrivalDelta": 0
+    },
+    {
+      "arrivalReceiptCounts": [
+        9
+      ],
+      "httpStatus": 200,
+      "name": "approved_tool_call",
+      "payload": {
+        "result": {
+          "contentTypes": [
+            "text"
+          ]
+        }
+      },
+      "receiptDecisions": [
+        "approved",
+        "allow"
+      ],
+      "receiptDelta": 2,
+      "receiptPhases": [
+        "attempt",
+        "outcome"
+      ],
+      "responseReceiptHashMatched": true,
+      "responseReceiptHashPresent": true,
+      "upstreamArrivalDelta": 1
+    },
+    {
+      "arrivalReceiptCounts": [],
+      "httpStatus": 200,
+      "name": "approval_required_error_call",
+      "payload": {
+        "error": {
+          "code": -32001,
+          "decision": "ask",
+          "message": "Hush requires approval for this MCP tool call.",
+          "pendingIdPresent": true
+        }
+      },
+      "receiptDecisions": [],
+      "receiptDelta": 0,
+      "receiptPhases": [],
+      "responseReceiptHashMatched": null,
+      "responseReceiptHashPresent": false,
+      "upstreamArrivalDelta": 0
+    },
+    {
+      "arrivalReceiptCounts": [
+        12
+      ],
+      "httpStatus": 503,
+      "name": "approved_upstream_error",
+      "payload": {
+        "error": {
+          "code": -32000,
+          "decision": null,
+          "message": "frozen upstream error",
+          "pendingIdPresent": false
+        }
+      },
+      "receiptDecisions": [
+        "approved",
+        "error"
+      ],
+      "receiptDelta": 2,
+      "receiptPhases": [
+        "attempt",
+        "outcome"
+      ],
+      "responseReceiptHashMatched": true,
+      "responseReceiptHashPresent": true,
+      "upstreamArrivalDelta": 1
+    }
+  ],
+  "classes": 15,
+  "hypothesis": "Every credentialed unary MCP POST arrival is preceded by one signed attempt and closed by one terminal outcome.",
+  "rawCredentialInReceipts": false,
+  "schemaVersion": 1,
+  "smallestSupportedClaim": "Across the frozen 14 protocol classes plus one required second approval precursor (15 cases total), every one of 5 brokered upstream POST arrivals had a signed attempt already durable at arrival and exactly one terminal outcome; all local and rejected classes had zero upstream arrivals.",
+  "upstreamArrivals": 5
+}

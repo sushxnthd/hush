@@ -1,0 +1,15 @@
+{
+  "all_markers_found": true,
+  "early_dispatch_precedes_policy_and_receipt": true,
+  "positions": {
+    "early_delete_branch": 8223,
+    "early_dispatch": 8367,
+    "json_parse": 8629,
+    "mcp_function": 8190,
+    "receipt": 12992,
+    "tool_policy": 11469
+  },
+  "protocol": "mcp-delete-static-order-audit-v1",
+  "scientific_gate": "FAIL",
+  "source_sha256": "5adcb1dff2834ef97f902d863838225c80f7d1da7d646790f2b43f0bc8eab805"
+}

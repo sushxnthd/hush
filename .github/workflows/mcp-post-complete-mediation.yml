@@ -1,0 +1,32 @@
+name: MCP POST complete mediation
+
+on:
+  push:
+    branches: [breakthrough-engine/pcc-cleanroom-replication]
+  pull_request:
+    paths:
+      - src/server.js
+      - research/pcc-runtime-product/run_mcp_post_complete_mediation.mjs
+      - research/pcc-runtime-product/audit_mcp_post_complete_mediation.py
+      - research/pcc-runtime-product/MCP_POST_COMPLETE_MEDIATION_*.md
+      - research/pcc-runtime-product/mcp_post_complete_mediation_*.json
+      - .github/workflows/mcp-post-complete-mediation.yml
+
+jobs:
+  prospective-correction:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Reproduce frozen method-class evaluation
+        run: |
+          node research/pcc-runtime-product/run_mcp_post_complete_mediation.mjs > /tmp/result.json
+          node -e "const r=require('./research/pcc-runtime-product/mcp_post_complete_mediation_result.json'); if(r.classes!==15||r.upstreamArrivals!==5||!r.allArrivalsSawPriorAttempt||!r.allReceiptsSigned||r.rawCredentialInReceipts) process.exit(1)"
+      - name: Reproduce independent source-order audit
+        run: |
+          python3 research/pcc-runtime-product/audit_mcp_post_complete_mediation.py > /tmp/audit.json
+          python3 -c "import json; assert json.load(open('/tmp/audit.json'))['passed']"
+      - name: Focused regression
+        run: node --test test/mcp-proxy.test.js test/mcp-get-mediation.test.js test/mcp-delete-mediation.test.js

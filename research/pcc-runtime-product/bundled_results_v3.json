@@ -1,0 +1,43 @@
+{
+  "study": "PCC bounded approval bundle",
+  "case_start": 512,
+  "cases": 256,
+  "metrics": {
+    "pcc_separate": {
+      "cases": 256,
+      "task_success": 256,
+      "action_success": 256,
+      "cutoff_disclosures": 0,
+      "canary_disclosures": 0,
+      "provider_source_disclosures": 0,
+      "receipt_disclosures": 0,
+      "approvals": 768,
+      "capacity_two": 256,
+      "replay_denied": 256,
+      "mean_latency_ms": 207.31183116796876
+    },
+    "pcc_bundled": {
+      "cases": 256,
+      "task_success": 256,
+      "action_success": 256,
+      "cutoff_disclosures": 0,
+      "canary_disclosures": 0,
+      "provider_source_disclosures": 0,
+      "receipt_disclosures": 0,
+      "approvals": 512,
+      "capacity_two": 256,
+      "replay_denied": 256,
+      "mean_latency_ms": 205.053231953125
+    }
+  },
+  "gates": {
+    "utility": true,
+    "model_non_disclosure": true,
+    "boundary_non_disclosure": true,
+    "bundle_capacity": true,
+    "approvals": true,
+    "one_shot": true
+  },
+  "overall": "PASS",
+  "discrete_sha256": "222ccf5449f6f7380b63a4bb0e5f7a231743ee95821cff928733494a71c5fab4"
+}

@@ -1,0 +1,43 @@
+name: MCP DELETE complete mediation
+
+on:
+  push:
+    branches: [breakthrough-engine/pcc-cleanroom-replication]
+  pull_request:
+    paths:
+      - src/server.js
+      - research/pcc-runtime-product/run_mcp_delete_mediation_probe.mjs
+      - research/pcc-runtime-product/audit_mcp_delete_mediation.py
+      - research/pcc-runtime-product/audit_mcp_delete_fail_closed_correction.py
+      - research/pcc-runtime-product/MCP_DELETE_COMPLETE_MEDIATION_*.md
+      - research/pcc-runtime-product/mcp_delete_mediation_*.json
+      - .github/workflows/mcp-delete-complete-mediation.yml
+
+jobs:
+  preserve-falsification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Preserve frozen bypass evidence
+        run: |
+          node -e "const r=require('./research/pcc-runtime-product/mcp_delete_mediation_result.json'); if(!r.bypassObserved||r.scientificGate!=='FAIL') process.exit(1)"
+          test -f research/pcc-runtime-product/MCP_DELETE_COMPLETE_MEDIATION_RESULT.md
+          echo "243e23bf2e5fe8f7323cbb16209146c061d3c6f5848a692ef52d0bc35a8dc099  research/pcc-runtime-product/mcp_delete_mediation_result.json" | sha256sum -c -
+          echo "02ebd6586fac1ac11aad4c5896c2485ad93abcad31cda86b6d10b72093bb8aa3  research/pcc-runtime-product/mcp_delete_mediation_static_audit.json" | sha256sum -c -
+          echo "337913f333f2ca015653751ebe11f067565c50472d7b6e13a1d0d0c8cafb1465  research/pcc-runtime-product/mcp_delete_fail_closed_correction_static_audit.json" | sha256sum -c -
+      - name: Reproduce fail-closed correction twice
+        run: |
+          node research/pcc-runtime-product/run_mcp_delete_fail_closed_correction.mjs /tmp/run1.json
+          node research/pcc-runtime-product/run_mcp_delete_fail_closed_correction.mjs /tmp/run2.json
+          cmp /tmp/run1.json /tmp/run2.json
+          cmp /tmp/run1.json research/pcc-runtime-product/mcp_delete_fail_closed_correction_result.json
+          echo "1d77e1f0b93834e73d16c0a4fed17fa6efc9a489ef3059ed4e251165bc66f550  research/pcc-runtime-product/mcp_delete_fail_closed_correction_result.json" | sha256sum -c -
+      - name: Reproduce independent correction audit
+        run: |
+          python3 research/pcc-runtime-product/audit_mcp_delete_fail_closed_correction.py > /tmp/audit.json
+          python3 -c "import json; assert json.load(open('/tmp/audit.json'))['all_gates_pass']"
+      - name: Focused regression
+        run: node --test test/mcp-delete-mediation.test.js test/mcp-proxy.test.js

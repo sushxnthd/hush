@@ -1,0 +1,84 @@
+{
+  "canonical_payload_sha256": "ab73bcf7984e49eccca22faf8a2446027bf07d73601c6cfeb9541201f02aa295",
+  "counts": {
+    "cardinality_order_checks": 2079,
+    "cardinality_order_failures": 0,
+    "extremizer_checks": 2079,
+    "extremizer_failures": 0,
+    "positive_limit_checks": 2108,
+    "positive_limit_failures": 237,
+    "prior_branch_cases": 2118108,
+    "unique_priors": 26040,
+    "upper_bound_violations": 0
+  },
+  "coverage_counterexample": {
+    "branch": [
+      0,
+      1
+    ],
+    "declared_charge_bits": 0.5849625007211562,
+    "declared_prior": [
+      "1/3",
+      "1/3",
+      "1/3"
+    ],
+    "n": 3,
+    "same_transcript": true,
+    "secret": 0,
+    "uncovered_charge_bits": 1.0,
+    "uncovered_prior": [
+      "1/2",
+      "0",
+      "1/2"
+    ]
+  },
+  "environment": {
+    "python": "3.12.14"
+  },
+  "gates": {
+    "coverage_counterexample": true,
+    "dominates_cardinality": true,
+    "exact_upper_bound": true,
+    "positive_limit": false,
+    "zero_mass_extremizers": true
+  },
+  "grid": {
+    "denominator": [
+      "n",
+      16
+    ],
+    "domain": [
+      2,
+      7
+    ]
+  },
+  "largest_observed_bound_slack": {
+    "bits": 2.584962500721156,
+    "branch": [
+      0,
+      1
+    ],
+    "k": 2,
+    "n": 7,
+    "prior": [
+      "1/16",
+      "1/16",
+      "1/16",
+      "1/16",
+      "1/16",
+      "1/16",
+      "5/8"
+    ]
+  },
+  "maximum_positive_limit_gap_bits": 0.000330168906264916,
+  "prior_counts": {
+    "2": 79,
+    "3": 493,
+    "4": 1745,
+    "5": 4311,
+    "6": 7980,
+    "7": 11432
+  },
+  "schema": "hush.distribution-free-branch-bound.v1",
+  "status": "FAIL"
+}

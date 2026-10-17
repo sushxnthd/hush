@@ -1,0 +1,38 @@
+name: distribution-free-branch-bound
+
+on:
+  push:
+    paths:
+      - research/pcc-runtime-product/*distribution_free_branch_bound.py
+      - research/pcc-runtime-product/DISTRIBUTION_FREE_BRANCH_BOUND_*.md
+      - src/distribution-free-branch-charge.js
+      - test/distribution-free-branch-charge.test.js
+      - .github/workflows/distribution-free-branch-bound.yml
+  workflow_dispatch:
+
+jobs:
+  exact-bound:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run exact primary verifier
+        run: |
+          python3 research/pcc-runtime-product/verify_distribution_free_branch_bound.py --max-domain 7 --max-denominator 16 --output distribution-free-result.json
+      - name: Run independent audit
+        run: |
+          python3 research/pcc-runtime-product/audit_distribution_free_branch_bound.py distribution-free-result.json --output distribution-free-audit.json
+      - name: Test runtime implementation
+        run: node --test test/distribution-free-branch-charge.test.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distribution-free-branch-bound
+          path: |
+            distribution-free-result.json
+            distribution-free-audit.json
+

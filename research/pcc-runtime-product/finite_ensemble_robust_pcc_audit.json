@@ -1,0 +1,8 @@
+{
+  "checked_configs": 10,
+  "complete_decision_tables_matched": true,
+  "failures": 0,
+  "rows_sha256": "2ce910fe86822a15dbfa422d5637d32ff35c57f860093eb022d4be92753001c1",
+  "source_canonical_sha256": "75fc755e59432cc3e424d5605400060fab6d20676d913b80e6135f821feeb8e5",
+  "status": "PASS"
+}

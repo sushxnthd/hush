@@ -1,0 +1,34 @@
+name: MCP GET complete mediation
+
+on:
+  push:
+    branches: [breakthrough-engine/pcc-cleanroom-replication]
+  pull_request:
+    paths:
+      - src/server.js
+      - research/pcc-runtime-product/run_mcp_get_mediation_probe.mjs
+      - research/pcc-runtime-product/audit_mcp_get_mediation.py
+      - research/pcc-runtime-product/MCP_GET_COMPLETE_MEDIATION_*.md
+      - research/pcc-runtime-product/mcp_get_complete_mediation_*.json
+      - .github/workflows/mcp-get-complete-mediation.yml
+
+jobs:
+  preserve-falsification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Confirm frozen negative result
+        run: |
+          node -e "const r=require('./research/pcc-runtime-product/mcp_get_complete_mediation_result.json'); if(!r.bypassObserved||r.scientificGate!=='FAIL'||r.receiptDelta!==0) process.exit(1)"
+          test -f research/pcc-runtime-product/MCP_GET_COMPLETE_MEDIATION_PREREGISTRATION.md
+          test -f research/pcc-runtime-product/MCP_GET_COMPLETE_MEDIATION_RESULT.md
+      - name: Preserve immutable historical evidence
+        run: |
+          echo "aae57e853d229bf6cc00575afc4db0a157eb3626c8951717556ddc6da86a9d22  research/pcc-runtime-product/mcp_get_complete_mediation_result.json" | sha256sum -c -
+          echo "2652df711eb170aea1d39d854a65cb1f3870158de7d0882fb351ecbf87d18b6d  research/pcc-runtime-product/mcp_get_complete_mediation_static_audit.json" | sha256sum -c -
+      - name: Current correction regression
+        run: |
+          node --test test/mcp-get-mediation.test.js test/mcp-proxy.test.js

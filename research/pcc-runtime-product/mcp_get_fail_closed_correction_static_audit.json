@@ -1,0 +1,15 @@
+{
+  "all_gates_pass": true,
+  "attempt_precedes_dispatch": true,
+  "failure_path_has_error_outcome": true,
+  "positions": {
+    "attempt_receipt": 394,
+    "bound_response": 1323,
+    "dispatch": 668,
+    "error_receipt": 737,
+    "outcome_receipt": 982
+  },
+  "protocol": "mcp-get-fail-closed-correction-static-audit-v2-scoped",
+  "response_bound_to_outcome": true,
+  "scope": "mcp GET branch"
+}
