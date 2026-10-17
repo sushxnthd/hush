@@ -23,7 +23,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: npm ci
       - name: Reproduce lifecycle counterexample twice
         run: |
           node research/pcc-runtime-product/run_mcp_stream_lifecycle_probe.mjs /tmp/stream-1.json
