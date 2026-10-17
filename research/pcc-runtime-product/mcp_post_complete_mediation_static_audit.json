@@ -1,0 +1,15 @@
+{
+  "checks": {
+    "attempt_precedes_dispatch": true,
+    "generic_post_uses_choke_point": true,
+    "http_outcome_closed": true,
+    "one_shot_gate_precedes_tool_dispatch": true,
+    "raw_credential_excluded": true,
+    "single_raw_post_dispatch_in_helper": true,
+    "terminal_hash_returned": true,
+    "tool_call_uses_choke_point": true,
+    "transport_error_closed": true
+  },
+  "passed": true,
+  "schema_version": 1
+}

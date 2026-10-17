@@ -179,6 +179,31 @@ async function pipeMcpResponse(res,upstream,extraHeaders={}){
   await pipeline(Readable.fromWeb(upstream.body),res);
 }
 
+async function dispatchMcpPost({req,u,raw,audit,authorizationBasis,approved=false}){
+  receipt(audit,'approved',null,{
+    mcp:true,transport:true,phase:'attempt',authorizationBasis,approved,
+    credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer),
+    rawCredentialIncluded:false
+  });
+  let upstream;
+  try{upstream=await fetchMcpUpstream(req,u,raw)}
+  catch(error){
+    receipt(audit,'error',null,{
+      mcp:true,transport:true,phase:'outcome',status:'error',approved,
+      credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer),
+      rawCredentialIncluded:false
+    });
+    throw error;
+  }
+  const outcome=receipt(audit,upstream.ok?'allow':'error',null,{
+    mcp:true,transport:true,phase:'outcome',status:upstream.ok?'allow':'error',
+    upstreamStatus:upstream.status,approved,
+    credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer),
+    rawCredentialIncluded:false
+  });
+  return {upstream,outcome};
+}
+
 async function mcp(req,res,u){
   if(req.method==='DELETE'){
     const audit={
@@ -286,12 +311,21 @@ async function mcp(req,res,u){
     }
 
     if(hadApproval) mcpApprovals.delete(evaluation.requestHash);
-    const upstream=await fetchMcpUpstream(req,u,raw);
-    receipt(audit,upstream.ok?'allow':'error',null,{mcp:true,upstreamStatus:upstream.status,approved:Boolean(hadApproval),credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer)});
-    return pipeMcpResponse(res,upstream);
+    const {upstream,outcome}=await dispatchMcpPost({
+      req,u,raw,audit,approved:Boolean(hadApproval),
+      authorizationBasis:hadApproval?'exact_one_shot_approval':'mcp_policy_allow'
+    });
+    return pipeMcpResponse(res,upstream,{'x-hush-receipt-hash':outcome.hash});
   }
 
-  const upstream=await fetchMcpUpstream(req,u,raw);
+  const transportAudit={
+    agent,purpose,category:'mcp-transport',action:`jsonrpc:${rpc.method}`,
+    resource:'/mcp',mcp:{transportMethod:'POST',method:rpc.method}
+  };
+  const {upstream,outcome}=await dispatchMcpPost({
+    req,u,raw,audit:transportAudit,
+    authorizationBasis:'configured_mcp_upstream'
+  });
   if(rpc.method==='tools/list'&&upstream.ok){
     const contentType=upstream.headers.get('content-type')||'';
     if(contentType.includes('json')){
@@ -300,12 +334,12 @@ async function mcp(req,res,u){
         const payload=JSON.parse(text);
         mcpCatalog.ingestListResult(payload);
         if(payload?.result&&Array.isArray(payload.result.tools)) payload.result.tools=[...payload.result.tools.filter(tool=>!isNativeMcpTool(tool?.name)),...NATIVE_MCP_TOOLS];
-        res.writeHead(upstream.status,responseHeaders(upstream.headers));res.end(JSON.stringify(payload));return;
+        res.writeHead(upstream.status,{...responseHeaders(upstream.headers),'x-hush-receipt-hash':outcome.hash});res.end(JSON.stringify(payload));return;
       }catch{}
-      res.writeHead(upstream.status,responseHeaders(upstream.headers));res.end(text);return;
+      res.writeHead(upstream.status,{...responseHeaders(upstream.headers),'x-hush-receipt-hash':outcome.hash});res.end(text);return;
     }
   }
-  return pipeMcpResponse(res,upstream);
+  return pipeMcpResponse(res,upstream,{'x-hush-receipt-hash':outcome.hash});
 }
 
 async function api(req,res,u){
