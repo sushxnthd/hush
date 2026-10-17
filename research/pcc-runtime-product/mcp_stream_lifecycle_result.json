@@ -1,0 +1,217 @@
+{
+  "classification": "REAL_SERVER_ADVERSARIAL_TRANSPORT_TEST",
+  "counterexample": true,
+  "protocol": "hush.mcp-stream-lifecycle.v1",
+  "receiptsIndistinguishable": true,
+  "scenarios": [
+    {
+      "clientTerminal": "complete",
+      "firstEventDelivered": true,
+      "firstSnapshot": {
+        "chainValid": true,
+        "receipts": [
+          {
+            "authorizationBasis": "configured_mcp_upstream",
+            "decision": "approved",
+            "phase": "attempt",
+            "rawCredentialIncluded": false,
+            "signed": true,
+            "status": null,
+            "streamTerminal": null,
+            "upstreamStatus": null
+          },
+          {
+            "authorizationBasis": null,
+            "decision": "allow",
+            "phase": "outcome",
+            "rawCredentialIncluded": false,
+            "signed": true,
+            "status": "allow",
+            "streamTerminal": null,
+            "upstreamStatus": 200
+          }
+        ]
+      },
+      "hasLifecycleTerminal": false,
+      "mode": "clean_eof",
+      "rawBrokeredCredentialInReceipts": false,
+      "receiptDelta": 2,
+      "responseStatus": 200,
+      "secondEventDelivered": true,
+      "terminalSnapshot": {
+        "chainValid": true,
+        "receipts": [
+          {
+            "authorizationBasis": "configured_mcp_upstream",
+            "decision": "approved",
+            "phase": "attempt",
+            "rawCredentialIncluded": false,
+            "signed": true,
+            "status": null,
+            "streamTerminal": null,
+            "upstreamStatus": null
+          },
+          {
+            "authorizationBasis": null,
+            "decision": "allow",
+            "phase": "outcome",
+            "rawCredentialIncluded": false,
+            "signed": true,
+            "status": "allow",
+            "streamTerminal": null,
+            "upstreamStatus": 200
+          }
+        ]
+      },
+      "upstreamArrival": [
+        {
+          "authorizationBrokered": true,
+          "chainValid": true,
+          "method": "GET",
+          "receiptCount": 1
+        }
+      ],
+      "upstreamClientClosed": true
+    },
+    {
+      "clientTerminal": "aborted",
+      "firstEventDelivered": true,
+      "firstSnapshot": {
+        "chainValid": true,
+        "receipts": [
+          {
+            "authorizationBasis": "configured_mcp_upstream",
+            "decision": "approved",
+            "phase": "attempt",
+            "rawCredentialIncluded": false,
+            "signed": true,
+            "status": null,
+            "streamTerminal": null,
+            "upstreamStatus": null
+          },
+          {
+            "authorizationBasis": null,
+            "decision": "allow",
+            "phase": "outcome",
+            "rawCredentialIncluded": false,
+            "signed": true,
+            "status": "allow",
+            "streamTerminal": null,
+            "upstreamStatus": 200
+          }
+        ]
+      },
+      "hasLifecycleTerminal": false,
+      "mode": "upstream_abort",
+      "rawBrokeredCredentialInReceipts": false,
+      "receiptDelta": 2,
+      "responseStatus": 200,
+      "secondEventDelivered": false,
+      "terminalSnapshot": {
+        "chainValid": true,
+        "receipts": [
+          {
+            "authorizationBasis": "configured_mcp_upstream",
+            "decision": "approved",
+            "phase": "attempt",
+            "rawCredentialIncluded": false,
+            "signed": true,
+            "status": null,
+            "streamTerminal": null,
+            "upstreamStatus": null
+          },
+          {
+            "authorizationBasis": null,
+            "decision": "allow",
+            "phase": "outcome",
+            "rawCredentialIncluded": false,
+            "signed": true,
+            "status": "allow",
+            "streamTerminal": null,
+            "upstreamStatus": 200
+          }
+        ]
+      },
+      "upstreamArrival": [
+        {
+          "authorizationBrokered": true,
+          "chainValid": true,
+          "method": "GET",
+          "receiptCount": 1
+        }
+      ],
+      "upstreamClientClosed": true
+    },
+    {
+      "clientTerminal": "cancelled",
+      "firstEventDelivered": true,
+      "firstSnapshot": {
+        "chainValid": true,
+        "receipts": [
+          {
+            "authorizationBasis": "configured_mcp_upstream",
+            "decision": "approved",
+            "phase": "attempt",
+            "rawCredentialIncluded": false,
+            "signed": true,
+            "status": null,
+            "streamTerminal": null,
+            "upstreamStatus": null
+          },
+          {
+            "authorizationBasis": null,
+            "decision": "allow",
+            "phase": "outcome",
+            "rawCredentialIncluded": false,
+            "signed": true,
+            "status": "allow",
+            "streamTerminal": null,
+            "upstreamStatus": 200
+          }
+        ]
+      },
+      "hasLifecycleTerminal": false,
+      "mode": "client_cancel",
+      "rawBrokeredCredentialInReceipts": false,
+      "receiptDelta": 2,
+      "responseStatus": 200,
+      "secondEventDelivered": false,
+      "terminalSnapshot": {
+        "chainValid": true,
+        "receipts": [
+          {
+            "authorizationBasis": "configured_mcp_upstream",
+            "decision": "approved",
+            "phase": "attempt",
+            "rawCredentialIncluded": false,
+            "signed": true,
+            "status": null,
+            "streamTerminal": null,
+            "upstreamStatus": null
+          },
+          {
+            "authorizationBasis": null,
+            "decision": "allow",
+            "phase": "outcome",
+            "rawCredentialIncluded": false,
+            "signed": true,
+            "status": "allow",
+            "streamTerminal": null,
+            "upstreamStatus": 200
+          }
+        ]
+      },
+      "upstreamArrival": [
+        {
+          "authorizationBrokered": true,
+          "chainValid": true,
+          "method": "GET",
+          "receiptCount": 1
+        }
+      ],
+      "upstreamClientClosed": true
+    }
+  ],
+  "scientificGate": "FALSIFIED_TERMINAL_STREAM_CLOSURE",
+  "smallestClaim": "The current GET outcome receipt certifies upstream response headers, not stream completion: clean EOF, upstream body failure, and client cancellation leave indistinguishable receipts."
+}
