@@ -1,0 +1,96 @@
+{
+  "allGatesPass": true,
+  "failure": {
+    "chainValid": true,
+    "proxyErrorReturned": true,
+    "rawCredentialInReceipts": false,
+    "receiptDelta": 2,
+    "receipts": [
+      {
+        "action": "http_get",
+        "agent": "mediation-probe",
+        "authorizationBasis": "configured_mcp_upstream",
+        "category": "mcp-transport",
+        "credentialBrokered": true,
+        "decision": "approved",
+        "phase": "attempt",
+        "purpose": "frozen GET failure closure",
+        "rawCredentialIncluded": false,
+        "resource": "/mcp",
+        "signed": true,
+        "status": null,
+        "transportMethod": "GET",
+        "upstreamStatus": null
+      },
+      {
+        "action": "http_get",
+        "agent": "mediation-probe",
+        "authorizationBasis": null,
+        "category": "mcp-transport",
+        "credentialBrokered": true,
+        "decision": "error",
+        "phase": "outcome",
+        "purpose": "frozen GET failure closure",
+        "rawCredentialIncluded": false,
+        "resource": "/mcp",
+        "signed": true,
+        "status": "error",
+        "transportMethod": "GET",
+        "upstreamStatus": null
+      }
+    ]
+  },
+  "protocol": "mcp-get-fail-closed-correction-v1",
+  "scientificGate": "PASS",
+  "success": {
+    "chainValid": true,
+    "exactBodyForwarded": true,
+    "rawCredentialInReceipts": false,
+    "receiptDelta": 2,
+    "receipts": [
+      {
+        "action": "http_get",
+        "agent": "mediation-probe",
+        "authorizationBasis": "configured_mcp_upstream",
+        "category": "mcp-transport",
+        "credentialBrokered": true,
+        "decision": "approved",
+        "phase": "attempt",
+        "purpose": "frozen GET correction",
+        "rawCredentialIncluded": false,
+        "resource": "/mcp",
+        "signed": true,
+        "status": null,
+        "transportMethod": "GET",
+        "upstreamStatus": null
+      },
+      {
+        "action": "http_get",
+        "agent": "mediation-probe",
+        "authorizationBasis": null,
+        "category": "mcp-transport",
+        "credentialBrokered": true,
+        "decision": "allow",
+        "phase": "outcome",
+        "purpose": "frozen GET correction",
+        "rawCredentialIncluded": false,
+        "resource": "/mcp",
+        "signed": true,
+        "status": "allow",
+        "transportMethod": "GET",
+        "upstreamStatus": 200
+      }
+    ],
+    "responseBoundToOutcome": true,
+    "responseStatus": 200,
+    "upstream": [
+      {
+        "authorization": "Bearer server-only-secret",
+        "chainValidAtArrival": true,
+        "method": "GET",
+        "path": "/mcp?session=complete-mediation-probe",
+        "receiptCountAtArrival": 1
+      }
+    ]
+  }
+}

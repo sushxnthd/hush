@@ -173,8 +173,8 @@ async function fetchMcpUpstream(req,u,raw){
     signal:AbortSignal.timeout(30_000)
   });
 }
-async function pipeMcpResponse(res,upstream){
-  res.writeHead(upstream.status,responseHeaders(upstream.headers));
+async function pipeMcpResponse(res,upstream,extraHeaders={}){
+  res.writeHead(upstream.status,{...responseHeaders(upstream.headers),...extraHeaders});
   if(!upstream.body){res.end();return;}
   await pipeline(Readable.fromWeb(upstream.body),res);
 }
@@ -194,8 +194,37 @@ async function mcp(req,res,u){
   }
   if(req.method==='GET'){
     if(!mcpUpstream){res.writeHead(405,securityHeaders({'allow':'POST'}));res.end();return;}
-    const upstream=await fetchMcpUpstream(req,u,null);
-    return pipeMcpResponse(res,upstream);
+    const audit={
+      agent:String(req.headers['x-hush-agent']||'unknown-agent'),
+      purpose:String(req.headers['x-hush-purpose']||'unspecified'),
+      category:'mcp-transport',
+      action:'http_get',
+      resource:'/mcp',
+      mcp:{transportMethod:'GET'}
+    };
+    receipt(audit,'approved',null,{
+      mcp:true,transport:true,phase:'attempt',
+      authorizationBasis:'configured_mcp_upstream',
+      credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer),
+      rawCredentialIncluded:false
+    });
+    let upstream;
+    try{upstream=await fetchMcpUpstream(req,u,null)}
+    catch(error){
+      receipt(audit,'error',null,{
+        mcp:true,transport:true,phase:'outcome',status:'error',
+        credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer),
+        rawCredentialIncluded:false
+      });
+      throw error;
+    }
+    const outcome=receipt(audit,upstream.ok?'allow':'error',null,{
+      mcp:true,transport:true,phase:'outcome',status:upstream.ok?'allow':'error',
+      upstreamStatus:upstream.status,
+      credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer),
+      rawCredentialIncluded:false
+    });
+    return pipeMcpResponse(res,upstream,{'x-hush-receipt-hash':outcome.hash});
   }
   if(req.method!=='POST'){
     res.writeHead(405,securityHeaders({'allow':'GET, POST'}));res.end();return;
