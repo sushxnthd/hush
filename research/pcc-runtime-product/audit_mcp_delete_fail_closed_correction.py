@@ -11,7 +11,9 @@ markers = {
     "deny_receipt": "const r=receipt(audit,'deny'",
     "method_response": "res.writeHead(405,securityHeaders({'allow':'GET, POST'",
     "get_branch": "if(req.method==='GET')",
-    "dispatch": "const upstream=await fetchMcpUpstream(req,u,null);",
+    # Match the dispatch call itself rather than its former local declaration;
+    # GET now assigns inside a try block, while DELETE must still terminate first.
+    "dispatch": "await fetchMcpUpstream(req,u,null)",
 }
 positions = {name: source.index(marker) for name, marker in markers.items()}
 ordered = positions["delete_branch"] < positions["deny_receipt"] < positions["method_response"] < positions["get_branch"] < positions["dispatch"]

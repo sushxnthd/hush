@@ -25,13 +25,10 @@ jobs:
           node -e "const r=require('./research/pcc-runtime-product/mcp_get_complete_mediation_result.json'); if(!r.bypassObserved||r.scientificGate!=='FAIL'||r.receiptDelta!==0) process.exit(1)"
           test -f research/pcc-runtime-product/MCP_GET_COMPLETE_MEDIATION_PREREGISTRATION.md
           test -f research/pcc-runtime-product/MCP_GET_COMPLETE_MEDIATION_RESULT.md
-      - name: Reproduce real-server probe twice
+      - name: Preserve immutable historical evidence
         run: |
-          node research/pcc-runtime-product/run_mcp_get_mediation_probe.mjs /tmp/run1.json
-          node research/pcc-runtime-product/run_mcp_get_mediation_probe.mjs /tmp/run2.json
-          cmp /tmp/run1.json /tmp/run2.json
-          cmp /tmp/run1.json research/pcc-runtime-product/mcp_get_complete_mediation_result.json
-      - name: Reproduce independent source audit
+          echo "aae57e853d229bf6cc00575afc4db0a157eb3626c8951717556ddc6da86a9d22  research/pcc-runtime-product/mcp_get_complete_mediation_result.json" | sha256sum -c -
+          echo "2652df711eb170aea1d39d854a65cb1f3870158de7d0882fb351ecbf87d18b6d  research/pcc-runtime-product/mcp_get_complete_mediation_static_audit.json" | sha256sum -c -
+      - name: Current correction regression
         run: |
-          python3 research/pcc-runtime-product/audit_mcp_get_mediation.py > /tmp/audit.json
-          cmp /tmp/audit.json research/pcc-runtime-product/mcp_get_complete_mediation_static_audit.json
+          node --test test/mcp-get-mediation.test.js test/mcp-proxy.test.js
