@@ -1,0 +1,15 @@
+{
+  "all_gates_pass": true,
+  "all_markers_found": true,
+  "combined_delete_dispatch_removed": true,
+  "deny_receipt_precedes_first_transport_dispatch": true,
+  "positions": {
+    "delete_branch": 8223,
+    "deny_receipt": 8533,
+    "dispatch": 8887,
+    "get_branch": 8766,
+    "method_response": 8655
+  },
+  "protocol": "mcp-delete-fail-closed-static-audit-v1",
+  "source_sha256": "a366972eabfd99cf4195783f30220a8541ebdbe2b12786f2ba6784f31332c720"
+}

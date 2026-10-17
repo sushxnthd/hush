@@ -1,0 +1,22 @@
+{
+  "bypassObserved": true,
+  "protocol": "mcp-delete-complete-mediation-v1",
+  "receiptCountAfter": 0,
+  "receiptCountBefore": 0,
+  "receiptDelta": 0,
+  "request": {
+    "method": "DELETE",
+    "path": "/mcp?session=probe"
+  },
+  "responseStatus": 204,
+  "scientificGate": "FAIL",
+  "smallestClaim": "At this revision, authenticated MCP DELETE reaches the configured upstream without a Hush policy decision or receipt.",
+  "upstreamObserved": [
+    {
+      "authorization": "Bearer server-only-secret",
+      "bodyBytes": 0,
+      "method": "DELETE",
+      "path": "/mcp?session=probe"
+    }
+  ]
+}

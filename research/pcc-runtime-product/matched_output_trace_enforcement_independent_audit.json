@@ -1,0 +1,15 @@
+{
+  "exact_match": true,
+  "formula_counts": {
+    "classified_instances": 57120,
+    "matched_safe_unsafe_pairs": 560064,
+    "mixed_safety_fibers": 816,
+    "policy_output_fibers": 840
+  },
+  "primary_counts": {
+    "classified_instances": 57120,
+    "matched_safe_unsafe_pairs": 560064,
+    "mixed_safety_fibers": 816,
+    "policy_output_fibers": 840
+  }
+}

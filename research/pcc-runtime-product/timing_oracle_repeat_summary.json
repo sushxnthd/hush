@@ -1,0 +1,18 @@
+{
+  "study": "PCC preparation timing-oracle differential independent repeat",
+  "sourceArtifactSha256": "5167ee34d70c91949d145f41595b73cf058e46efa6b2fcc080ae744fdce647e3",
+  "pairs": 500,
+  "adjustedMedianRatio": 1.0050983965124125,
+  "positive": 256,
+  "negative": 244,
+  "directionalConsistency": 0.512,
+  "exactTwoSidedSignP": 0.6228094319797879,
+  "agreeingBlocks": 3,
+  "gates": {
+    "minimum_effect": false,
+    "direction_consistency": false,
+    "sign_test": false,
+    "block_consistency": false
+  },
+  "verdict": "PASS_WITHIN_TESTED_RESOLUTION"
+}

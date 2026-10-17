@@ -1,0 +1,80 @@
+{
+  "study": "PCC inference-firewall differential probe",
+  "domain": {
+    "type": "integer",
+    "min": 0,
+    "max": 1023
+  },
+  "secret": 500,
+  "target": 500,
+  "native": {
+    "decision": "deny",
+    "reason": "Realized posterior knowledge exceeds the partition privacy limit.",
+    "hasResult": false,
+    "partition": {
+      "decision": "deny",
+      "reason": "Realized posterior knowledge exceeds the partition privacy limit.",
+      "field": "finance.balance",
+      "beforeCandidates": 1024,
+      "afterCandidates": 1,
+      "marginalKnowledgeBits": 10,
+      "totalKnowledgeBits": 10,
+      "maxKnowledgeBits": 8,
+      "minRemaining": 1
+    }
+  },
+  "pcc": {
+    "decision": "allow",
+    "observed": [
+      true,
+      true
+    ],
+    "capacityBits": 2,
+    "inferredCandidates": [
+      500
+    ],
+    "partitionBefore": [
+      {
+        "field": "finance.balance",
+        "domain": {
+          "type": "integer",
+          "min": 0,
+          "max": 1023,
+          "size": 1024
+        },
+        "initialCandidates": 1024,
+        "remainingCandidates": 1024,
+        "totalKnowledgeBits": 0,
+        "maxKnowledgeBits": 8,
+        "minRemaining": 1,
+        "fragments": 1
+      }
+    ],
+    "partitionAfter": [
+      {
+        "field": "finance.balance",
+        "domain": {
+          "type": "integer",
+          "min": 0,
+          "max": 1023,
+          "size": 1024
+        },
+        "initialCandidates": 1024,
+        "remainingCandidates": 1024,
+        "totalKnowledgeBits": 0,
+        "maxKnowledgeBits": 8,
+        "minRemaining": 1,
+        "fragments": 1
+      }
+    ]
+  },
+  "checks": {
+    "native_denied": true,
+    "native_identifying": true,
+    "pcc_released_identifying_vector": true,
+    "independent_exact_reconstruction": true,
+    "pcc_left_partition_unchanged": true
+  },
+  "security_consistency_gate": "FAIL",
+  "evidence_sha256": "3bcda0efb686863d6e5d0f9f393cfade8c0db4076f078f42af2df175be0660ee"
+}

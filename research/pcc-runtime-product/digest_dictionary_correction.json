@@ -1,0 +1,49 @@
+{
+  "study": "PCC diagnostic digest dictionary probe",
+  "domain": {
+    "type": "integer",
+    "min": 0,
+    "max": 1023
+  },
+  "secret": 500,
+  "publicFootprint": [
+    {
+      "field": "finance.balance",
+      "domain": {
+        "type": "integer",
+        "min": 0,
+        "max": 1023,
+        "size": 1024
+      },
+      "initialCandidates": 1024,
+      "remainingCandidates": 1024,
+      "totalKnowledgeBits": 0,
+      "maxKnowledgeBits": 8,
+      "minRemaining": 1,
+      "fragments": 1
+    },
+    {
+      "field": "pcc:derived",
+      "domain": {
+        "type": "integer",
+        "min": 0,
+        "max": 1023,
+        "size": 1024
+      },
+      "initialCandidates": 1024,
+      "remainingCandidates": 624,
+      "totalKnowledgeBits": 0.714597781,
+      "maxKnowledgeBits": 8,
+      "minRemaining": 1,
+      "fragments": 1
+    }
+  ],
+  "enumeratedCandidates": 1024,
+  "matches": [],
+  "gates": {
+    "pcc_identifier_exposed": true,
+    "dictionary_uniquely_recovers_secret": false,
+    "diagnostic_non_disclosure": true
+  },
+  "verdict": "PASS"
+}

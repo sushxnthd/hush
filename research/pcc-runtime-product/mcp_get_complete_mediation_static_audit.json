@@ -1,0 +1,15 @@
+{
+  "all_markers_found": true,
+  "direct_dispatch_ordered": true,
+  "policy_call_in_get_branch": false,
+  "positions": {
+    "configured_guard": 8794,
+    "dispatch": 8887,
+    "get_branch": 8766,
+    "pipe_response": 8942
+  },
+  "protocol": "mcp-get-complete-mediation-static-audit-v1",
+  "receipt_call_in_get_branch": false,
+  "source_sha256": "a366972eabfd99cf4195783f30220a8541ebdbe2b12786f2ba6784f31332c720",
+  "unmediated_branch_confirmed": true
+}

@@ -1,0 +1,197 @@
+{
+  "canonical_payload_sha256": "b38c3a57fe7a4ba8e85b6b7445e01e1c42838c45f4d51a03652acb9a226b1b36",
+  "command": "python3 verify_prior_contract_certificate.py --max-domain 5 --max-denominator 10 --output RESULT.json",
+  "counts": {
+    "prior_pair_branches": 2551588,
+    "prior_pairs": 117868,
+    "rho_one_disagreements": 0,
+    "robust_upper_bound_violations": 0,
+    "theorem_violations": 0,
+    "two_log_counterexamples": 0
+  },
+  "created_at_utc": "2026-10-12T23:20:00Z",
+  "decisions": {
+    "cardinality": {
+      "0.0": {
+        "false_deny": 198419,
+        "false_safe": 0
+      },
+      "0.25": {
+        "false_deny": 489007,
+        "false_safe": 0
+      },
+      "0.5": {
+        "false_deny": 528940,
+        "false_safe": 52160
+      },
+      "1.0": {
+        "false_deny": 626443,
+        "false_safe": 9840
+      },
+      "2.0": {
+        "false_deny": 307475,
+        "false_safe": 0
+      },
+      "4.0": {
+        "false_deny": 0,
+        "false_safe": 0
+      }
+    },
+    "nominal": {
+      "0.0": {
+        "false_deny": 177586,
+        "false_safe": 177586
+      },
+      "0.25": {
+        "false_deny": 295976,
+        "false_safe": 295976
+      },
+      "0.5": {
+        "false_deny": 367464,
+        "false_safe": 367464
+      },
+      "1.0": {
+        "false_deny": 202756,
+        "false_safe": 202756
+      },
+      "2.0": {
+        "false_deny": 7350,
+        "false_safe": 7350
+      },
+      "4.0": {
+        "false_deny": 0,
+        "false_safe": 0
+      }
+    },
+    "robust": {
+      "0.0": {
+        "false_deny": 197366,
+        "false_safe": 0
+      },
+      "0.25": {
+        "false_deny": 486457,
+        "false_safe": 0
+      },
+      "0.5": {
+        "false_deny": 954931,
+        "false_safe": 0
+      },
+      "1.0": {
+        "false_deny": 2006013,
+        "false_safe": 0
+      },
+      "2.0": {
+        "false_deny": 2490734,
+        "false_safe": 0
+      },
+      "4.0": {
+        "false_deny": 2011567,
+        "false_safe": 0
+      }
+    }
+  },
+  "gates": {
+    "rho_one_exact": true,
+    "robust_upper_bound": true,
+    "robust_zero_false_safe": true,
+    "theorem_bound": true
+  },
+  "grid": {
+    "budgets_bits": [
+      0.0,
+      0.25,
+      0.5,
+      1.0,
+      2.0,
+      4.0
+    ],
+    "denominator": [
+      "n",
+      10
+    ],
+    "domain": [
+      2,
+      5
+    ]
+  },
+  "max_bound_error": 0.0,
+  "max_normalized_mismatch": {
+    "branch": [
+      0,
+      1
+    ],
+    "declared": [
+      "1/7",
+      "1/7",
+      "1/7",
+      "1/7",
+      "3/7"
+    ],
+    "declared_leakage": 0.22239242133644802,
+    "n": 5,
+    "rho": 1.4285714285714286,
+    "true": [
+      "1/10",
+      "1/5",
+      "1/5",
+      "1/5",
+      "3/10"
+    ],
+    "true_leakage": 1.15200309344505,
+    "value": 1.8065665316294193
+  },
+  "max_robust_shortfall": 0.0,
+  "minimal_false_safe": {
+    "cardinality": {
+      "branch": [
+        0,
+        1,
+        2
+      ],
+      "budget": 0.5,
+      "declared": [
+        "1/10",
+        "1/10",
+        "1/10",
+        "7/10"
+      ],
+      "n": 4,
+      "policy_charge": 0.41503749927884376,
+      "rho": 5.0,
+      "true": [
+        "1/10",
+        "1/10",
+        "1/2",
+        "3/10"
+      ],
+      "true_charge": 0.5145731728297582
+    },
+    "nominal": {
+      "branch": [
+        0
+      ],
+      "budget": 0.25,
+      "declared": [
+        "1/10",
+        "9/10"
+      ],
+      "n": 2,
+      "policy_charge": 0.15200309344505006,
+      "rho": 5.0,
+      "true": [
+        "1/2",
+        "1/2"
+      ],
+      "true_charge": 1.0
+    }
+  },
+  "prior_counts": {
+    "2": 31,
+    "3": 109,
+    "4": 205,
+    "5": 251
+  },
+  "python": "3.12.14",
+  "schema": "hush.prior-contract-certificate.v1",
+  "status": "PASS"
+}

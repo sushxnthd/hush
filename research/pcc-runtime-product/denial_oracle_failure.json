@@ -1,0 +1,28 @@
+{
+  "study": "PCC pre-approval denial-oracle differential",
+  "domain": {
+    "type": "integer",
+    "min": 0,
+    "max": 1023
+  },
+  "publicGuess": 500,
+  "equalWorld": {
+    "observation": {
+      "kind": "inference-denial"
+    },
+    "actualEquality": true
+  },
+  "unequalWorld": {
+    "observation": {
+      "kind": "prepared",
+      "decision": "ask"
+    },
+    "actualEquality": false
+  },
+  "adversaryInference": "equality is true in the denied world",
+  "gates": {
+    "no_approval_or_consumption": true,
+    "preparation_observation_independent_of_private_result": false
+  },
+  "verdict": "FAIL"
+}

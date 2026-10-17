@@ -1,0 +1,10 @@
+{
+  "audit_digest": "cf8652cd86b99950c6f446b889cd04082762067257d7750c15c2af6ec8caec3a",
+  "cases": 7680,
+  "checks": 3035520,
+  "failures": [],
+  "schema": "hush.trace-envelope-minimality-independent-audit.v1",
+  "seed": 20261014,
+  "source_canonical_sha256": "f9d35d5fbb3b0e09426b1424e79292ef5e8de4067eb1e38cdd762b1fbeffc399",
+  "status": "PASS"
+}

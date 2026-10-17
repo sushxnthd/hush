@@ -1,0 +1,37 @@
+name: MCP GET complete mediation
+
+on:
+  push:
+    branches: [breakthrough-engine/pcc-cleanroom-replication]
+  pull_request:
+    paths:
+      - src/server.js
+      - research/pcc-runtime-product/run_mcp_get_mediation_probe.mjs
+      - research/pcc-runtime-product/audit_mcp_get_mediation.py
+      - research/pcc-runtime-product/MCP_GET_COMPLETE_MEDIATION_*.md
+      - research/pcc-runtime-product/mcp_get_complete_mediation_*.json
+      - .github/workflows/mcp-get-complete-mediation.yml
+
+jobs:
+  preserve-falsification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Confirm frozen negative result
+        run: |
+          node -e "const r=require('./research/pcc-runtime-product/mcp_get_complete_mediation_result.json'); if(!r.bypassObserved||r.scientificGate!=='FAIL'||r.receiptDelta!==0) process.exit(1)"
+          test -f research/pcc-runtime-product/MCP_GET_COMPLETE_MEDIATION_PREREGISTRATION.md
+          test -f research/pcc-runtime-product/MCP_GET_COMPLETE_MEDIATION_RESULT.md
+      - name: Reproduce real-server probe twice
+        run: |
+          node research/pcc-runtime-product/run_mcp_get_mediation_probe.mjs /tmp/run1.json
+          node research/pcc-runtime-product/run_mcp_get_mediation_probe.mjs /tmp/run2.json
+          cmp /tmp/run1.json /tmp/run2.json
+          cmp /tmp/run1.json research/pcc-runtime-product/mcp_get_complete_mediation_result.json
+      - name: Reproduce independent source audit
+        run: |
+          python3 research/pcc-runtime-product/audit_mcp_get_mediation.py > /tmp/audit.json
+          cmp /tmp/audit.json research/pcc-runtime-product/mcp_get_complete_mediation_static_audit.json

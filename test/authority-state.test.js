@@ -30,7 +30,9 @@ test('authority state fails closed on ciphertext tampering or wrong key',()=>{
     assert.throws(()=>new AuthorityState(dir,crypto.randomBytes(32)),/auth|authenticate|Unsupported|decrypt|bad/i);
     const file=path.join(dir,'authority-state.enc.json');
     const blob=JSON.parse(fs.readFileSync(file,'utf8'));
-    blob.ciphertext=blob.ciphertext.slice(0,-2)+'AA';
+    const ciphertext=Buffer.from(blob.ciphertext,'base64url');
+    ciphertext[0]^=1;
+    blob.ciphertext=ciphertext.toString('base64url');
     fs.writeFileSync(file,JSON.stringify(blob));
     assert.throws(()=>new AuthorityState(dir,key));
   }finally{fs.rmSync(dir,{recursive:true,force:true});}

@@ -1,0 +1,58 @@
+name: Matched-output trace enforcement
+
+on:
+  push:
+    branches: [breakthrough-engine/pcc-cleanroom-replication]
+    paths:
+      - research/pcc-runtime-product/MATCHED_OUTPUT_TRACE_ENFORCEMENT_PREREGISTRATION.md
+      - research/pcc-runtime-product/MATCHED_OUTPUT_TRACE_ENFORCEMENT_RESULT.md
+      - research/pcc-runtime-product/verify_matched_output_trace_enforcement.py
+      - research/pcc-runtime-product/independent_matched_output_trace_audit.py
+      - research/pcc-runtime-product/matched_output_trace_enforcement_results.json
+      - research/pcc-runtime-product/matched_output_trace_enforcement_independent_audit.json
+      - src/trace-policy-monitor.js
+      - test/trace-policy-monitor.test.js
+      - .github/workflows/matched-output-trace-enforcement.yml
+  pull_request:
+    paths:
+      - research/pcc-runtime-product/MATCHED_OUTPUT_TRACE_ENFORCEMENT_PREREGISTRATION.md
+      - research/pcc-runtime-product/MATCHED_OUTPUT_TRACE_ENFORCEMENT_RESULT.md
+      - research/pcc-runtime-product/verify_matched_output_trace_enforcement.py
+      - research/pcc-runtime-product/independent_matched_output_trace_audit.py
+      - src/trace-policy-monitor.js
+      - test/trace-policy-monitor.test.js
+      - .github/workflows/matched-output-trace-enforcement.yml
+
+jobs:
+  exact-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Primary exact enumeration
+        run: python3 research/pcc-runtime-product/verify_matched_output_trace_enforcement.py
+      - name: Independent formula audit
+        run: python3 research/pcc-runtime-product/independent_matched_output_trace_audit.py
+      - name: Deterministic artifact check
+        run: |
+          cp research/pcc-runtime-product/matched_output_trace_enforcement_results.json /tmp/primary.json
+          cp research/pcc-runtime-product/matched_output_trace_enforcement_independent_audit.json /tmp/audit.json
+          python3 research/pcc-runtime-product/verify_matched_output_trace_enforcement.py >/dev/null
+          python3 research/pcc-runtime-product/independent_matched_output_trace_audit.py >/dev/null
+          cmp /tmp/primary.json research/pcc-runtime-product/matched_output_trace_enforcement_results.json
+          cmp /tmp/audit.json research/pcc-runtime-product/matched_output_trace_enforcement_independent_audit.json
+      - name: Runtime monitor tests
+        run: node --test test/trace-policy-monitor.test.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: matched-output-trace-enforcement
+          path: |
+            research/pcc-runtime-product/matched_output_trace_enforcement_results.json
+            research/pcc-runtime-product/matched_output_trace_enforcement_independent_audit.json

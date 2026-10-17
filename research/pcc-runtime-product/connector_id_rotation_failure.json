@@ -1,0 +1,70 @@
+{
+  "study": "PCC connector source-ID rotation differential",
+  "domain": {
+    "type": "integer",
+    "min": 0,
+    "max": 1023
+  },
+  "secret": 500,
+  "conditions": {
+    "stableId": {
+      "connectorPathChanged": false,
+      "firstSync": {
+        "created": 1,
+        "updated": 0,
+        "removed": 0
+      },
+      "secondSync": {
+        "created": 0,
+        "updated": 1,
+        "removed": 0
+      },
+      "firstReleased": {
+        "decision": "allow",
+        "value": true
+      },
+      "secondPrepared": {
+        "decision": "deny",
+        "derivedDisclosure": false
+      },
+      "secondReleased": null,
+      "jointInference": {
+        "candidateCount": 0,
+        "recoveredValue": null
+      }
+    },
+    "rotatedId": {
+      "connectorPathChanged": true,
+      "firstSync": {
+        "created": 1,
+        "updated": 0,
+        "removed": 0
+      },
+      "secondSync": {
+        "created": 1,
+        "updated": 0,
+        "removed": 1
+      },
+      "firstReleased": {
+        "decision": "allow",
+        "value": true
+      },
+      "secondPrepared": {
+        "decision": "ask",
+        "derivedDisclosure": true
+      },
+      "secondReleased": {
+        "decision": "allow",
+        "value": true
+      },
+      "jointInference": {
+        "candidateCount": 1,
+        "recoveredValue": 500
+      }
+    }
+  },
+  "gates": {
+    "stable_and_rotated_id_deny_identifying_second_predicate": false
+  },
+  "verdict": "FAIL"
+}
