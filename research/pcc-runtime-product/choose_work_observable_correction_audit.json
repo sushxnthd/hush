@@ -1,0 +1,26 @@
+{
+  "allPass": true,
+  "checks": {
+    "all_100_budgets_present": true,
+    "authorized_release_constant": true,
+    "canonical_hash_bound": true,
+    "classification_exact": true,
+    "constant_time_not_claimed": true,
+    "constraint_work_public_cardinality": true,
+    "feasible_count_exact": true,
+    "old_counterexample_preserved": true,
+    "preference_work_public_cardinality": true,
+    "scientific_gate_passes": true,
+    "source_hash_bound": true,
+    "source_maps_all_constraints": true,
+    "source_maps_all_preferences": true,
+    "source_removes_feasible_only_scoring": true,
+    "source_visits_all_candidates": true
+  },
+  "classification": "INDEPENDENT_EXACT_CORRECTION_AND_PROVENANCE_AUDIT",
+  "passed": 15,
+  "preservedCounterexampleResultSha256": "9947228502ad31efbb9790285297b9f87b6f6ac9f5fb82a4594194f9fb848835",
+  "protocol": "hush.choose-work-observable-correction.audit.v1",
+  "resultSha256": "0ddfff958130caac702607d14ec9e028de0be4557b884f804914b7845e0bb695",
+  "total": 15
+}

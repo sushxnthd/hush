@@ -1,0 +1,22 @@
+{
+  "allPass": true,
+  "checks": {
+    "all_100_budgets_present": true,
+    "authorized_release_constant": true,
+    "canonical_hash_bound": true,
+    "classification_exact": true,
+    "constraint_work_fixed": true,
+    "feasible_count_exact": true,
+    "hundred_distinct_work_counts": true,
+    "preference_work_secret_dependent": true,
+    "scientific_gate_passes": true,
+    "source_filters_by_private_constraint": true,
+    "source_hash_bound": true,
+    "source_scores_only_feasible": true
+  },
+  "classification": "INDEPENDENT_EXACT_ENUMERATION_AND_SOURCE_AUDIT",
+  "passed": 12,
+  "protocol": "hush.choose-work-observable.audit.v1",
+  "resultSha256": "9947228502ad31efbb9790285297b9f87b6f6ac9f5fb82a4594194f9fb848835",
+  "total": 12
+}

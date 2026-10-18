@@ -172,14 +172,16 @@ function executeProgram(program, compiled, profile) {
   if (compiled.kind === 'choose') {
     const constraints = Array.isArray(program.constraints) ? program.constraints : [];
     const preferences = Array.isArray(program.preferences) ? program.preferences : [];
-    const feasible = compiled.candidates.filter(c => constraints.every(rule=>passesConstraint(c,profile,rule)));
-    if (!feasible.length) return null;
-    const scored = feasible.map(candidate=>({
-      id:String(candidate.id),
-      score:preferences.reduce((s,p)=>s+preferenceScore(candidate,profile,p),0)
-    }));
-    scored.sort((a,b)=>b.score-a.score || a.id.localeCompare(b.id));
-    return scored[0].id;
+    let best = null;
+    for (const candidate of compiled.candidates) {
+      const constraintResults = constraints.map(rule=>passesConstraint(candidate,profile,rule));
+      const preferenceScores = preferences.map(pref=>preferenceScore(candidate,profile,pref));
+      const feasible = constraintResults.every(Boolean);
+      const score = preferenceScores.reduce((sum,value)=>sum+value,0);
+      const item = {id:String(candidate.id),score};
+      if (feasible && (best===null || item.score>best.score || (item.score===best.score && item.id.localeCompare(best.id)<0))) best=item;
+    }
+    return best?.id ?? null;
   }
   throw new Error('Program was not compiled');
 }
