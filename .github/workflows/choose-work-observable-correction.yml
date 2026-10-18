@@ -1,0 +1,62 @@
+name: choose-work-observable-correction
+
+on:
+  push:
+    branches: [breakthrough-engine/choose-work-observable-20261018]
+    paths:
+      - src/private-decision.js
+      - research/pcc-runtime-product/CHOOSE_WORK_OBSERVABLE_CORRECTION_*.md
+      - research/pcc-runtime-product/run_choose_work_observable_correction.mjs
+      - research/pcc-runtime-product/audit_choose_work_observable_correction.py
+      - .github/workflows/choose-work-observable-correction.yml
+  pull_request:
+    paths:
+      - src/private-decision.js
+      - research/pcc-runtime-product/CHOOSE_WORK_OBSERVABLE_CORRECTION_*.md
+      - research/pcc-runtime-product/run_choose_work_observable_correction.mjs
+      - research/pcc-runtime-product/audit_choose_work_observable_correction.py
+      - .github/workflows/choose-work-observable-correction.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  exact-correction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Execute exact correction twice
+        run: |
+          node research/pcc-runtime-product/run_choose_work_observable_correction.mjs /tmp/correction-1.json
+          node research/pcc-runtime-product/run_choose_work_observable_correction.mjs /tmp/correction-2.json
+          cmp /tmp/correction-1.json /tmp/correction-2.json
+          cp /tmp/correction-1.json research/pcc-runtime-product/choose_work_observable_correction_result.json
+      - name: Independent correction and provenance audit
+        run: python research/pcc-runtime-product/audit_choose_work_observable_correction.py
+      - name: Focused private-decision tests
+        run: node --test test/private-decision.test.js
+      - name: Full repository tests
+        run: npm test
+      - name: Preserve exact correction result
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/pcc-runtime-product/choose_work_observable_correction_result.json research/pcc-runtime-product/choose_work_observable_correction_audit.json
+          git commit -m "research: record choose work-observable correction"
+          git push origin HEAD:$GITHUB_REF_NAME
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: choose-work-observable-correction
+          path: |
+            /tmp/correction-1.json
+            research/pcc-runtime-product/choose_work_observable_correction_audit.json
