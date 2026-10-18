@@ -1,0 +1,733 @@
+{
+  "authorizedResults": [
+    "c0"
+  ],
+  "canonicalSha256": "a4bfb8db6188869e3062799b531875372146fcc53cad261cf0fdc47a7b54d79d",
+  "classification": "EXACT_SYNTHETIC_PUBLIC_CARDINALITY_HIGH_LEVEL_WORK_CLOSURE",
+  "cohort": {
+    "budgets": 100,
+    "candidates": 100,
+    "constraints": 1,
+    "preferences": 1
+  },
+  "distinctConstraintWorkCounts": 1,
+  "distinctPreferenceWorkCounts": 1,
+  "fixedConstraintEvaluations": 100,
+  "fixedPreferenceEvaluations": 100,
+  "limitations": [
+    "No constant-time JavaScript, wall-clock timing, microarchitectural, garbage-collector, exception-shape, or process-isolation claim.",
+    "The cohort is synthetic and already opened; this establishes exact mechanism closure for the specified high-level observable, not external validation."
+  ],
+  "protocol": "hush.choose-work-observable-correction.v1",
+  "rows": [
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 1,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 0
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 2,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 1
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 3,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 2
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 4,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 3
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 5,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 4
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 6,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 5
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 7,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 6
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 8,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 7
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 9,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 8
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 10,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 9
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 11,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 10
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 12,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 11
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 13,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 12
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 14,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 13
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 15,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 14
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 16,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 15
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 17,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 16
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 18,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 17
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 19,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 18
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 20,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 19
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 21,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 20
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 22,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 21
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 23,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 22
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 24,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 23
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 25,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 24
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 26,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 25
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 27,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 26
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 28,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 27
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 29,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 28
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 30,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 29
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 31,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 30
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 32,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 31
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 33,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 32
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 34,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 33
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 35,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 34
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 36,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 35
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 37,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 36
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 38,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 37
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 39,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 38
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 40,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 39
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 41,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 40
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 42,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 41
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 43,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 42
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 44,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 43
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 45,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 44
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 46,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 45
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 47,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 46
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 48,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 47
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 49,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 48
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 50,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 49
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 51,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 50
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 52,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 51
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 53,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 52
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 54,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 53
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 55,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 54
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 56,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 55
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 57,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 56
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 58,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 57
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 59,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 58
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 60,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 59
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 61,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 60
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 62,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 61
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 63,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 62
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 64,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 63
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 65,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 64
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 66,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 65
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 67,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 66
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 68,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 67
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 69,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 68
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 70,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 69
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 71,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 70
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 72,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 71
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 73,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 72
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 74,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 73
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 75,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 74
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 76,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 75
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 77,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 76
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 78,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 77
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 79,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 78
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 80,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 79
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 81,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 80
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 82,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 81
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 83,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 82
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 84,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 83
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 85,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 84
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 86,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 85
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 87,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 86
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 88,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 87
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 89,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 88
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 90,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 89
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 91,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 90
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 92,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 91
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 93,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 92
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 94,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 93
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 95,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 94
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 96,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 95
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 97,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 96
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 98,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 97
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 99,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 98
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 100,
+      "sourceDerivedConstraintEvaluations": 100,
+      "sourceDerivedPreferenceEvaluations": 100,
+      "syntheticBudget": 99
+    }
+  ],
+  "scientificGate": "PASS_PUBLIC_CARDINALITY_HIGH_LEVEL_WORK_CLOSURE",
+  "smallestClaim": "Across the frozen 100-budget cohort, the corrected bounded choose executor preserves the authorized result c0 while source-derived constraint and preference evaluation multiplicities are fixed by the public program cardinalities (100 each), not the hidden feasible-set size. This is not a constant-time JavaScript claim.",
+  "sourceWitness": {
+    "mapsAllConstraints": true,
+    "mapsAllPreferences": true,
+    "noFeasibleOnlyScoring": true,
+    "sourceSha256": "d2412f47f24a7ea38bf0b29b1c4723efd088c9fcbc91a57e9dd254eb4a309bdc",
+    "visitsAllCandidates": true
+  }
+}
