@@ -1,0 +1,726 @@
+{
+  "authorizedResults": [
+    "c0"
+  ],
+  "canonicalSha256": "fba6712ed601aaa7ee3fd20f13eda9d188d40ca9e50d695af30c4e855816764c",
+  "classification": "EXACT_SYNTHETIC_SAME_RELEASE_DIFFERENT_WORK_COUNTEREXAMPLE",
+  "cohort": {
+    "budgets": 100,
+    "candidates": 100,
+    "constraints": 1,
+    "preferences": 1
+  },
+  "distinctPreferenceWorkCounts": 100,
+  "maximumPreferenceEvaluations": 100,
+  "minimumPreferenceEvaluations": 1,
+  "protocol": "hush.choose-work-observable.v1",
+  "rows": [
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 1,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 1,
+      "syntheticBudget": 0
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 2,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 2,
+      "syntheticBudget": 1
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 3,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 3,
+      "syntheticBudget": 2
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 4,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 4,
+      "syntheticBudget": 3
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 5,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 5,
+      "syntheticBudget": 4
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 6,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 6,
+      "syntheticBudget": 5
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 7,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 7,
+      "syntheticBudget": 6
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 8,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 8,
+      "syntheticBudget": 7
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 9,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 9,
+      "syntheticBudget": 8
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 10,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 10,
+      "syntheticBudget": 9
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 11,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 11,
+      "syntheticBudget": 10
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 12,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 12,
+      "syntheticBudget": 11
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 13,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 13,
+      "syntheticBudget": 12
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 14,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 14,
+      "syntheticBudget": 13
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 15,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 15,
+      "syntheticBudget": 14
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 16,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 16,
+      "syntheticBudget": 15
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 17,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 17,
+      "syntheticBudget": 16
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 18,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 18,
+      "syntheticBudget": 17
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 19,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 19,
+      "syntheticBudget": 18
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 20,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 20,
+      "syntheticBudget": 19
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 21,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 21,
+      "syntheticBudget": 20
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 22,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 22,
+      "syntheticBudget": 21
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 23,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 23,
+      "syntheticBudget": 22
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 24,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 24,
+      "syntheticBudget": 23
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 25,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 25,
+      "syntheticBudget": 24
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 26,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 26,
+      "syntheticBudget": 25
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 27,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 27,
+      "syntheticBudget": 26
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 28,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 28,
+      "syntheticBudget": 27
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 29,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 29,
+      "syntheticBudget": 28
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 30,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 30,
+      "syntheticBudget": 29
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 31,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 31,
+      "syntheticBudget": 30
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 32,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 32,
+      "syntheticBudget": 31
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 33,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 33,
+      "syntheticBudget": 32
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 34,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 34,
+      "syntheticBudget": 33
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 35,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 35,
+      "syntheticBudget": 34
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 36,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 36,
+      "syntheticBudget": 35
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 37,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 37,
+      "syntheticBudget": 36
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 38,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 38,
+      "syntheticBudget": 37
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 39,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 39,
+      "syntheticBudget": 38
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 40,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 40,
+      "syntheticBudget": 39
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 41,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 41,
+      "syntheticBudget": 40
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 42,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 42,
+      "syntheticBudget": 41
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 43,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 43,
+      "syntheticBudget": 42
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 44,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 44,
+      "syntheticBudget": 43
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 45,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 45,
+      "syntheticBudget": 44
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 46,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 46,
+      "syntheticBudget": 45
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 47,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 47,
+      "syntheticBudget": 46
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 48,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 48,
+      "syntheticBudget": 47
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 49,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 49,
+      "syntheticBudget": 48
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 50,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 50,
+      "syntheticBudget": 49
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 51,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 51,
+      "syntheticBudget": 50
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 52,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 52,
+      "syntheticBudget": 51
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 53,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 53,
+      "syntheticBudget": 52
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 54,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 54,
+      "syntheticBudget": 53
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 55,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 55,
+      "syntheticBudget": 54
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 56,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 56,
+      "syntheticBudget": 55
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 57,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 57,
+      "syntheticBudget": 56
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 58,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 58,
+      "syntheticBudget": 57
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 59,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 59,
+      "syntheticBudget": 58
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 60,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 60,
+      "syntheticBudget": 59
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 61,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 61,
+      "syntheticBudget": 60
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 62,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 62,
+      "syntheticBudget": 61
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 63,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 63,
+      "syntheticBudget": 62
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 64,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 64,
+      "syntheticBudget": 63
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 65,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 65,
+      "syntheticBudget": 64
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 66,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 66,
+      "syntheticBudget": 65
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 67,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 67,
+      "syntheticBudget": 66
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 68,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 68,
+      "syntheticBudget": 67
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 69,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 69,
+      "syntheticBudget": 68
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 70,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 70,
+      "syntheticBudget": 69
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 71,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 71,
+      "syntheticBudget": 70
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 72,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 72,
+      "syntheticBudget": 71
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 73,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 73,
+      "syntheticBudget": 72
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 74,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 74,
+      "syntheticBudget": 73
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 75,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 75,
+      "syntheticBudget": 74
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 76,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 76,
+      "syntheticBudget": 75
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 77,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 77,
+      "syntheticBudget": 76
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 78,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 78,
+      "syntheticBudget": 77
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 79,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 79,
+      "syntheticBudget": 78
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 80,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 80,
+      "syntheticBudget": 79
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 81,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 81,
+      "syntheticBudget": 80
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 82,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 82,
+      "syntheticBudget": 81
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 83,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 83,
+      "syntheticBudget": 82
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 84,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 84,
+      "syntheticBudget": 83
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 85,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 85,
+      "syntheticBudget": 84
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 86,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 86,
+      "syntheticBudget": 85
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 87,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 87,
+      "syntheticBudget": 86
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 88,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 88,
+      "syntheticBudget": 87
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 89,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 89,
+      "syntheticBudget": 88
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 90,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 90,
+      "syntheticBudget": 89
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 91,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 91,
+      "syntheticBudget": 90
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 92,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 92,
+      "syntheticBudget": 91
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 93,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 93,
+      "syntheticBudget": 92
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 94,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 94,
+      "syntheticBudget": 93
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 95,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 95,
+      "syntheticBudget": 94
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 96,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 96,
+      "syntheticBudget": 95
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 97,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 97,
+      "syntheticBudget": 96
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 98,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 98,
+      "syntheticBudget": 97
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 99,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 99,
+      "syntheticBudget": 98
+    },
+    {
+      "authorizedResult": "c0",
+      "feasibleCandidates": 100,
+      "predictedConstraintEvaluations": 100,
+      "predictedPreferenceEvaluations": 100,
+      "syntheticBudget": 99
+    }
+  ],
+  "scientificGate": "PASS_SECRET_DEPENDENT_WORK_CHANNEL_CONFIRMED",
+  "smallestClaim": "For 100 synthetic hidden budgets with the same authorized winner c0, the current choose executor has 100 distinct source-derived preference-evaluation counts because it scores only the secret-dependent feasible set.",
+  "sourceWitness": {
+    "filtersBeforeScoring": true,
+    "preferencesOnlyFeasible": true,
+    "sourceSha256": "f9673682204711309ea7d69da9c02c6db7de713112ce59f8cb1bf9c35335a1c3"
+  }
+}
