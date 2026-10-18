@@ -88,6 +88,35 @@ function receipt(request, decision, grantId=null, result=null){
   return r;
 }
 
+function mcpStreamTerminal(streamId){
+  return store.receipts.find(item=>item.result?.mcp===true&&item.result?.streamId===streamId&&item.result?.phase==='terminal')??null;
+}
+function finalizeMcpStream(audit,streamId,streamTerminal,{upstreamStatus=null,terminalReason=null,reconciled=false}={}){
+  const existing=mcpStreamTerminal(streamId);
+  if(existing)return existing;
+  if(!['complete','error','cancelled'].includes(streamTerminal))throw new Error('Unsupported MCP stream terminal state');
+  return receipt(audit,streamTerminal==='complete'?'allow':'error',null,{
+    mcp:true,transport:true,phase:'terminal',status:streamTerminal==='complete'?'allow':'error',
+    streamId,streamTerminal,upstreamStatus,terminalReason,reconciled,
+    credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer),
+    rawCredentialIncluded:false
+  });
+}
+function reconcileMcpStreams(){
+  const attempts=new Map();
+  for(const item of store.receipts){
+    if(item.result?.mcp===true&&item.result?.phase==='attempt'&&item.result?.streamId&&item.request?.action==='http_get')attempts.set(item.result.streamId,item);
+  }
+  for(const [streamId,attempt] of attempts){
+    if(mcpStreamTerminal(streamId))continue;
+    const opened=store.receipts.find(item=>item.result?.mcp===true&&item.result?.streamId===streamId&&item.result?.phase==='opened');
+    finalizeMcpStream(attempt.request,streamId,'error',{
+      upstreamStatus:opened?.result?.upstreamStatus??null,
+      terminalReason:'process_restart',reconciled:true
+    });
+  }
+}
+
 function providerActionAudit({phase,ticket,outcome=null}={}){
   if(!ticket?.requestHash) throw new Error('Provider action audit requires a safe action ticket');
   if(!['attempt','outcome'].includes(String(phase))) throw new Error('Unsupported provider action audit phase');
@@ -178,6 +207,32 @@ async function pipeMcpResponse(res,upstream,extraHeaders={}){
   if(!upstream.body){res.end();return;}
   await pipeline(Readable.fromWeb(upstream.body),res);
 }
+async function pipeMcpStreamResponse({res,upstream,extraHeaders={},audit,streamId}){
+  res.writeHead(upstream.status,{...responseHeaders(upstream.headers),...extraHeaders});
+  if(!upstream.body){
+    res.end();
+    return finalizeMcpStream(audit,streamId,'complete',{upstreamStatus:upstream.status,terminalReason:'empty_body_eof'});
+  }
+  const source=Readable.fromWeb(upstream.body);
+  let firstFailure=null;
+  const upstreamFailed=()=>{if(!firstFailure)firstFailure='upstream';};
+  const clientClosed=()=>{if(!res.writableEnded&&!firstFailure)firstFailure='client';};
+  source.once('error',upstreamFailed);
+  res.once('close',clientClosed);
+  try{
+    await pipeline(source,res);
+    return finalizeMcpStream(audit,streamId,'complete',{upstreamStatus:upstream.status,terminalReason:'upstream_eof'});
+  }catch(error){
+    const terminal=firstFailure==='client'?'cancelled':'error';
+    return finalizeMcpStream(audit,streamId,terminal,{
+      upstreamStatus:upstream.status,
+      terminalReason:terminal==='cancelled'?'client_closed':'upstream_body_error'
+    });
+  }finally{
+    source.off('error',upstreamFailed);
+    res.off('close',clientClosed);
+  }
+}
 
 async function dispatchMcpPost({req,u,raw,audit,authorizationBasis,approved=false}){
   receipt(audit,'approved',null,{
@@ -227,8 +282,10 @@ async function mcp(req,res,u){
       resource:'/mcp',
       mcp:{transportMethod:'GET'}
     };
+    const streamId=crypto.randomUUID();
     receipt(audit,'approved',null,{
       mcp:true,transport:true,phase:'attempt',
+      streamId,streamState:'attempted',
       authorizationBasis:'configured_mcp_upstream',
       credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer),
       rawCredentialIncluded:false
@@ -236,20 +293,16 @@ async function mcp(req,res,u){
     let upstream;
     try{upstream=await fetchMcpUpstream(req,u,null)}
     catch(error){
-      receipt(audit,'error',null,{
-        mcp:true,transport:true,phase:'outcome',status:'error',
-        credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer),
-        rawCredentialIncluded:false
-      });
+      finalizeMcpStream(audit,streamId,'error',{terminalReason:'upstream_headers_error'});
       throw error;
     }
-    const outcome=receipt(audit,upstream.ok?'allow':'error',null,{
-      mcp:true,transport:true,phase:'outcome',status:upstream.ok?'allow':'error',
-      upstreamStatus:upstream.status,
+    const opened=receipt(audit,'approved',null,{
+      mcp:true,transport:true,phase:'opened',status:upstream.ok?'allow':'error',
+      streamId,streamState:'opened',upstreamStatus:upstream.status,
       credentialBrokered:Boolean(configuredVaultAuthId||configuredBearer),
       rawCredentialIncluded:false
     });
-    return pipeMcpResponse(res,upstream,{'x-hush-receipt-hash':outcome.hash});
+    return pipeMcpStreamResponse({res,upstream,audit,streamId,extraHeaders:{'x-hush-receipt-hash':opened.hash}});
   }
   if(req.method!=='POST'){
     res.writeHead(405,securityHeaders({'allow':'GET, POST'}));res.end();return;
@@ -493,6 +546,8 @@ function staticFile(res,u){
   const type={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml'}[path.extname(real).toLowerCase()]??'application/octet-stream';
   res.writeHead(200,securityHeaders({'content-type':type}));fs.createReadStream(real).pipe(res);return true;
 }
+
+reconcileMcpStreams();
 
 const server=http.createServer(async(req,res)=>{
   let u=null;

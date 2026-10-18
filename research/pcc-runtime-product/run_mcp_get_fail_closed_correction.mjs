@@ -30,10 +30,11 @@ async function waitFor(url, child, stderr) {
   throw Error(`Hush did not start: ${stderr()}`);
 }
 function project(receipts) {
-  return receipts.slice(0, 2).reverse().map(item => ({
+  return receipts.slice(0, 3).reverse().map(item => ({
     decision: item.decision,
     phase: item.result?.phase,
     status: item.result?.status ?? null,
+    streamTerminal: item.result?.streamTerminal ?? null,
     authorizationBasis: item.result?.authorizationBasis ?? null,
     upstreamStatus: item.result?.upstreamStatus ?? null,
     agent: item.request?.agent,
@@ -107,7 +108,7 @@ async function successfulScenario() {
         return {
           responseStatus: response.status,
           exactBodyForwarded: body === frozenBody,
-          responseBoundToOutcome: response.headers.get('x-hush-receipt-hash') === after.receipts[0]?.hash,
+          responseBoundToOpened: response.headers.get('x-hush-receipt-hash') === after.receipts[1]?.hash,
           upstream: observations,
           receiptDelta: after.receipts.length - before.receipts.length,
           chainValid: after.chainValid,
@@ -150,18 +151,21 @@ const attemptPass = receipt => receipt?.decision === 'approved' && receipt?.phas
   receipt?.action === 'http_get' && receipt?.transportMethod === 'GET' && receipt?.signed === true &&
   receipt?.rawCredentialIncluded === false;
 const result = {
-  protocol: 'mcp-get-fail-closed-correction-v1', success, failure
+  protocol: 'mcp-get-fail-closed-correction-v2', success, failure
 };
 result.allGatesPass = success.responseStatus === 200 && success.exactBodyForwarded &&
   success.upstream.length === 1 && success.upstream[0].authorization === 'Bearer server-only-secret' &&
   success.upstream[0].receiptCountAtArrival >= 1 && success.upstream[0].chainValidAtArrival === true &&
-  success.receiptDelta === 2 && success.chainValid && success.responseBoundToOutcome &&
+  success.receiptDelta === 3 && success.chainValid && success.responseBoundToOpened &&
   !success.rawCredentialInReceipts && attemptPass(success.receipts[0]) &&
-  success.receipts[1]?.decision === 'allow' && success.receipts[1]?.phase === 'outcome' &&
+  success.receipts[1]?.decision === 'approved' && success.receipts[1]?.phase === 'opened' &&
   success.receipts[1]?.upstreamStatus === 200 && success.receipts[1]?.signed === true &&
+  success.receipts[2]?.decision === 'allow' && success.receipts[2]?.phase === 'terminal' &&
+  success.receipts[2]?.streamTerminal === 'complete' && success.receipts[2]?.signed === true &&
   failure.proxyErrorReturned && failure.receiptDelta === 2 && failure.chainValid &&
   !failure.rawCredentialInReceipts && attemptPass(failure.receipts[0]) &&
-  failure.receipts[1]?.decision === 'error' && failure.receipts[1]?.phase === 'outcome' &&
+  failure.receipts[1]?.decision === 'error' && failure.receipts[1]?.phase === 'terminal' &&
+  failure.receipts[1]?.streamTerminal === 'error' &&
   failure.receipts[1]?.status === 'error' && failure.receipts[1]?.signed === true;
 result.scientificGate = result.allGatesPass ? 'PASS' : 'FAIL';
 assert.equal(result.allGatesPass, true);

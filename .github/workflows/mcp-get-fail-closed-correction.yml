@@ -1,38 +1,11 @@
 name: MCP GET fail-closed correction
 
 on:
-  push:
-    branches: [breakthrough-engine/pcc-cleanroom-replication]
-  pull_request:
-    paths:
-      - src/server.js
-      - research/pcc-runtime-product/run_mcp_get_fail_closed_correction.mjs
-      - research/pcc-runtime-product/audit_mcp_get_fail_closed_correction.py
-      - research/pcc-runtime-product/MCP_GET_FAIL_CLOSED_CORRECTION_*.md
-      - research/pcc-runtime-product/mcp_get_fail_closed_correction_*.json
-      - test/mcp-get-mediation.test.js
-      - .github/workflows/mcp-get-fail-closed-correction.yml
+  workflow_dispatch:
 
 jobs:
-  prospective-correction:
+  superseded-unary-contract:
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Preserve original falsification
-        run: |
-          node -e "const r=require('./research/pcc-runtime-product/mcp_get_complete_mediation_result.json'); if(!r.bypassObserved||r.scientificGate!=='FAIL'||r.receiptDelta!==0) process.exit(1)"
-      - name: Reproduce correction twice
-        run: |
-          node research/pcc-runtime-product/run_mcp_get_fail_closed_correction.mjs /tmp/run1.json
-          node research/pcc-runtime-product/run_mcp_get_fail_closed_correction.mjs /tmp/run2.json
-          cmp /tmp/run1.json /tmp/run2.json
-          cmp /tmp/run1.json research/pcc-runtime-product/mcp_get_fail_closed_correction_result.json
-      - name: Reproduce source-order audit
-        run: |
-          python3 research/pcc-runtime-product/audit_mcp_get_fail_closed_correction.py > /tmp/audit.json
-          cmp /tmp/audit.json research/pcc-runtime-product/mcp_get_fail_closed_correction_static_audit.json
-      - name: Focused regressions
-        run: node --test test/mcp-get-mediation.test.js test/mcp-delete-mediation.test.js test/mcp-proxy.test.js
+      - run: echo "Superseded by mcp-stream-terminal-correction; historical runs and v1 artifact remain preserved."

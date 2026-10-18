@@ -1,0 +1,25 @@
+{
+  "allPass": true,
+  "checks": {
+    "all_receipt_chains_valid": true,
+    "all_upstream_arrivals_have_prior_attempt": true,
+    "attempt_precedes_dispatch_in_source": true,
+    "brokered_auth_used_without_persistence": true,
+    "causal_race_classifier_present": true,
+    "crash_reconciles_once_to_error": true,
+    "crash_was_open_before_restart": true,
+    "each_stream_has_exactly_one_terminal": true,
+    "five_frozen_scenarios_present": true,
+    "scientific_gate_passes": true,
+    "second_restart_is_idempotent": true,
+    "startup_reconciliation_present": true,
+    "terminal_append_is_guarded": true,
+    "three_primary_endings_distinguished": true,
+    "upstream_first_race_is_error": true
+  },
+  "classification": "INDEPENDENT_RESULT_AND_SOURCE_ORDER_AUDIT",
+  "passed": 15,
+  "protocol": "hush.mcp-stream-terminal-correction.audit.v1",
+  "resultSha256": "b4611a22c4809a6ca7e78f4184aa8f041bb5d06b2ee36a65e550e682d6857609",
+  "total": 15
+}

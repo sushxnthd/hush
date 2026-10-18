@@ -1,0 +1,338 @@
+{
+  "classification": "REAL_SERVER_ADVERSARIAL_LIFECYCLE_AND_CRASH_TEST",
+  "protocol": "hush.mcp-stream-terminal-correction.v1",
+  "scenarios": [
+    {
+      "arrivals": [
+        {
+          "authorizationBrokered": true,
+          "chainValid": true,
+          "priorAttempts": 1
+        }
+      ],
+      "chainValid": true,
+      "clientTerminal": "complete",
+      "expected": "complete",
+      "firstEventDelivered": true,
+      "mode": "clean_eof",
+      "projection": [
+        {
+          "decision": "approved",
+          "phase": "attempt",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": null,
+          "streamState": "attempted",
+          "streamTerminal": null,
+          "terminalReason": null,
+          "upstreamStatus": null
+        },
+        {
+          "decision": "approved",
+          "phase": "opened",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": "allow",
+          "streamState": "opened",
+          "streamTerminal": null,
+          "terminalReason": null,
+          "upstreamStatus": 200
+        },
+        {
+          "decision": "allow",
+          "phase": "terminal",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": "allow",
+          "streamState": null,
+          "streamTerminal": "complete",
+          "terminalReason": "upstream_eof",
+          "upstreamStatus": 200
+        }
+      ],
+      "rawCredentialPersisted": false,
+      "secondEventDelivered": true
+    },
+    {
+      "arrivals": [
+        {
+          "authorizationBrokered": true,
+          "chainValid": true,
+          "priorAttempts": 1
+        }
+      ],
+      "chainValid": true,
+      "clientTerminal": "aborted",
+      "expected": "error",
+      "firstEventDelivered": true,
+      "mode": "upstream_abort",
+      "projection": [
+        {
+          "decision": "approved",
+          "phase": "attempt",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": null,
+          "streamState": "attempted",
+          "streamTerminal": null,
+          "terminalReason": null,
+          "upstreamStatus": null
+        },
+        {
+          "decision": "approved",
+          "phase": "opened",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": "allow",
+          "streamState": "opened",
+          "streamTerminal": null,
+          "terminalReason": null,
+          "upstreamStatus": 200
+        },
+        {
+          "decision": "error",
+          "phase": "terminal",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": "error",
+          "streamState": null,
+          "streamTerminal": "error",
+          "terminalReason": "upstream_body_error",
+          "upstreamStatus": 200
+        }
+      ],
+      "rawCredentialPersisted": false,
+      "secondEventDelivered": false
+    },
+    {
+      "arrivals": [
+        {
+          "authorizationBrokered": true,
+          "chainValid": true,
+          "priorAttempts": 1
+        }
+      ],
+      "chainValid": true,
+      "clientTerminal": "cancelled",
+      "expected": "cancelled",
+      "firstEventDelivered": true,
+      "mode": "client_cancel",
+      "projection": [
+        {
+          "decision": "approved",
+          "phase": "attempt",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": null,
+          "streamState": "attempted",
+          "streamTerminal": null,
+          "terminalReason": null,
+          "upstreamStatus": null
+        },
+        {
+          "decision": "approved",
+          "phase": "opened",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": "allow",
+          "streamState": "opened",
+          "streamTerminal": null,
+          "terminalReason": null,
+          "upstreamStatus": 200
+        },
+        {
+          "decision": "error",
+          "phase": "terminal",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": "error",
+          "streamState": null,
+          "streamTerminal": "cancelled",
+          "terminalReason": "client_closed",
+          "upstreamStatus": 200
+        }
+      ],
+      "rawCredentialPersisted": false,
+      "secondEventDelivered": false
+    },
+    {
+      "arrivals": [
+        {
+          "authorizationBrokered": true,
+          "chainValid": true,
+          "priorAttempts": 1
+        }
+      ],
+      "chainValid": true,
+      "clientTerminal": "aborted",
+      "expected": "error",
+      "firstEventDelivered": true,
+      "mode": "race_upstream_first",
+      "projection": [
+        {
+          "decision": "approved",
+          "phase": "attempt",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": null,
+          "streamState": "attempted",
+          "streamTerminal": null,
+          "terminalReason": null,
+          "upstreamStatus": null
+        },
+        {
+          "decision": "approved",
+          "phase": "opened",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": "allow",
+          "streamState": "opened",
+          "streamTerminal": null,
+          "terminalReason": null,
+          "upstreamStatus": 200
+        },
+        {
+          "decision": "error",
+          "phase": "terminal",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": "error",
+          "streamState": null,
+          "streamTerminal": "error",
+          "terminalReason": "upstream_body_error",
+          "upstreamStatus": 200
+        }
+      ],
+      "rawCredentialPersisted": false,
+      "secondEventDelivered": false
+    },
+    {
+      "afterRestart": [
+        {
+          "decision": "approved",
+          "phase": "attempt",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": null,
+          "streamState": "attempted",
+          "streamTerminal": null,
+          "terminalReason": null,
+          "upstreamStatus": null
+        },
+        {
+          "decision": "approved",
+          "phase": "opened",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": "allow",
+          "streamState": "opened",
+          "streamTerminal": null,
+          "terminalReason": null,
+          "upstreamStatus": 200
+        },
+        {
+          "decision": "error",
+          "phase": "terminal",
+          "rawCredentialIncluded": false,
+          "reconciled": true,
+          "signed": true,
+          "status": "error",
+          "streamState": null,
+          "streamTerminal": "error",
+          "terminalReason": "process_restart",
+          "upstreamStatus": 200
+        }
+      ],
+      "afterSecondRestart": [
+        {
+          "decision": "approved",
+          "phase": "attempt",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": null,
+          "streamState": "attempted",
+          "streamTerminal": null,
+          "terminalReason": null,
+          "upstreamStatus": null
+        },
+        {
+          "decision": "approved",
+          "phase": "opened",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": "allow",
+          "streamState": "opened",
+          "streamTerminal": null,
+          "terminalReason": null,
+          "upstreamStatus": 200
+        },
+        {
+          "decision": "error",
+          "phase": "terminal",
+          "rawCredentialIncluded": false,
+          "reconciled": true,
+          "signed": true,
+          "status": "error",
+          "streamState": null,
+          "streamTerminal": "error",
+          "terminalReason": "process_restart",
+          "upstreamStatus": 200
+        }
+      ],
+      "arrivals": [
+        {
+          "authorizationBrokered": true,
+          "chainValid": true,
+          "priorAttempts": 1
+        }
+      ],
+      "beforeRestart": [
+        {
+          "decision": "approved",
+          "phase": "attempt",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": null,
+          "streamState": "attempted",
+          "streamTerminal": null,
+          "terminalReason": null,
+          "upstreamStatus": null
+        },
+        {
+          "decision": "approved",
+          "phase": "opened",
+          "rawCredentialIncluded": false,
+          "reconciled": false,
+          "signed": true,
+          "status": "allow",
+          "streamState": "opened",
+          "streamTerminal": null,
+          "terminalReason": null,
+          "upstreamStatus": 200
+        }
+      ],
+      "chainValid": true,
+      "mode": "process_crash",
+      "rawCredentialPersisted": false
+    }
+  ],
+  "scientificGate": "PASS_EXACTLY_ONCE_TERMINAL_STREAM_MEDIATION",
+  "smallestClaim": "For the frozen MCP GET lifecycle partition, Hush records a prior attempt and exactly one signed terminal complete, error, or cancelled state; an opened stream interrupted by process death is idempotently reconciled to error on restart."
+}
