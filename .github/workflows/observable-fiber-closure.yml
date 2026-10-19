@@ -1,0 +1,33 @@
+name: Observable fiber closure
+
+on:
+  push:
+    branches: [breakthrough-engine/observable-fiber-closure-20261019]
+  pull_request:
+    paths:
+      - 'src/context-kernel-base.js'
+      - 'src/private-decision.js'
+      - 'src/native-mcp.js'
+      - 'test/native-mcp.test.js'
+      - 'research/pcc-runtime-product/*semantic_path_digest*'
+      - '.github/workflows/observable-fiber-closure.yml'
+
+jobs:
+  exact-probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify preserved failure artifact
+        run: python3 research/pcc-runtime-product/audit_semantic_path_digest.py research/pcc-runtime-product/semantic_path_digest_result.json
+      - name: Re-run corrected frozen cohort
+        run: |
+          node research/pcc-runtime-product/run_semantic_path_digest_correction.mjs > /tmp/correction.json
+          cmp /tmp/correction.json research/pcc-runtime-product/semantic_path_digest_correction_result.json
+          python3 research/pcc-runtime-product/audit_semantic_path_digest_correction.py /tmp/correction.json
+      - name: Focused tests
+        run: node --test test/native-mcp.test.js
+      - name: Full tests
+        run: npm test
