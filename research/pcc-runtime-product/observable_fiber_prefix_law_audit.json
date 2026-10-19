@@ -1,0 +1,18 @@
+{
+  "allPass": true,
+  "checks": {
+    "all_shape_counts_reproduced": true,
+    "exact_structural_boundary": true,
+    "five_channels_rejected": true,
+    "frozen_total": true,
+    "gate": true,
+    "minimal_witness": true,
+    "one_step_equivalence": true,
+    "prefix_implies_final": true,
+    "schema": true,
+    "strict_two_step_gap": true
+  },
+  "passed": 10,
+  "schema": "hush.observable-fiber-prefix-law.audit.v1",
+  "total": 10
+}
