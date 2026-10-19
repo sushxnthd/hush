@@ -51,6 +51,8 @@ test('MCP client can personalize semantically without knowing private paths or v
   assert.equal(wire.includes('travel.preferredAirline'),false);
   assert.equal(wire.includes('1500'),false);
   assert.equal(wire.includes('ANA'),false);
+  assert.equal(Object.hasOwn(out.structuredContent.receipt,'privatePathsHash'),false);
+  assert.equal(out.structuredContent.receipt.privateCapabilitiesBound,true);
 });
 
 test('MCP client can omit privateRef when task and clause roles identify context',()=>{
