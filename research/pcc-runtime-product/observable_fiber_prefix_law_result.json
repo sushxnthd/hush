@@ -1,0 +1,160 @@
+{
+  "schema": "hush.observable-fiber-prefix-law.v1",
+  "claim": "Prefix-wise factorization is strictly stronger than factorization through the eventual authorized transcript.",
+  "shapes": [
+    {
+      "worlds": 2,
+      "horizon": 1,
+      "total": 16,
+      "prefixSafe": 12,
+      "finalSafe": 12,
+      "finalOnlySafe": 0,
+      "prefixButFinalUnsafe": 0,
+      "futureRefiningAuthorized": 0,
+      "strictAuthorized": 0,
+      "boundaryDisagreements": 0
+    },
+    {
+      "worlds": 2,
+      "horizon": 2,
+      "total": 256,
+      "prefixSafe": 176,
+      "finalSafe": 208,
+      "finalOnlySafe": 32,
+      "prefixButFinalUnsafe": 0,
+      "futureRefiningAuthorized": 4,
+      "strictAuthorized": 4,
+      "boundaryDisagreements": 0
+    },
+    {
+      "worlds": 2,
+      "horizon": 3,
+      "total": 4096,
+      "prefixSafe": 2752,
+      "finalSafe": 3648,
+      "finalOnlySafe": 896,
+      "prefixButFinalUnsafe": 0,
+      "futureRefiningAuthorized": 24,
+      "strictAuthorized": 24,
+      "boundaryDisagreements": 0
+    },
+    {
+      "worlds": 3,
+      "horizon": 1,
+      "total": 64,
+      "prefixSafe": 28,
+      "finalSafe": 28,
+      "finalOnlySafe": 0,
+      "prefixButFinalUnsafe": 0,
+      "futureRefiningAuthorized": 0,
+      "strictAuthorized": 0,
+      "boundaryDisagreements": 0
+    },
+    {
+      "worlds": 3,
+      "horizon": 2,
+      "total": 4096,
+      "prefixSafe": 1264,
+      "finalSafe": 2128,
+      "finalOnlySafe": 864,
+      "prefixButFinalUnsafe": 0,
+      "futureRefiningAuthorized": 36,
+      "strictAuthorized": 36,
+      "boundaryDisagreements": 0
+    },
+    {
+      "worlds": 3,
+      "horizon": 3,
+      "total": 262144,
+      "prefixSafe": 72640,
+      "finalSafe": 182848,
+      "finalOnlySafe": 110208,
+      "prefixButFinalUnsafe": 0,
+      "futureRefiningAuthorized": 408,
+      "strictAuthorized": 408,
+      "boundaryDisagreements": 0
+    }
+  ],
+  "totals": {
+    "total": 270672,
+    "prefixSafe": 76872,
+    "finalSafe": 188872,
+    "finalOnlySafe": 112000,
+    "prefixButFinalUnsafe": 0
+  },
+  "firstStrict": {
+    "worlds": 2,
+    "horizon": 2,
+    "authorized": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        0
+      ]
+    ],
+    "observable": [
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        0
+      ]
+    ],
+    "witness": {
+      "prefix": 1,
+      "secretA": 0,
+      "secretB": 1,
+      "authorizedPrefix": [
+        0
+      ],
+      "observableA": [
+        1
+      ],
+      "observableB": [
+        0
+      ]
+    }
+  },
+  "fixtureResults": {
+    "status": {
+      "fullTraceSafe": false,
+      "finalAggregateControlSafe": true,
+      "witnessPrefix": 1
+    },
+    "byteLength": {
+      "fullTraceSafe": false,
+      "finalAggregateControlSafe": true,
+      "witnessPrefix": 1
+    },
+    "eventOrder": {
+      "fullTraceSafe": false,
+      "finalAggregateControlSafe": true,
+      "witnessPrefix": 1
+    },
+    "multiplicity": {
+      "fullTraceSafe": false,
+      "finalAggregateControlSafe": true,
+      "witnessPrefix": 1
+    },
+    "workCount": {
+      "fullTraceSafe": false,
+      "finalAggregateControlSafe": true,
+      "witnessPrefix": 1
+    }
+  },
+  "gates": {
+    "exactFrozenTotal": true,
+    "prefixImpliesFinal": true,
+    "noOneStepGap": true,
+    "strictGapExists": true,
+    "minimalStrictWitness": true,
+    "exactStructuralBoundary": true,
+    "allFiveUnseenChannelsRejected": true
+  },
+  "status": "PASS_PREFIX_LAW_AND_CHECKER"
+}

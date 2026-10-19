@@ -22,6 +22,10 @@ function stripSemanticPaths(result){
     out.joint.fieldCount=out.joint.fields.length;
     delete out.joint.fields;
   }
+  if(out?.receipt){
+    delete out.receipt.privatePathsHash;
+    out.receipt.privateCapabilitiesBound=true;
+  }
   return out;
 }
 

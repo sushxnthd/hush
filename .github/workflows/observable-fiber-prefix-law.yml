@@ -1,0 +1,40 @@
+name: Observable fiber prefix law
+
+on:
+  push:
+    branches: [breakthrough-engine/observable-fiber-closure-20261019]
+  pull_request:
+    paths:
+      - 'src/observable-fiber.js'
+      - 'test/observable-fiber.test.js'
+      - 'research/pcc-runtime-product/*OBSERVABLE_FIBER*'
+      - 'research/pcc-runtime-product/*observable_fiber_prefix_law*'
+      - '.github/workflows/observable-fiber-prefix-law.yml'
+
+jobs:
+  exact-prefix-law:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reproduce exhaustive result twice
+        run: |
+          node research/pcc-runtime-product/run_observable_fiber_prefix_law.mjs /tmp/prefix-1.json
+          node research/pcc-runtime-product/run_observable_fiber_prefix_law.mjs /tmp/prefix-2.json
+          cmp /tmp/prefix-1.json /tmp/prefix-2.json
+          cmp /tmp/prefix-1.json research/pcc-runtime-product/observable_fiber_prefix_law_result.json
+      - name: Independent exhaustive audit
+        run: |
+          cp research/pcc-runtime-product/observable_fiber_prefix_law_audit.json /tmp/expected-audit.json
+          python research/pcc-runtime-product/audit_observable_fiber_prefix_law.py
+          cmp research/pcc-runtime-product/observable_fiber_prefix_law_audit.json /tmp/expected-audit.json
+      - name: Focused checker tests
+        run: node --test test/observable-fiber.test.js
+      - name: Full regression suite
+        run: npm test

@@ -1,0 +1,6 @@
+{
+  "schema": "hush.semantic-path-digest-audit.v1",
+  "checks": 69,
+  "passed": 69,
+  "failed": []
+}

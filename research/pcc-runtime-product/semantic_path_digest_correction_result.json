@@ -1,0 +1,368 @@
+{
+  "schema": "hush.semantic-path-digest-correction.v1",
+  "frozenCohortSize": 32,
+  "distinctAuthorizedResults": 1,
+  "distinctObservations": 1,
+  "digestExposures": 0,
+  "rawPathExposures": 0,
+  "gate": {
+    "resultsPreserved": true,
+    "noDigest": true,
+    "noRawPath": true,
+    "fiberClosed": true
+  },
+  "rows": [
+    {
+      "index": 0,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 1,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 2,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 3,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 4,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 5,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 6,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 7,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 8,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 9,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 10,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 11,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 12,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 13,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 14,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 15,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 16,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 17,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 18,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 19,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 20,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 21,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 22,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 23,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 24,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 25,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 26,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 27,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 28,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 29,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 30,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    },
+    {
+      "index": 31,
+      "authorizedResult": true,
+      "hasDigest": false,
+      "hasRawPath": false,
+      "observation": {
+        "decision": "allow",
+        "result": true,
+        "privateCapabilitiesBound": true
+      }
+    }
+  ]
+}

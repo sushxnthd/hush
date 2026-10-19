@@ -1,0 +1,240 @@
+{
+  "schema": "hush.semantic-path-digest-probe.v1",
+  "frozenCohortSize": 32,
+  "identicalPublicRequest": true,
+  "distinctAuthorizedResults": 1,
+  "distinctDigests": 32,
+  "exactRecoveries": 32,
+  "recoveryRate": 1,
+  "gate": {
+    "sameAuthorizedRelease": true,
+    "dictionaryRecovery": true,
+    "closureViolation": true
+  },
+  "rows": [
+    {
+      "index": 0,
+      "authorizedResult": true,
+      "digest": "0892c643b12433af0ea253f927ae06be83f701f9c240fa9414fc60b65d5716c7",
+      "recoveredPath": "travel.maxBudget",
+      "actualPath": "travel.maxBudget"
+    },
+    {
+      "index": 1,
+      "authorizedResult": true,
+      "digest": "ab576471d916bae992aa9f1a276eae24dee7e4bedbe7e3fec1e3dee575103c8c",
+      "recoveredPath": "finance.maxBudget",
+      "actualPath": "finance.maxBudget"
+    },
+    {
+      "index": 2,
+      "authorizedResult": true,
+      "digest": "bbf692aefa0783ef216fc36a77025399215f7472b57fb75e3f1cf89b0fe79f08",
+      "recoveredPath": "shopping.maxBudget",
+      "actualPath": "shopping.maxBudget"
+    },
+    {
+      "index": 3,
+      "authorizedResult": true,
+      "digest": "ec298f0a13f7d41cf9589b120448715fca6e7407ec88e63bcbec203a1d237dae",
+      "recoveredPath": "housing.maxBudget",
+      "actualPath": "housing.maxBudget"
+    },
+    {
+      "index": 4,
+      "authorizedResult": true,
+      "digest": "7d19e0c610f5655b0164ad6a1219b1063496711a395a576d73b8000653762de9",
+      "recoveredPath": "education.maxBudget",
+      "actualPath": "education.maxBudget"
+    },
+    {
+      "index": 5,
+      "authorizedResult": true,
+      "digest": "07dba20cdf9847cf551367deaa9c11b413371ebb962504d45ed28119c3ecfe22",
+      "recoveredPath": "health.maxBudget",
+      "actualPath": "health.maxBudget"
+    },
+    {
+      "index": 6,
+      "authorizedResult": true,
+      "digest": "53f1294c81ac64e0f297f6b8d901860e22f6e96d3eef4522a20204ae6b875e1a",
+      "recoveredPath": "insurance.maxBudget",
+      "actualPath": "insurance.maxBudget"
+    },
+    {
+      "index": 7,
+      "authorizedResult": true,
+      "digest": "6d2f97feb8f2002b795938d7932c1dbcc509afaf6d69126a779d8068bdbd0009",
+      "recoveredPath": "transport.maxBudget",
+      "actualPath": "transport.maxBudget"
+    },
+    {
+      "index": 8,
+      "authorizedResult": true,
+      "digest": "efdf06105d8fc02f9cf79970510f2e1fa7d364434fd5edadb9db301b44c286cc",
+      "recoveredPath": "food.maxBudget",
+      "actualPath": "food.maxBudget"
+    },
+    {
+      "index": 9,
+      "authorizedResult": true,
+      "digest": "a485485c0393d067c2d08ac75ae07955caddf05dd0111a8489ab65257a592ace",
+      "recoveredPath": "entertainment.maxBudget",
+      "actualPath": "entertainment.maxBudget"
+    },
+    {
+      "index": 10,
+      "authorizedResult": true,
+      "digest": "5a2f1273256cf5792cad3126b6543e2cbdfae03df4561bad72602e174e3fbdd0",
+      "recoveredPath": "gifts.maxBudget",
+      "actualPath": "gifts.maxBudget"
+    },
+    {
+      "index": 11,
+      "authorizedResult": true,
+      "digest": "ff5c8bb38ebe4074214a0d2776bf1e220ecc6217f30d59747d641e785f08cc3c",
+      "recoveredPath": "charity.maxBudget",
+      "actualPath": "charity.maxBudget"
+    },
+    {
+      "index": 12,
+      "authorizedResult": true,
+      "digest": "ead4dd6b3120f8fcba11f840131d071ed2a066d9044a6d34f325982fe3ffa0e4",
+      "recoveredPath": "subscriptions.maxBudget",
+      "actualPath": "subscriptions.maxBudget"
+    },
+    {
+      "index": 13,
+      "authorizedResult": true,
+      "digest": "80fbe971e3b9ccc5bb63d6c2fcb0531ce91cfb0047bf002be23cb1f50cadff59",
+      "recoveredPath": "utilities.maxBudget",
+      "actualPath": "utilities.maxBudget"
+    },
+    {
+      "index": 14,
+      "authorizedResult": true,
+      "digest": "79612b1902ada06ad009cb0dd29f8be4a1b2deff50975189f6501700728fab21",
+      "recoveredPath": "vacation.maxBudget",
+      "actualPath": "vacation.maxBudget"
+    },
+    {
+      "index": 15,
+      "authorizedResult": true,
+      "digest": "9c46dbb6f05effd033d754ed4ff1f73390afbee51a093c353f712b92fb8138dd",
+      "recoveredPath": "events.maxBudget",
+      "actualPath": "events.maxBudget"
+    },
+    {
+      "index": 16,
+      "authorizedResult": true,
+      "digest": "1cec48bed390e8fc5b952ae44fdbb90bee37c5bab1ec3580f438ab205540df7b",
+      "recoveredPath": "projects.maxBudget",
+      "actualPath": "projects.maxBudget"
+    },
+    {
+      "index": 17,
+      "authorizedResult": true,
+      "digest": "3f97ecb403f12e7a4c0b47f533b58cd738650c7f01cea3b452415745c8c5bad7",
+      "recoveredPath": "research.maxBudget",
+      "actualPath": "research.maxBudget"
+    },
+    {
+      "index": 18,
+      "authorizedResult": true,
+      "digest": "e9487cea3f0c481771515a4ffe12ab98b84bb2dd46e343e31ceda084e6f18543",
+      "recoveredPath": "hardware.maxBudget",
+      "actualPath": "hardware.maxBudget"
+    },
+    {
+      "index": 19,
+      "authorizedResult": true,
+      "digest": "a6afe8b90d6df988d333734231f28ea129985b0fc0c1fa91153278e1f1f49f6b",
+      "recoveredPath": "software.maxBudget",
+      "actualPath": "software.maxBudget"
+    },
+    {
+      "index": 20,
+      "authorizedResult": true,
+      "digest": "54fb2316a35116532ffa724c035f460d7fb4550aa6d3f242fa15fad914cbf0e2",
+      "recoveredPath": "cloud.maxBudget",
+      "actualPath": "cloud.maxBudget"
+    },
+    {
+      "index": 21,
+      "authorizedResult": true,
+      "digest": "47e5c627b1d073cbda86509237aed991b6832ce21a48b8c63e20f83594ca966f",
+      "recoveredPath": "hiring.maxBudget",
+      "actualPath": "hiring.maxBudget"
+    },
+    {
+      "index": 22,
+      "authorizedResult": true,
+      "digest": "f2dd439b3c988e341b20c004ea1fd65fc04ae8393383d5f39b6fa48ce6093de4",
+      "recoveredPath": "marketing.maxBudget",
+      "actualPath": "marketing.maxBudget"
+    },
+    {
+      "index": 23,
+      "authorizedResult": true,
+      "digest": "675e3f5c09de3a121700ceb34f450bdf1bfdfbf33837578a5a6f730bddcaedc0",
+      "recoveredPath": "legal.maxBudget",
+      "actualPath": "legal.maxBudget"
+    },
+    {
+      "index": 24,
+      "authorizedResult": true,
+      "digest": "c70fa38d3dc6deefc6085956a351093b935ff5f490d3945871eee17f96d0ee88",
+      "recoveredPath": "tax.maxBudget",
+      "actualPath": "tax.maxBudget"
+    },
+    {
+      "index": 25,
+      "authorizedResult": true,
+      "digest": "72ffa408e57863d4f6cfd3d5d78dbaaad81b9dd0508bdee8b9a11aac3a083e87",
+      "recoveredPath": "savings.maxBudget",
+      "actualPath": "savings.maxBudget"
+    },
+    {
+      "index": 26,
+      "authorizedResult": true,
+      "digest": "a1276a005073ddde3c0bb6fe126adddce67eb32b2bb7d5f9fb169424d58a9319",
+      "recoveredPath": "investing.maxBudget",
+      "actualPath": "investing.maxBudget"
+    },
+    {
+      "index": 27,
+      "authorizedResult": true,
+      "digest": "fa3ea96d6cf2e28b45fb55b9534ca454c5f7874f8f6b7ac0472c4190d43974e9",
+      "recoveredPath": "emergency.maxBudget",
+      "actualPath": "emergency.maxBudget"
+    },
+    {
+      "index": 28,
+      "authorizedResult": true,
+      "digest": "18d0001ab5aa4caa8f16c415f4548a123bb50a952d838cb8f0e21884e2855d7b",
+      "recoveredPath": "family.maxBudget",
+      "actualPath": "family.maxBudget"
+    },
+    {
+      "index": 29,
+      "authorizedResult": true,
+      "digest": "d83e1c19d36ef644453501dcb926642fe63c9eca8af11e0ac353bb7e4295619b",
+      "recoveredPath": "personal.maxBudget",
+      "actualPath": "personal.maxBudget"
+    },
+    {
+      "index": 30,
+      "authorizedResult": true,
+      "digest": "9c2fcd8a5868cbc152a2180a8efd7b0e8b600198bf8c1911f590a834f9c09eab",
+      "recoveredPath": "business.maxBudget",
+      "actualPath": "business.maxBudget"
+    },
+    {
+      "index": 31,
+      "authorizedResult": true,
+      "digest": "eae82785f8a3bc2e8b4ef143f67dad0f0bb2908ebb58d029ee1e0a27f993e06f",
+      "recoveredPath": "other.maxBudget",
+      "actualPath": "other.maxBudget"
+    }
+  ]
+}
