@@ -26,3 +26,9 @@ Branch: `breakthrough-engine/observable-fiber-closure-20261019`
 ## Provenance
 
 The MCP exactly-once terminal lifecycle and bounded-choose fixed-work correction remain preserved on their original branches. No external privacy/task holdout is opened. All finite worlds, projections, and gates are frozen before the first execution.
+
+## Exact prefix-law enumeration freeze
+
+Before executing the reusable checker, exhaust every pair of binary authorized-event and public-observable schedules for `n in {2,3}` private worlds and `T in {1,2,3}` event times. This is `sum 2^(2*n*T) = 270,672` schedule pairs. Record final-fiber closure, prefix closure, and the strict gap where eventual authorization would make a completed trace appear safe even though an earlier public prefix distinguished worlds that were not yet declassified. The predicted smallest strict witness has two worlds and two event times; no strict witness should exist at one event time.
+
+The independent implementation must recompute every aggregate without importing the production checker. The system gate requires: zero cases where prefix closure passes but final closure fails; no strict witness at `T=1`; at least one strict witness at `T>=2`; a minimal two-world/two-time witness; and rejection of fixed-total-work fixtures whose intermediate status, byte length, event order, multiplicity, or work count varies inside an authorized prefix fiber.
