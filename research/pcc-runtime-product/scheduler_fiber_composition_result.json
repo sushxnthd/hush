@@ -1,0 +1,74 @@
+{
+  "protocol": "scheduler-fiber-composition-v1",
+  "model": {
+    "worlds": 4,
+    "authorizationFibers": [
+      [
+        "p0h0",
+        "p0h1"
+      ],
+      [
+        "p1h0",
+        "p1h1"
+      ]
+    ],
+    "components": 2,
+    "observableComponentTags": true,
+    "componentPayloadFunctions": 16,
+    "schedulerFunctions": 16
+  },
+  "prediction": {
+    "systems": 256,
+    "finalMultisetSafe": 256,
+    "orderedPrefixSafe": 64,
+    "leaks": 192,
+    "criterionDisagreements": 0
+  },
+  "observed": {
+    "systems": 256,
+    "finalMultisetSafe": 256,
+    "orderedPrefixSafe": 64,
+    "schedulerFiberSafe": 64,
+    "leaks": 192,
+    "criterionDisagreements": 0
+  },
+  "firstLeak": {
+    "componentEvents": {
+      "A": {
+        "p0h0": 0,
+        "p0h1": 0,
+        "p1h0": 0,
+        "p1h1": 0
+      },
+      "B": {
+        "p0h0": 0,
+        "p0h1": 0,
+        "p1h0": 0,
+        "p1h1": 0
+      }
+    },
+    "schedulerMask": 1,
+    "witness": {
+      "left": "p0h0",
+      "right": "p0h1",
+      "prefix": 1,
+      "leftComponent": "B",
+      "rightComponent": "A"
+    },
+    "leftTrace": [
+      {
+        "component": "B",
+        "event": 0
+      }
+    ],
+    "rightTrace": [
+      {
+        "component": "A",
+        "event": 0
+      }
+    ],
+    "finalCanonicalEqual": true
+  },
+  "scientificGate": "SURVIVE_SCHEDULER_FIBER_LAW",
+  "payloadSha256": "7ad1be80777f32f8374a488936dfa89ba849b07dd2babbd8a19049287dd29fd7"
+}
