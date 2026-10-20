@@ -1,0 +1,40 @@
+name: scheduler-fiber-composition
+
+on:
+  push:
+    branches: [breakthrough-engine/scheduler-fiber-composition-20261021]
+  pull_request:
+    paths:
+      - src/scheduler-fiber-contract.js
+      - test/scheduler-fiber-contract.test.js
+      - research/pcc-runtime-product/SCHEDULER_FIBER_COMPOSITION_*.md
+      - research/pcc-runtime-product/run_scheduler_fiber_composition.mjs
+      - research/pcc-runtime-product/check_scheduler_fiber_composition.py
+      - research/pcc-runtime-product/scheduler_fiber_composition_result.json
+      - .github/workflows/scheduler-fiber-composition.yml
+  workflow_dispatch:
+
+jobs:
+  exact-composition-law:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Reproduce twice
+        run: |
+          node research/pcc-runtime-product/run_scheduler_fiber_composition.mjs --output /tmp/scheduler-1.json
+          node research/pcc-runtime-product/run_scheduler_fiber_composition.mjs --output /tmp/scheduler-2.json
+          cmp /tmp/scheduler-1.json /tmp/scheduler-2.json
+          cmp /tmp/scheduler-1.json research/pcc-runtime-product/scheduler_fiber_composition_result.json
+      - name: Independent audit
+        run: python research/pcc-runtime-product/check_scheduler_fiber_composition.py
+      - name: Focused tests
+        run: node --test test/scheduler-fiber-contract.test.js
+      - name: Full suite
+        run: node --test
