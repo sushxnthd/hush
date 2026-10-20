@@ -1,0 +1,19 @@
+{
+  "protocol": "mcp-stream-single-writer-boundary-v1",
+  "rounds": 100,
+  "concurrent": {
+    "validJsonRounds": 100,
+    "bothReceiptsDurable": 0,
+    "lostUpdateRounds": 100,
+    "observedDurableCounts": [
+      1
+    ]
+  },
+  "sequential": {
+    "validJson": true,
+    "durableReceipts": 2,
+    "distinctWorkers": 2
+  },
+  "scientificGate": "FAIL_MULTI_WRITER_APPEND",
+  "smallestClaim": "Whole-file atomic replacement prevents torn JSON but does not make Store.addReceipt an atomic multi-process append."
+}

@@ -1,0 +1,39 @@
+name: mcp-stream-single-writer-boundary
+
+on:
+  push:
+    branches: [breakthrough-engine/mcp-stream-single-writer-boundary-20261020]
+  pull_request:
+    paths:
+      - src/core.js
+      - src/runtime-lock.js
+      - src/server.js
+      - research/pcc-runtime-product/*MCP_STREAM_SINGLE_WRITER*.md
+      - research/pcc-runtime-product/*MCP_STREAM_RUNTIME_LOCK*.md
+      - research/pcc-runtime-product/*mcp_stream_single_writer*
+      - research/pcc-runtime-product/*mcp_stream_runtime_lock*
+      - .github/workflows/mcp-stream-single-writer-boundary.yml
+
+jobs:
+  multi-process-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: node research/pcc-runtime-product/run_mcp_stream_single_writer_probe.mjs /tmp/run-1.json
+      - run: node research/pcc-runtime-product/run_mcp_stream_single_writer_probe.mjs /tmp/run-2.json
+      - run: cmp /tmp/run-1.json /tmp/run-2.json
+      - run: cmp /tmp/run-1.json research/pcc-runtime-product/mcp_stream_single_writer_result.json
+      - run: python research/pcc-runtime-product/audit_mcp_stream_single_writer.py /tmp/run-1.json
+      - run: node research/pcc-runtime-product/run_mcp_stream_runtime_lock_probe.mjs /tmp/lock-1.json
+      - run: node research/pcc-runtime-product/run_mcp_stream_runtime_lock_probe.mjs /tmp/lock-2.json
+      - run: cmp /tmp/lock-1.json /tmp/lock-2.json
+      - run: cmp /tmp/lock-1.json research/pcc-runtime-product/mcp_stream_runtime_lock_result.json
+      - run: python research/pcc-runtime-product/audit_mcp_stream_runtime_lock.py /tmp/lock-1.json
+      - run: npm test

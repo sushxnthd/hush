@@ -1,0 +1,8 @@
+{
+  "protocol": "mcp-stream-runtime-lock-closure-v1",
+  "rounds": 50,
+  "liveContenderRejected": 50,
+  "deadOwnerRecovered": 50,
+  "scientificGate": "PASS",
+  "smallestClaim": "The production startup lease excludes a second live local process and recovers after a proven-dead PID."
+}
