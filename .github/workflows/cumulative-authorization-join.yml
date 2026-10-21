@@ -1,0 +1,44 @@
+name: cumulative-authorization-join
+
+on:
+  push:
+    branches: [breakthrough-engine/cumulative-authorization-join-20261021]
+  pull_request:
+    paths:
+      - src/cumulative-authorization-contract.js
+      - test/cumulative-authorization-contract.test.js
+      - bench/cumulative-authorization-join.js
+      - scripts/check-cumulative-authorization.py
+      - research/pcc-runtime-product/CUMULATIVE_AUTHORIZATION_JOIN_*.md
+      - research/pcc-runtime-product/cumulative-authorization-fixtures.json
+      - research/pcc-runtime-product/raw/cumulative-authorization-*
+      - .github/workflows/cumulative-authorization-join.yml
+  workflow_dispatch:
+
+jobs:
+  exact-authorization-law:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Reproduce exact enumeration twice
+        run: |
+          node bench/cumulative-authorization-join.js --json > /tmp/js-1.json
+          node bench/cumulative-authorization-join.js --json > /tmp/js-2.json
+          cmp /tmp/js-1.json /tmp/js-2.json
+      - name: Independent enumeration and shared-count comparison
+        run: |
+          python scripts/check-cumulative-authorization.py > /tmp/python.json
+          jq '{authorizationSystems,universallyComposable,notUniversallyComposable,oracleObservationPairs,oracleSafeObservationPairs,disagreements}' /tmp/python.json > /tmp/python-shared.json
+          jq '.exactEnumeration | {authorizationSystems,universallyComposable,notUniversallyComposable,oracleObservationPairs,oracleSafeObservationPairs,disagreements}' /tmp/js-1.json > /tmp/js-shared.json
+          cmp /tmp/js-shared.json /tmp/python-shared.json
+      - name: Focused tests
+        run: node --test test/cumulative-authorization-contract.test.js
+      - name: Full suite
+        run: node --test

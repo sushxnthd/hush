@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "theorem": "ker(G) subset intersection_i ker(A_i)",
+  "exactEnumeration": {
+    "worlds": 4,
+    "binaryMaps": 16,
+    "authorizationSystems": 4096,
+    "universallyComposable": 232,
+    "notUniversallyComposable": 3864,
+    "oracleObservationPairs": 57600,
+    "oracleSafeObservationPairs": 20192,
+    "disagreements": 0
+  },
+  "frozenFixtures": {
+    "seed": 20261021,
+    "total": 4,
+    "passed": 4
+  },
+  "gate": "PASS"
+}

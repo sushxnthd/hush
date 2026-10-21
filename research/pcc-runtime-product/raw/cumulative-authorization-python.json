@@ -1,0 +1,9 @@
+{
+  "authorizationSystems": 4096,
+  "disagreements": 0,
+  "gate": "PASS",
+  "notUniversallyComposable": 3864,
+  "oracleObservationPairs": 57600,
+  "oracleSafeObservationPairs": 20192,
+  "universallyComposable": 232
+}

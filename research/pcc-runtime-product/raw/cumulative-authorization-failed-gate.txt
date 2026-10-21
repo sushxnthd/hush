@@ -1,0 +1,9 @@
+Initial combined harness gate: FAIL
+
+Cause: the shell diff compared the JavaScript `exactEnumeration` object, which
+includes descriptive `worlds` and `binaryMaps` fields, against the independent
+Python summary, which intentionally omits those two fields and includes the same
+substantive counts in a different key order. Both mathematical checkers reported
+zero disagreements and identical six substantive counts. The failure was in the
+comparison wrapper, not the theorem or either enumeration. The raw outputs are
+preserved beside this file; subsequent comparison selects the shared fields.
