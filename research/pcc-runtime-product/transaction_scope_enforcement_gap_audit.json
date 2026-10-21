@@ -1,0 +1,13 @@
+{
+  "schema": "hush.transaction-scope-enforcement-gap.audit.v1",
+  "status": "pass",
+  "independent": true,
+  "pairedTraceChecks": 2,
+  "apiChecks": {
+    "noTransactionId": true,
+    "noGlobalAuthorization": true,
+    "noScopeCommitment": true,
+    "noCumulativeGuardImport": true
+  },
+  "mismatches": 0
+}
