@@ -219,13 +219,16 @@ export class ActionBroker {
       authorizationScopeDecision,
       createdAt:now,expiresAt:now+ttl(ttlMs),approvedAt:null,deniedAt:null,denialReason:null,consumedAt:null,attemptedAt:null,receipt:null,consent:null,requestHash:null
     };
-    ticket.requestHash=sha256(canonicalize({
+    const requestBinding={
       adapter:ticket.adapter,action:ticket.action,agent:ticket.agent,sink:ticket.sink,purpose:ticket.purpose,category:ticket.category,resource:ticket.resource,
-      arguments:ticket.arguments,credentialRefs:ticket.credentialRefs.map(ref=>sha256(String(ref))),
-      transactionId:ticket.transactionId,
-      globalAuthorizationCommitment:ticket.globalAuthorizationCommitment,
-      localAuthorizationCommitment:ticket.localAuthorizationCommitment
-    }));
+      arguments:ticket.arguments,credentialRefs:ticket.credentialRefs.map(ref=>sha256(String(ref)))
+    };
+    if(ticket.transactionId){
+      requestBinding.transactionId=ticket.transactionId;
+      requestBinding.globalAuthorizationCommitment=ticket.globalAuthorizationCommitment;
+      requestBinding.localAuthorizationCommitment=ticket.localAuthorizationCommitment;
+    }
+    ticket.requestHash=sha256(canonicalize(requestBinding));
 
     if(this.consentRegistry){
       const verdict=this.consentRegistry.evaluate(consentRequest(ticket),{consume:false});
