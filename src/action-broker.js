@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
-import {canonicalize,detectSensitive,sha256} from './core.js';
+import fs from 'node:fs';
+import {atomicWriteJson,canonicalize,decryptJson,detectSensitive,encryptJson,sha256} from './core.js';
 import {certifyCumulativeAuthorization} from './cumulative-authorization-contract.js';
 
 const DEFAULT_TTL=5*60*1000;
@@ -108,20 +109,63 @@ function safeTicket(ticket){
   };
 }
 
+export class EncryptedAuthorizationStateStore {
+  constructor({file,key}={}){
+    if(!String(file??'').trim()) throw new Error('Authorization state file is required');
+    if(!Buffer.isBuffer(key)||key.length!==32) throw new Error('Authorization state key must be a 32-byte Buffer');
+    this.file=String(file);
+    this.key=key;
+  }
+  load(){
+    if(!fs.existsSync(this.file)) return {v:1,transactions:[]};
+    const state=decryptJson(JSON.parse(fs.readFileSync(this.file,'utf8')),this.key);
+    if(state?.v!==1||!Array.isArray(state.transactions)) throw new Error('Invalid authorization transaction state');
+    return state;
+  }
+  save(state){ atomicWriteJson(this.file,encryptJson(state,this.key)); }
+}
+
 /**
  * Local action brokerage for Hush. AI clients describe an action and may reference
  * opaque credential handles, but never receive credential values. Adapters are
  * registered by trusted local application code, not by AI-facing tools.
  */
 export class ActionBroker {
-  constructor({consentRegistry=null,secretResolver=null,now=()=>Date.now()}={}){
+  constructor({consentRegistry=null,secretResolver=null,now=()=>Date.now(),authorizationStateStore=null}={}){
     this.consentRegistry=consentRegistry;
     this.secretResolver=secretResolver;
     this.now=now;
     this.adapters=new Map();
-    this.authorizationTransactions=new Map();
+    this.authorizationStateStore=authorizationStateStore;
+    this.authorizationTransactions=this._loadAuthorizationTransactions();
     this.tickets=new Map();
     this.receipts=[];
+  }
+
+  _loadAuthorizationTransactions(){
+    const state=this.authorizationStateStore?.load?.();
+    const records=state?.transactions??[];
+    const transactions=new Map();
+    for(const record of records){
+      const id=text(record?.id,'',160);
+      if(!id||transactions.has(id)) throw new Error('Invalid authorization transaction state');
+      const worlds=clone(record.worlds);
+      const globalAuthorization=clone(record.globalAuthorization);
+      certifyCumulativeAuthorization({worlds,globalAuthorization,calls:[{id:'recovery',localAuthorization:globalAuthorization,observation:globalAuthorization}]});
+      const commitment=sha256(canonicalize({v:1,transactionId:id,worlds,globalAuthorization}));
+      if(commitment!==record.commitment) throw new Error('Authorization transaction commitment mismatch');
+      const closedAt=record.closedAt==null?null:Number(record.closedAt);
+      if(closedAt!=null&&!Number.isFinite(closedAt)) throw new Error('Invalid authorization transaction closure');
+      transactions.set(id,{id,worlds,globalAuthorization,commitment,closedAt});
+    }
+    return transactions;
+  }
+
+  _persistAuthorizationTransactions(){
+    if(!this.authorizationStateStore) return;
+    const transactions=[...this.authorizationTransactions.values()]
+      .sort((a,b)=>a.id.localeCompare(b.id)).map(clone);
+    this.authorizationStateStore.save({v:1,transactions});
   }
 
   registerAdapter({name,actions=['*'],execute,description='',authorizationScopes={}}={}){
@@ -152,13 +196,20 @@ export class ActionBroker {
       return {transactionId:id,globalAuthorizationCommitment:commitment,closed:false};
     }
     this.authorizationTransactions.set(id,{id,worlds:worldsCopy,globalAuthorization:globalCopy,commitment,closedAt:null});
+    try{ this._persistAuthorizationTransactions(); }
+    catch(error){ this.authorizationTransactions.delete(id); throw error; }
     return {transactionId:id,globalAuthorizationCommitment:commitment,closed:false};
   }
 
   closeAuthorizationTransaction(transactionId){
     const transaction=this.authorizationTransactions.get(String(transactionId));
     if(!transaction) throw new Error('Authorization transaction not found');
-    if(!transaction.closedAt) transaction.closedAt=this.now();
+    if(!transaction.closedAt){
+      const before=transaction.closedAt;
+      transaction.closedAt=this.now();
+      try{ this._persistAuthorizationTransactions(); }
+      catch(error){ transaction.closedAt=before; throw error; }
+    }
     return {transactionId:transaction.id,globalAuthorizationCommitment:transaction.commitment,closed:true};
   }
 

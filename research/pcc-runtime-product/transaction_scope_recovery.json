@@ -1,0 +1,26 @@
+{
+  "checks": {
+    "closedRemainsClosed": true,
+    "corruptionRejected": true,
+    "encryptedEnvelopeOnly": true,
+    "freshProcessKilled": true,
+    "identityAllows": true,
+    "parityDeniedBeforeDispatch": true,
+    "wrongKeyRejected": true
+  },
+  "classification": "FRESH_PROCESS_CRASH_RECOVERY_AND_ADVERSARIAL_STORAGE_TEST",
+  "decisions": {
+    "closed": "rejected",
+    "identity": [
+      "allow",
+      "allow"
+    ],
+    "parity": "deny"
+  },
+  "dispatches": [
+    "read_x",
+    "read_y"
+  ],
+  "protocol": "hush.transaction-scope-recovery.v1",
+  "smallestClaim": "On the single-writer local runtime, a synchronously persisted encrypted transaction snapshot survives process death, preserves open identity/parity authorization decisions, preserves closure, and fails closed under wrong-key or modified-ciphertext recovery."
+}
