@@ -42,6 +42,10 @@ These sources make the factorization/partition core non-novel. This run did not 
 
 Approval receipts need a transaction-scope identifier and a canonical authorization-partition commitment. Before disclosing a call result, the broker should run the universal scope check; after disclosure, it should retain the existing cumulative observation audit. The two gates intentionally differ: the first controls capability, the second records realized leakage.
 
+## Hosted CI state
+
+At commit `675714b62338fdbadb2eff5f936e00dbbdeaf76f`, the dedicated cumulative-authorization workflow, general CI, CodeQL, research-superiority, scheduler-fiber, trace-envelope, stream-boundary, stream-terminal, and MCP GET/POST/DELETE mediation workflows passed. The repository-wide production-readiness workflow failed specifically at `Inspect exact-source release evidence`; this branch does not claim that release gate passed.
+
 ## Limits
 
 - Finite, deterministic world maps only; no probabilistic leakage metric.
