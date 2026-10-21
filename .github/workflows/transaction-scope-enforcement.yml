@@ -1,0 +1,43 @@
+name: transaction-scope-enforcement
+
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-enforcement-20261021]
+  pull_request:
+    paths:
+      - src/action-broker.js
+      - src/cumulative-authorization-contract.js
+      - scripts/verify-transaction-scope-enforcement.mjs
+      - scripts/audit-transaction-scope-enforcement.mjs
+      - test/transaction-scope-enforcement.test.js
+      - research/pcc-runtime-product/TRANSACTION_SCOPE_ENFORCEMENT_*.md
+      - research/pcc-runtime-product/transaction_scope_enforcement*
+      - .github/workflows/transaction-scope-enforcement.yml
+  workflow_dispatch:
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: npm install --ignore-scripts
+      - name: Reproduce exact primary artifact twice
+        run: |
+          node scripts/verify-transaction-scope-enforcement.mjs --output /tmp/primary-1.json
+          node scripts/verify-transaction-scope-enforcement.mjs --output /tmp/primary-2.json
+          cmp /tmp/primary-1.json /tmp/primary-2.json
+          cmp /tmp/primary-1.json research/pcc-runtime-product/transaction_scope_enforcement.json
+      - name: Run independent checker
+        run: |
+          node scripts/audit-transaction-scope-enforcement.mjs \
+            --primary research/pcc-runtime-product/transaction_scope_enforcement.json \
+            --output /tmp/audit.json
+          cmp /tmp/audit.json research/pcc-runtime-product/transaction_scope_enforcement_audit.json
+      - name: Run focused production-broker tests
+        run: node --test test/transaction-scope-enforcement.test.js test/action-broker.test.js
+      - run: npm test

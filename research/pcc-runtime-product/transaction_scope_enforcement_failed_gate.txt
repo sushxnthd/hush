@@ -1,0 +1,33 @@
+Preserved failed development check
+Date: 2026-10-21
+
+Command:
+  node --test test/transaction-scope-enforcement.test.js test/action-broker.test.js
+
+Observed:
+  14 passed, 1 failed.
+
+Failure:
+  identity transaction preserves both coordinate actions and binds commitments
+  asserted that JSON.stringify(outcome) did not contain the substring "00".
+  A cryptographic hash legitimately contained that substring, so this was an
+  invalid privacy oracle.
+
+Disposition:
+  Replaced the substring assertion with structural checks that neither
+  globalAuthorization nor localAuthorization is present in the public receipt.
+  The corrected focused run passed. This was a test-design failure, not an
+  enforcement or privacy failure, and is preserved rather than omitted.
+
+Preserved hosted integration failure
+Run: https://github.com/sushxnthd/hush/actions/runs/39563774297
+
+Observed:
+  The predecessor transaction-scope-gap workflow failed its exact primary
+  artifact comparison. Scoped support had added three null fields to every
+  unscoped request-hash input, changing historical unscoped request hashes.
+
+Disposition:
+  Scope commitments are now added to the request-hash input only when a
+  transaction id is present. The predecessor unscoped artifact again reproduces
+  byte-for-byte, while scoped tickets remain bound to all three fields.
