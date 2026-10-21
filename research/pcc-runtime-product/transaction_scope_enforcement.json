@@ -1,0 +1,136 @@
+{
+  "schema": "hush.transaction-scope-enforcement.v1",
+  "status": "pass",
+  "identityRun": {
+    "order": [
+      "read_x",
+      "read_y"
+    ],
+    "outcomes": [
+      {
+        "action": "read_x",
+        "decision": "allow",
+        "reason": null,
+        "status": "allow",
+        "result": {
+          "value": 1
+        },
+        "transactionId": "identity",
+        "globalAuthorizationCommitment": "206e23b6a33f6ea288a820f7feae0b9197860447b5a08ae9a7abf24debbc0edf",
+        "localAuthorizationCommitment": "61831654ae11e14d5cb6827c031935cb68569d90aa9de3751512916dcde23adb"
+      },
+      {
+        "action": "read_y",
+        "decision": "allow",
+        "reason": null,
+        "status": "allow",
+        "result": {
+          "value": 1
+        },
+        "transactionId": "identity",
+        "globalAuthorizationCommitment": "206e23b6a33f6ea288a820f7feae0b9197860447b5a08ae9a7abf24debbc0edf",
+        "localAuthorizationCommitment": "27667a7fdb1d94f5c2f70ccb38e6f8c0b23a8aad3128e77c12fc7bf255da546b"
+      }
+    ],
+    "dispatches": [
+      "read_x",
+      "read_y"
+    ],
+    "registration": {
+      "transactionId": "identity",
+      "globalAuthorizationCommitment": "206e23b6a33f6ea288a820f7feae0b9197860447b5a08ae9a7abf24debbc0edf",
+      "closed": false
+    }
+  },
+  "protectedRuns": [
+    {
+      "order": [
+        "read_x",
+        "read_y"
+      ],
+      "outcomes": [
+        {
+          "action": "read_x",
+          "decision": "deny",
+          "reason": "Transaction authorization denied before dispatch: GLOBAL_SCOPE_REFINEMENT",
+          "status": "deny",
+          "result": null,
+          "transactionId": "parity-read_x",
+          "globalAuthorizationCommitment": "10903d7f2580aea8f8bc7841db745b6a644dc665afcb547f56f9cf167596131c",
+          "localAuthorizationCommitment": "61831654ae11e14d5cb6827c031935cb68569d90aa9de3751512916dcde23adb"
+        }
+      ],
+      "dispatches": [],
+      "registration": {
+        "transactionId": "parity-read_x",
+        "globalAuthorizationCommitment": "10903d7f2580aea8f8bc7841db745b6a644dc665afcb547f56f9cf167596131c",
+        "closed": false
+      }
+    },
+    {
+      "order": [
+        "read_y",
+        "read_x"
+      ],
+      "outcomes": [
+        {
+          "action": "read_y",
+          "decision": "deny",
+          "reason": "Transaction authorization denied before dispatch: GLOBAL_SCOPE_REFINEMENT",
+          "status": "deny",
+          "result": null,
+          "transactionId": "parity-read_y",
+          "globalAuthorizationCommitment": "3c8e937e15eb3d6da3cafb8a7f6b376b19cb2511b0e6dffda01294d877a94269",
+          "localAuthorizationCommitment": "27667a7fdb1d94f5c2f70ccb38e6f8c0b23a8aad3128e77c12fc7bf255da546b"
+        }
+      ],
+      "dispatches": [],
+      "registration": {
+        "transactionId": "parity-read_y",
+        "globalAuthorizationCommitment": "3c8e937e15eb3d6da3cafb8a7f6b376b19cb2511b0e6dffda01294d877a94269",
+        "closed": false
+      }
+    }
+  ],
+  "adversaries": {
+    "closedTransaction": {
+      "decision": "deny",
+      "reason": "Transaction authorization denied before dispatch: AUTHORIZATION_TRANSACTION_CLOSED",
+      "dispatches": 0
+    },
+    "mutatedLocalScope": {
+      "decision": "deny",
+      "reason": "Transaction authorization denied before dispatch: LOCAL_AUTHORIZATION_COMMITMENT_MISMATCH",
+      "dispatches": 0
+    },
+    "mutatedGlobalScope": {
+      "decision": "deny",
+      "reason": "Transaction authorization denied before dispatch: GLOBAL_AUTHORIZATION_COMMITMENT_MISMATCH",
+      "dispatches": 0
+    }
+  },
+  "ordinaryControl": {
+    "decision": "allow",
+    "dispatches": 1,
+    "result": {
+      "value": 1
+    }
+  },
+  "counts": {
+    "identityAllows": 2,
+    "identityDispatches": 2,
+    "protectedOrders": 2,
+    "protectedDenials": 2,
+    "protectedDispatches": 0,
+    "adversarialDenials": 3,
+    "adversarialDispatches": 0,
+    "ordinaryAllows": 1
+  },
+  "smallestClaim": "For explicitly registered finite-map transactions with trusted adapter scope declarations, ActionBroker now binds scope commitments into tickets and receipts and rejects non-factorizing, closed, or mutated scopes before credential resolution and adapter dispatch, while preserving identity-authorized and ordinary unscoped actions.",
+  "limits": [
+    "finite explicitly registered transactions",
+    "trusted local scope declarations",
+    "unscoped calls remain backward-compatible and are outside this guarantee",
+    "no distributed persistence or crash-recovery claim"
+  ]
+}

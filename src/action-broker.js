@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import {canonicalize,detectSensitive,sha256} from './core.js';
+import {certifyCumulativeAuthorization} from './cumulative-authorization-contract.js';
 
 const DEFAULT_TTL=5*60*1000;
 const MAX_TTL=15*60*1000;
@@ -58,6 +59,9 @@ function safeReceipt(ticket,result,status,now){
     adapter:ticket.adapter,
     action:ticket.action,
     resource:ticket.resource,
+    transactionId:ticket.transactionId,
+    globalAuthorizationCommitment:ticket.globalAuthorizationCommitment,
+    localAuthorizationCommitment:ticket.localAuthorizationCommitment,
     status,
     credentialCount:ticket.credentialRefs.length,
     rawCredentialIncluded:false,
@@ -79,7 +83,7 @@ function safeTicket(ticket){
   return {
     actionId:ticket.id,
     decision:ticket.deniedAt?'deny':ticket.consumedAt?'consumed':ticket.approvedAt?'allow':ticket.consent?.decision==='allow'?'allow':'ask',
-    reason:ticket.deniedAt?'Action was denied.':ticket.consumedAt?'Action ticket was already consumed.':ticket.approvedAt?'Action was approved locally.':ticket.consent?.reason??'Action requires approval.',
+    reason:ticket.deniedAt?(ticket.denialReason??'Action was denied.'):ticket.consumedAt?'Action ticket was already consumed.':ticket.approvedAt?'Action was approved locally.':ticket.consent?.reason??'Action requires approval.',
     agent:ticket.agent,
     sink:ticket.sink,
     purpose:ticket.purpose,
@@ -87,6 +91,10 @@ function safeTicket(ticket){
     adapter:ticket.adapter,
     action:ticket.action,
     resource:ticket.resource,
+    transactionId:ticket.transactionId,
+    globalAuthorizationCommitment:ticket.globalAuthorizationCommitment,
+    localAuthorizationCommitment:ticket.localAuthorizationCommitment,
+    authorizationScopeDecision:ticket.authorizationScopeDecision,
     argumentKeys:Object.keys(ticket.arguments??{}).sort(),
     credentialCount:ticket.credentialRefs.length,
     createdAt:iso(ticket.createdAt),
@@ -111,22 +119,48 @@ export class ActionBroker {
     this.secretResolver=secretResolver;
     this.now=now;
     this.adapters=new Map();
+    this.authorizationTransactions=new Map();
     this.tickets=new Map();
     this.receipts=[];
   }
 
-  registerAdapter({name,actions=['*'],execute,description=''}={}){
+  registerAdapter({name,actions=['*'],execute,description='',authorizationScopes={}}={}){
     const id=text(name,'',120);
     if(!id) throw new Error('Action adapter name is required');
     if(typeof execute!=='function') throw new Error('Action adapter execute function is required');
-    const normalized={name:id,actions:unique(actions).sort(),execute,description:text(description,'',240)};
+    if(!authorizationScopes||typeof authorizationScopes!=='object'||Array.isArray(authorizationScopes)) throw new Error('authorizationScopes must be an action-to-map object');
+    const normalized={name:id,actions:unique(actions).sort(),execute,description:text(description,'',240),authorizationScopes:clone(authorizationScopes)};
     if(!normalized.actions.length) throw new Error('Action adapter must declare at least one supported action');
     this.adapters.set(id,normalized);
     return {name:normalized.name,actions:[...normalized.actions],description:normalized.description};
   }
 
   removeAdapter(name){ return this.adapters.delete(String(name)); }
-  listAdapters(){ return [...this.adapters.values()].map(({execute,...adapter})=>clone(adapter)).sort((a,b)=>a.name.localeCompare(b.name)); }
+  listAdapters(){ return [...this.adapters.values()].map(({execute,authorizationScopes,...adapter})=>clone(adapter)).sort((a,b)=>a.name.localeCompare(b.name)); }
+
+  registerAuthorizationTransaction({transactionId,worlds,globalAuthorization}={}){
+    const id=text(transactionId,'',160);
+    if(!id) throw new Error('transactionId is required');
+    const worldsCopy=clone(worlds);
+    const globalCopy=clone(globalAuthorization);
+    certifyCumulativeAuthorization({worlds:worldsCopy,globalAuthorization:globalCopy,calls:[{id:'registration',localAuthorization:globalCopy,observation:globalCopy}]});
+    const commitment=sha256(canonicalize({v:1,transactionId:id,worlds:worldsCopy,globalAuthorization:globalCopy}));
+    const existing=this.authorizationTransactions.get(id);
+    if(existing){
+      if(existing.commitment!==commitment) throw new Error('Authorization transaction ids are immutable');
+      if(existing.closedAt) throw new Error('Authorization transaction is closed');
+      return {transactionId:id,globalAuthorizationCommitment:commitment,closed:false};
+    }
+    this.authorizationTransactions.set(id,{id,worlds:worldsCopy,globalAuthorization:globalCopy,commitment,closedAt:null});
+    return {transactionId:id,globalAuthorizationCommitment:commitment,closed:false};
+  }
+
+  closeAuthorizationTransaction(transactionId){
+    const transaction=this.authorizationTransactions.get(String(transactionId));
+    if(!transaction) throw new Error('Authorization transaction not found');
+    if(!transaction.closedAt) transaction.closedAt=this.now();
+    return {transactionId:transaction.id,globalAuthorizationCommitment:transaction.commitment,closed:true};
+  }
 
   _adapter(name,action){
     const adapter=this.adapters.get(String(name));
@@ -135,11 +169,11 @@ export class ActionBroker {
     return adapter;
   }
 
-  request({adapter,action,agent='unknown-agent',sink='unknown-sink',purpose='unspecified',category='general',resource='*',arguments:args={},credentialRefs=[],ttlMs=DEFAULT_TTL}={}){
+  request({adapter,action,agent='unknown-agent',sink='unknown-sink',purpose='unspecified',category='general',resource='*',arguments:args={},credentialRefs=[],ttlMs=DEFAULT_TTL,transactionId=null}={}){
     const adapterName=text(adapter,'',120);
     const actionName=text(action,'',160);
     if(!adapterName||!actionName) throw new Error('adapter and action are required');
-    this._adapter(adapterName,actionName);
+    const trustedAdapter=this._adapter(adapterName,actionName);
 
     const argumentsCopy=clone(args??{});
     const argumentBytes=Buffer.byteLength(JSON.stringify(argumentsCopy));
@@ -156,16 +190,41 @@ export class ActionBroker {
     const refs=unique(credentialRefs);
     if(refs.length>MAX_CREDENTIALS) throw new Error(`At most ${MAX_CREDENTIALS} credential references may be attached to one action`);
     const now=this.now();
+    let transaction=null;
+    let localAuthorization=null;
+    let localAuthorizationCommitment=null;
+    let authorizationScopeDecision=null;
+    if(transactionId!=null){
+      transaction=this.authorizationTransactions.get(String(transactionId));
+      if(!transaction) throw new Error('Authorization transaction not found');
+      if(transaction.closedAt) throw new Error('Authorization transaction is closed');
+      localAuthorization=clone(trustedAdapter.authorizationScopes[actionName]??trustedAdapter.authorizationScopes['*']??null);
+      if(localAuthorization){
+        localAuthorizationCommitment=sha256(canonicalize({v:1,adapter:adapterName,action:actionName,localAuthorization}));
+        try{
+          const certificate=certifyCumulativeAuthorization({worlds:transaction.worlds,globalAuthorization:transaction.globalAuthorization,calls:[{id:actionName,localAuthorization,observation:localAuthorization}]});
+          authorizationScopeDecision=certificate.safe?'allow':'deny';
+        }catch{ authorizationScopeDecision='deny'; }
+      }else authorizationScopeDecision='deny';
+    }
     const ticket={
       id:`action_${crypto.randomBytes(24).toString('base64url')}`,
       adapter:adapterName,action:actionName,
       agent:text(agent,'unknown-agent'),sink:text(sink,'unknown-sink'),purpose:text(purpose,'unspecified'),category:text(category,'general'),resource:text(resource,'*'),
       arguments:argumentsCopy,credentialRefs:refs,
-      createdAt:now,expiresAt:now+ttl(ttlMs),approvedAt:null,deniedAt:null,consumedAt:null,attemptedAt:null,receipt:null,consent:null,requestHash:null
+      transactionId:transaction?.id??null,
+      globalAuthorizationCommitment:transaction?.commitment??null,
+      localAuthorizationCommitment,
+      localAuthorization,
+      authorizationScopeDecision,
+      createdAt:now,expiresAt:now+ttl(ttlMs),approvedAt:null,deniedAt:null,denialReason:null,consumedAt:null,attemptedAt:null,receipt:null,consent:null,requestHash:null
     };
     ticket.requestHash=sha256(canonicalize({
       adapter:ticket.adapter,action:ticket.action,agent:ticket.agent,sink:ticket.sink,purpose:ticket.purpose,category:ticket.category,resource:ticket.resource,
-      arguments:ticket.arguments,credentialRefs:ticket.credentialRefs.map(ref=>sha256(String(ref)))
+      arguments:ticket.arguments,credentialRefs:ticket.credentialRefs.map(ref=>sha256(String(ref))),
+      transactionId:ticket.transactionId,
+      globalAuthorizationCommitment:ticket.globalAuthorizationCommitment,
+      localAuthorizationCommitment:ticket.localAuthorizationCommitment
     }));
 
     if(this.consentRegistry){
@@ -208,6 +267,38 @@ export class ActionBroker {
     return safeTicket(ticket);
   }
 
+  _scopeVerdict(ticket){
+    if(!ticket.transactionId) return {safe:true,reason:'UNSCOPED'};
+    const transaction=this.authorizationTransactions.get(ticket.transactionId);
+    if(!transaction) return {safe:false,reason:'AUTHORIZATION_TRANSACTION_MISSING'};
+    if(transaction.closedAt) return {safe:false,reason:'AUTHORIZATION_TRANSACTION_CLOSED'};
+    const currentGlobalCommitment=sha256(canonicalize({v:1,transactionId:transaction.id,worlds:transaction.worlds,globalAuthorization:transaction.globalAuthorization}));
+    if(currentGlobalCommitment!==transaction.commitment||transaction.commitment!==ticket.globalAuthorizationCommitment) return {safe:false,reason:'GLOBAL_AUTHORIZATION_COMMITMENT_MISMATCH'};
+    const adapter=this._adapter(ticket.adapter,ticket.action);
+    const currentLocal=adapter.authorizationScopes[ticket.action]??adapter.authorizationScopes['*']??null;
+    if(!currentLocal) return {safe:false,reason:'LOCAL_AUTHORIZATION_SCOPE_MISSING'};
+    const currentCommitment=sha256(canonicalize({v:1,adapter:ticket.adapter,action:ticket.action,localAuthorization:currentLocal}));
+    const snapshotCommitment=sha256(canonicalize({v:1,adapter:ticket.adapter,action:ticket.action,localAuthorization:ticket.localAuthorization}));
+    if(currentCommitment!==ticket.localAuthorizationCommitment||snapshotCommitment!==ticket.localAuthorizationCommitment) return {safe:false,reason:'LOCAL_AUTHORIZATION_COMMITMENT_MISMATCH'};
+    try{
+      const certificate=certifyCumulativeAuthorization({
+        worlds:transaction.worlds,
+        globalAuthorization:transaction.globalAuthorization,
+        calls:[{id:ticket.action,localAuthorization:ticket.localAuthorization,observation:ticket.localAuthorization}]
+      });
+      return certificate.safe?{safe:true,reason:'CERTIFIED'}:{safe:false,reason:certificate.reason,witness:certificate.witness};
+    }catch{ return {safe:false,reason:'AUTHORIZATION_SCOPE_INVALID'}; }
+  }
+
+  _denyBeforeDispatch(ticket,verdict){
+    ticket.deniedAt=this.now();
+    ticket.consumedAt=ticket.deniedAt;
+    ticket.denialReason=`Transaction authorization denied before dispatch: ${verdict.reason}`;
+    ticket.receipt=safeReceipt(ticket,undefined,'deny',ticket.deniedAt);
+    this.receipts.push(ticket.receipt);
+    return {decision:'deny',reason:ticket.denialReason,witness:verdict.witness??null,receipt:clone(ticket.receipt),rawCredentialIncluded:false};
+  }
+
   async execute({actionId,agent='unknown-agent',sink='unknown-sink'}={}){
     const ticket=this._ticket(actionId);
     if(ticket.agent!==String(agent)||ticket.sink!==String(sink)) throw new Error('Action ticket is bound to another agent or sink');
@@ -221,6 +312,9 @@ export class ActionBroker {
       if(verdict.decision==='deny'){ ticket.deniedAt=this.now(); return safeTicket(ticket); }
       if(verdict.decision!=='allow') return safeTicket(ticket);
     }
+
+    const scopeVerdict=this._scopeVerdict(ticket);
+    if(!scopeVerdict.safe) return this._denyBeforeDispatch(ticket,scopeVerdict);
 
     const adapter=this._adapter(ticket.adapter,ticket.action);
     const credentials=[];

@@ -1,0 +1,12 @@
+{
+  "schema": "hush.transaction-scope-enforcement.audit.v1",
+  "status": "pass",
+  "independent": true,
+  "checks": {
+    "primaryGates": 11,
+    "finiteFactorization": 4,
+    "preCredentialOrdering": true,
+    "commitmentBindings": 3
+  },
+  "mismatches": 0
+}

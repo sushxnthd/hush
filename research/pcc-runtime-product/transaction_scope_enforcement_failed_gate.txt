@@ -1,0 +1,20 @@
+Preserved failed development check
+Date: 2026-10-21
+
+Command:
+  node --test test/transaction-scope-enforcement.test.js test/action-broker.test.js
+
+Observed:
+  14 passed, 1 failed.
+
+Failure:
+  identity transaction preserves both coordinate actions and binds commitments
+  asserted that JSON.stringify(outcome) did not contain the substring "00".
+  A cryptographic hash legitimately contained that substring, so this was an
+  invalid privacy oracle.
+
+Disposition:
+  Replaced the substring assertion with structural checks that neither
+  globalAuthorization nor localAuthorization is present in the public receipt.
+  The corrected focused run passed. This was a test-design failure, not an
+  enforcement or privacy failure, and is preserved rather than omitted.
