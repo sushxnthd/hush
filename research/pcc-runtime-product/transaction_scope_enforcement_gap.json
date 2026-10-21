@@ -1,0 +1,532 @@
+{
+  "schema": "hush.transaction-scope-enforcement-gap.v1",
+  "status": "pass",
+  "proposition": "A broker cannot enforce an unrepresented transaction-wide authorization contract against locally identical traces.",
+  "pairedOrders": [
+    {
+      "order": [
+        "read_x",
+        "read_y"
+      ],
+      "brokerVisibleEqual": true,
+      "permissiveTrace": [
+        {
+          "requested": {
+            "decision": "ask",
+            "reason": "Action requires approval.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_x",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "352474eb6566f062f26bce5dee509d21d167fbc1f9398e5134c9ea7b2223d60a",
+            "rawCredentialIncluded": false
+          },
+          "approved": {
+            "decision": "allow",
+            "reason": "Action was approved locally.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_x",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "352474eb6566f062f26bce5dee509d21d167fbc1f9398e5134c9ea7b2223d60a",
+            "rawCredentialIncluded": false
+          },
+          "outcome": {
+            "decision": "allow",
+            "result": {
+              "value": 1
+            },
+            "rawCredentialIncluded": false,
+            "receipt": {
+              "agent": "fixture-agent",
+              "sink": "fixture-local",
+              "purpose": "paired authorization test",
+              "category": "read",
+              "adapter": "hidden-world",
+              "action": "read_x",
+              "resource": "hidden-world",
+              "status": "allow",
+              "credentialCount": 0,
+              "rawCredentialIncluded": false,
+              "requestHash": "352474eb6566f062f26bce5dee509d21d167fbc1f9398e5134c9ea7b2223d60a",
+              "resultDigest": "48208f9428d64634bd8e28ff345bf0eab60d53c18fa2fbdb0b9bc1e84df2b5f6"
+            }
+          }
+        },
+        {
+          "requested": {
+            "decision": "ask",
+            "reason": "Action requires approval.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_y",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "30a8ba837e612986f04bbaa394741cfe941665d1d7602bc880bda51f5359e1c5",
+            "rawCredentialIncluded": false
+          },
+          "approved": {
+            "decision": "allow",
+            "reason": "Action was approved locally.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_y",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "30a8ba837e612986f04bbaa394741cfe941665d1d7602bc880bda51f5359e1c5",
+            "rawCredentialIncluded": false
+          },
+          "outcome": {
+            "decision": "allow",
+            "result": {
+              "value": 1
+            },
+            "rawCredentialIncluded": false,
+            "receipt": {
+              "agent": "fixture-agent",
+              "sink": "fixture-local",
+              "purpose": "paired authorization test",
+              "category": "read",
+              "adapter": "hidden-world",
+              "action": "read_y",
+              "resource": "hidden-world",
+              "status": "allow",
+              "credentialCount": 0,
+              "rawCredentialIncluded": false,
+              "requestHash": "30a8ba837e612986f04bbaa394741cfe941665d1d7602bc880bda51f5359e1c5",
+              "resultDigest": "48208f9428d64634bd8e28ff345bf0eab60d53c18fa2fbdb0b9bc1e84df2b5f6"
+            }
+          }
+        }
+      ],
+      "protectedTrace": [
+        {
+          "requested": {
+            "decision": "ask",
+            "reason": "Action requires approval.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_x",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "352474eb6566f062f26bce5dee509d21d167fbc1f9398e5134c9ea7b2223d60a",
+            "rawCredentialIncluded": false
+          },
+          "approved": {
+            "decision": "allow",
+            "reason": "Action was approved locally.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_x",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "352474eb6566f062f26bce5dee509d21d167fbc1f9398e5134c9ea7b2223d60a",
+            "rawCredentialIncluded": false
+          },
+          "outcome": {
+            "decision": "allow",
+            "result": {
+              "value": 1
+            },
+            "rawCredentialIncluded": false,
+            "receipt": {
+              "agent": "fixture-agent",
+              "sink": "fixture-local",
+              "purpose": "paired authorization test",
+              "category": "read",
+              "adapter": "hidden-world",
+              "action": "read_x",
+              "resource": "hidden-world",
+              "status": "allow",
+              "credentialCount": 0,
+              "rawCredentialIncluded": false,
+              "requestHash": "352474eb6566f062f26bce5dee509d21d167fbc1f9398e5134c9ea7b2223d60a",
+              "resultDigest": "48208f9428d64634bd8e28ff345bf0eab60d53c18fa2fbdb0b9bc1e84df2b5f6"
+            }
+          }
+        },
+        {
+          "requested": {
+            "decision": "ask",
+            "reason": "Action requires approval.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_y",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "30a8ba837e612986f04bbaa394741cfe941665d1d7602bc880bda51f5359e1c5",
+            "rawCredentialIncluded": false
+          },
+          "approved": {
+            "decision": "allow",
+            "reason": "Action was approved locally.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_y",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "30a8ba837e612986f04bbaa394741cfe941665d1d7602bc880bda51f5359e1c5",
+            "rawCredentialIncluded": false
+          },
+          "outcome": {
+            "decision": "allow",
+            "result": {
+              "value": 1
+            },
+            "rawCredentialIncluded": false,
+            "receipt": {
+              "agent": "fixture-agent",
+              "sink": "fixture-local",
+              "purpose": "paired authorization test",
+              "category": "read",
+              "adapter": "hidden-world",
+              "action": "read_y",
+              "resource": "hidden-world",
+              "status": "allow",
+              "credentialCount": 0,
+              "rawCredentialIncluded": false,
+              "requestHash": "30a8ba837e612986f04bbaa394741cfe941665d1d7602bc880bda51f5359e1c5",
+              "resultDigest": "48208f9428d64634bd8e28ff345bf0eab60d53c18fa2fbdb0b9bc1e84df2b5f6"
+            }
+          }
+        }
+      ],
+      "permissiveCertificate": {
+        "safe": true,
+        "locallySafe": true,
+        "universallyComposable": true,
+        "actualSafe": true,
+        "reason": "CERTIFIED",
+        "witness": null,
+        "actualWitness": null
+      },
+      "protectedCertificate": {
+        "safe": false,
+        "locallySafe": true,
+        "universallyComposable": false,
+        "actualSafe": false,
+        "reason": "GLOBAL_SCOPE_REFINEMENT",
+        "witness": {
+          "left": "00",
+          "right": "11",
+          "call": "read_x",
+          "prefix": 1
+        },
+        "actualWitness": {
+          "left": "00",
+          "right": "11",
+          "call": "read_x",
+          "prefix": 1
+        }
+      },
+      "protectedReleasedValues": [
+        1,
+        1
+      ]
+    },
+    {
+      "order": [
+        "read_y",
+        "read_x"
+      ],
+      "brokerVisibleEqual": true,
+      "permissiveTrace": [
+        {
+          "requested": {
+            "decision": "ask",
+            "reason": "Action requires approval.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_y",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "30a8ba837e612986f04bbaa394741cfe941665d1d7602bc880bda51f5359e1c5",
+            "rawCredentialIncluded": false
+          },
+          "approved": {
+            "decision": "allow",
+            "reason": "Action was approved locally.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_y",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "30a8ba837e612986f04bbaa394741cfe941665d1d7602bc880bda51f5359e1c5",
+            "rawCredentialIncluded": false
+          },
+          "outcome": {
+            "decision": "allow",
+            "result": {
+              "value": 1
+            },
+            "rawCredentialIncluded": false,
+            "receipt": {
+              "agent": "fixture-agent",
+              "sink": "fixture-local",
+              "purpose": "paired authorization test",
+              "category": "read",
+              "adapter": "hidden-world",
+              "action": "read_y",
+              "resource": "hidden-world",
+              "status": "allow",
+              "credentialCount": 0,
+              "rawCredentialIncluded": false,
+              "requestHash": "30a8ba837e612986f04bbaa394741cfe941665d1d7602bc880bda51f5359e1c5",
+              "resultDigest": "48208f9428d64634bd8e28ff345bf0eab60d53c18fa2fbdb0b9bc1e84df2b5f6"
+            }
+          }
+        },
+        {
+          "requested": {
+            "decision": "ask",
+            "reason": "Action requires approval.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_x",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "352474eb6566f062f26bce5dee509d21d167fbc1f9398e5134c9ea7b2223d60a",
+            "rawCredentialIncluded": false
+          },
+          "approved": {
+            "decision": "allow",
+            "reason": "Action was approved locally.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_x",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "352474eb6566f062f26bce5dee509d21d167fbc1f9398e5134c9ea7b2223d60a",
+            "rawCredentialIncluded": false
+          },
+          "outcome": {
+            "decision": "allow",
+            "result": {
+              "value": 1
+            },
+            "rawCredentialIncluded": false,
+            "receipt": {
+              "agent": "fixture-agent",
+              "sink": "fixture-local",
+              "purpose": "paired authorization test",
+              "category": "read",
+              "adapter": "hidden-world",
+              "action": "read_x",
+              "resource": "hidden-world",
+              "status": "allow",
+              "credentialCount": 0,
+              "rawCredentialIncluded": false,
+              "requestHash": "352474eb6566f062f26bce5dee509d21d167fbc1f9398e5134c9ea7b2223d60a",
+              "resultDigest": "48208f9428d64634bd8e28ff345bf0eab60d53c18fa2fbdb0b9bc1e84df2b5f6"
+            }
+          }
+        }
+      ],
+      "protectedTrace": [
+        {
+          "requested": {
+            "decision": "ask",
+            "reason": "Action requires approval.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_y",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "30a8ba837e612986f04bbaa394741cfe941665d1d7602bc880bda51f5359e1c5",
+            "rawCredentialIncluded": false
+          },
+          "approved": {
+            "decision": "allow",
+            "reason": "Action was approved locally.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_y",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "30a8ba837e612986f04bbaa394741cfe941665d1d7602bc880bda51f5359e1c5",
+            "rawCredentialIncluded": false
+          },
+          "outcome": {
+            "decision": "allow",
+            "result": {
+              "value": 1
+            },
+            "rawCredentialIncluded": false,
+            "receipt": {
+              "agent": "fixture-agent",
+              "sink": "fixture-local",
+              "purpose": "paired authorization test",
+              "category": "read",
+              "adapter": "hidden-world",
+              "action": "read_y",
+              "resource": "hidden-world",
+              "status": "allow",
+              "credentialCount": 0,
+              "rawCredentialIncluded": false,
+              "requestHash": "30a8ba837e612986f04bbaa394741cfe941665d1d7602bc880bda51f5359e1c5",
+              "resultDigest": "48208f9428d64634bd8e28ff345bf0eab60d53c18fa2fbdb0b9bc1e84df2b5f6"
+            }
+          }
+        },
+        {
+          "requested": {
+            "decision": "ask",
+            "reason": "Action requires approval.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_x",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "352474eb6566f062f26bce5dee509d21d167fbc1f9398e5134c9ea7b2223d60a",
+            "rawCredentialIncluded": false
+          },
+          "approved": {
+            "decision": "allow",
+            "reason": "Action was approved locally.",
+            "agent": "fixture-agent",
+            "sink": "fixture-local",
+            "purpose": "paired authorization test",
+            "category": "read",
+            "adapter": "hidden-world",
+            "action": "read_x",
+            "resource": "hidden-world",
+            "argumentKeys": [],
+            "credentialCount": 0,
+            "requestHash": "352474eb6566f062f26bce5dee509d21d167fbc1f9398e5134c9ea7b2223d60a",
+            "rawCredentialIncluded": false
+          },
+          "outcome": {
+            "decision": "allow",
+            "result": {
+              "value": 1
+            },
+            "rawCredentialIncluded": false,
+            "receipt": {
+              "agent": "fixture-agent",
+              "sink": "fixture-local",
+              "purpose": "paired authorization test",
+              "category": "read",
+              "adapter": "hidden-world",
+              "action": "read_x",
+              "resource": "hidden-world",
+              "status": "allow",
+              "credentialCount": 0,
+              "rawCredentialIncluded": false,
+              "requestHash": "352474eb6566f062f26bce5dee509d21d167fbc1f9398e5134c9ea7b2223d60a",
+              "resultDigest": "48208f9428d64634bd8e28ff345bf0eab60d53c18fa2fbdb0b9bc1e84df2b5f6"
+            }
+          }
+        }
+      ],
+      "permissiveCertificate": {
+        "safe": true,
+        "locallySafe": true,
+        "universallyComposable": true,
+        "actualSafe": true,
+        "reason": "CERTIFIED",
+        "witness": null,
+        "actualWitness": null
+      },
+      "protectedCertificate": {
+        "safe": false,
+        "locallySafe": true,
+        "universallyComposable": false,
+        "actualSafe": false,
+        "reason": "GLOBAL_SCOPE_REFINEMENT",
+        "witness": {
+          "left": "00",
+          "right": "11",
+          "call": "read_y",
+          "prefix": 1
+        },
+        "actualWitness": {
+          "left": "00",
+          "right": "11",
+          "call": "read_y",
+          "prefix": 1
+        }
+      },
+      "protectedReleasedValues": [
+        1,
+        1
+      ]
+    }
+  ],
+  "counts": {
+    "orders": 2,
+    "pairedExecutions": 4,
+    "approvedActions": 8,
+    "brokerVisibleMismatches": 0,
+    "protectedContractRejections": 0,
+    "oracleContractSeparations": 2
+  },
+  "minimumCorrectiveContract": [
+    "transactionId",
+    "globalAuthorizationCommitment",
+    "localAuthorizationCommitment",
+    "preExecutionFactorizationCheck"
+  ],
+  "smallestClaim": "The current ActionBroker API cannot universally enforce cumulative authorization because its broker-visible inputs omit the global transaction scope; transaction-bound scope metadata and a fail-closed pre-execution check are necessary."
+}

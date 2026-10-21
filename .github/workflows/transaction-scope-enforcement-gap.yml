@@ -1,0 +1,41 @@
+name: transaction-scope-enforcement-gap
+
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-enforcement-gap-20261021]
+  pull_request:
+    paths:
+      - src/action-broker.js
+      - src/cumulative-authorization-contract.js
+      - scripts/verify-transaction-scope-gap.mjs
+      - scripts/audit-transaction-scope-gap.mjs
+      - test/transaction-scope-enforcement-gap.test.js
+      - research/pcc-runtime-product/TRANSACTION_SCOPE_ENFORCEMENT_GAP_*.md
+      - research/pcc-runtime-product/transaction_scope_enforcement_gap*.json
+      - .github/workflows/transaction-scope-enforcement-gap.yml
+  workflow_dispatch:
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: npm install --ignore-scripts
+      - name: Reproduce twice
+        run: |
+          node scripts/verify-transaction-scope-gap.mjs --output /tmp/primary-1.json
+          node scripts/verify-transaction-scope-gap.mjs --output /tmp/primary-2.json
+          cmp /tmp/primary-1.json /tmp/primary-2.json
+          cmp /tmp/primary-1.json research/pcc-runtime-product/transaction_scope_enforcement_gap.json
+      - name: Independent audit
+        run: |
+          node scripts/audit-transaction-scope-gap.mjs \
+            --primary research/pcc-runtime-product/transaction_scope_enforcement_gap.json \
+            --output /tmp/audit.json
+          cmp /tmp/audit.json research/pcc-runtime-product/transaction_scope_enforcement_gap_audit.json
+      - run: npm test
