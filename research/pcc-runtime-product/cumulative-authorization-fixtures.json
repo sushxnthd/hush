@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "frozenBeforeExecution": true,
+  "seed": 20261021,
+  "worlds": ["000", "001", "010", "011", "100", "101", "110", "111"],
+  "fixtures": [
+    {
+      "id": "parity-coordinate-split-with-slack",
+      "global": [0, 1, 1, 0, 1, 0, 0, 1],
+      "calls": [
+        {"id": "x", "authorization": [0, 0, 0, 0, 1, 1, 1, 1], "observation": [0, 0, 0, 0, 1, 1, 1, 1]},
+        {"id": "y", "authorization": [0, 0, 1, 1, 0, 0, 1, 1], "observation": [0, 0, 1, 1, 0, 0, 1, 1]},
+        {"id": "slack", "authorization": [0, 0, 0, 0, 0, 0, 0, 0], "observation": ["ok", "ok", "ok", "ok", "ok", "ok", "ok", "ok"]}
+      ],
+      "expected": {"universallyComposable": false, "actualSafe": false}
+    },
+    {
+      "id": "global-parity-scoped",
+      "global": [0, 1, 1, 0, 1, 0, 0, 1],
+      "calls": [
+        {"id": "parity", "authorization": [0, 1, 1, 0, 1, 0, 0, 1], "observation": [0, 1, 1, 0, 1, 0, 0, 1]},
+        {"id": "not-parity", "authorization": [1, 0, 0, 1, 0, 1, 1, 0], "observation": [1, 0, 0, 1, 0, 1, 1, 0]},
+        {"id": "slack", "authorization": [0, 0, 0, 0, 0, 0, 0, 0], "observation": [0, 0, 0, 0, 0, 0, 0, 0]}
+      ],
+      "expected": {"universallyComposable": true, "actualSafe": true}
+    },
+    {
+      "id": "latent-overbroad-constant-release",
+      "global": [0, 1, 1, 0, 1, 0, 0, 1],
+      "calls": [
+        {"id": "latent-x", "authorization": [0, 0, 0, 0, 1, 1, 1, 1], "observation": [0, 0, 0, 0, 0, 0, 0, 0]},
+        {"id": "slack", "authorization": [0, 0, 0, 0, 0, 0, 0, 0], "observation": [0, 0, 0, 0, 0, 0, 0, 0]}
+      ],
+      "expected": {"universallyComposable": false, "actualSafe": true}
+    },
+    {
+      "id": "identity-global-allows-local-refinement",
+      "global": [0, 1, 2, 3, 4, 5, 6, 7],
+      "calls": [
+        {"id": "x", "authorization": [0, 0, 0, 0, 1, 1, 1, 1], "observation": [0, 0, 0, 0, 1, 1, 1, 1]},
+        {"id": "y", "authorization": [0, 0, 1, 1, 0, 0, 1, 1], "observation": [0, 0, 1, 1, 0, 0, 1, 1]},
+        {"id": "z", "authorization": [0, 1, 0, 1, 0, 1, 0, 1], "observation": [0, 1, 0, 1, 0, 1, 0, 1]}
+      ],
+      "expected": {"universallyComposable": true, "actualSafe": true}
+    }
+  ]
+}
