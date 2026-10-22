@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import {atomicWriteJson,canonicalize,decryptJson,detectSensitive,encryptJson,sha256} from './core.js';
 import {certifyCumulativeAuthorization} from './cumulative-authorization-contract.js';
+import {certifyLifecycleTraceAuthorization} from './lifecycle-trace-contract.js';
 
 const DEFAULT_TTL=5*60*1000;
 const MAX_TTL=15*60*1000;
@@ -63,6 +64,10 @@ function safeReceipt(ticket,result,status,now){
     transactionId:ticket.transactionId,
     globalAuthorizationCommitment:ticket.globalAuthorizationCommitment,
     localAuthorizationCommitment:ticket.localAuthorizationCommitment,
+    ...(ticket.requireLifecycleTraceCertificate?{
+      lifecycleTraceCommitment:ticket.lifecycleTraceCommitment,
+      lifecycleTraceDecision:ticket.lifecycleTraceDecision
+    }:{}),
     status,
     credentialCount:ticket.credentialRefs.length,
     rawCredentialIncluded:false,
@@ -96,6 +101,11 @@ function safeTicket(ticket){
     globalAuthorizationCommitment:ticket.globalAuthorizationCommitment,
     localAuthorizationCommitment:ticket.localAuthorizationCommitment,
     authorizationScopeDecision:ticket.authorizationScopeDecision,
+    ...(ticket.requireLifecycleTraceCertificate?{
+      requireLifecycleTraceCertificate:true,
+      lifecycleTraceCommitment:ticket.lifecycleTraceCommitment,
+      lifecycleTraceDecision:ticket.lifecycleTraceDecision
+    }:{}),
     argumentKeys:Object.keys(ticket.arguments??{}).sort(),
     credentialCount:ticket.credentialRefs.length,
     createdAt:iso(ticket.createdAt),
@@ -168,19 +178,20 @@ export class ActionBroker {
     this.authorizationStateStore.save({v:1,transactions});
   }
 
-  registerAdapter({name,actions=['*'],execute,description='',authorizationScopes={}}={}){
+  registerAdapter({name,actions=['*'],execute,description='',authorizationScopes={},lifecycleTraces={}}={}){
     const id=text(name,'',120);
     if(!id) throw new Error('Action adapter name is required');
     if(typeof execute!=='function') throw new Error('Action adapter execute function is required');
     if(!authorizationScopes||typeof authorizationScopes!=='object'||Array.isArray(authorizationScopes)) throw new Error('authorizationScopes must be an action-to-map object');
-    const normalized={name:id,actions:unique(actions).sort(),execute,description:text(description,'',240),authorizationScopes:clone(authorizationScopes)};
+    if(!lifecycleTraces||typeof lifecycleTraces!=='object'||Array.isArray(lifecycleTraces)) throw new Error('lifecycleTraces must be an action-to-map object');
+    const normalized={name:id,actions:unique(actions).sort(),execute,description:text(description,'',240),authorizationScopes:clone(authorizationScopes),lifecycleTraces:clone(lifecycleTraces)};
     if(!normalized.actions.length) throw new Error('Action adapter must declare at least one supported action');
     this.adapters.set(id,normalized);
     return {name:normalized.name,actions:[...normalized.actions],description:normalized.description};
   }
 
   removeAdapter(name){ return this.adapters.delete(String(name)); }
-  listAdapters(){ return [...this.adapters.values()].map(({execute,authorizationScopes,...adapter})=>clone(adapter)).sort((a,b)=>a.name.localeCompare(b.name)); }
+  listAdapters(){ return [...this.adapters.values()].map(({execute,authorizationScopes,lifecycleTraces,...adapter})=>clone(adapter)).sort((a,b)=>a.name.localeCompare(b.name)); }
 
   registerAuthorizationTransaction({transactionId,worlds,globalAuthorization}={}){
     const id=text(transactionId,'',160);
@@ -220,7 +231,7 @@ export class ActionBroker {
     return adapter;
   }
 
-  request({adapter,action,agent='unknown-agent',sink='unknown-sink',purpose='unspecified',category='general',resource='*',arguments:args={},credentialRefs=[],ttlMs=DEFAULT_TTL,transactionId=null}={}){
+  request({adapter,action,agent='unknown-agent',sink='unknown-sink',purpose='unspecified',category='general',resource='*',arguments:args={},credentialRefs=[],ttlMs=DEFAULT_TTL,transactionId=null,requireLifecycleTraceCertificate=false}={}){
     const adapterName=text(adapter,'',120);
     const actionName=text(action,'',160);
     if(!adapterName||!actionName) throw new Error('adapter and action are required');
@@ -245,6 +256,9 @@ export class ActionBroker {
     let localAuthorization=null;
     let localAuthorizationCommitment=null;
     let authorizationScopeDecision=null;
+    let lifecycleTrace=null;
+    let lifecycleTraceCommitment=null;
+    let lifecycleTraceDecision=null;
     if(transactionId!=null){
       transaction=this.authorizationTransactions.get(String(transactionId));
       if(!transaction) throw new Error('Authorization transaction not found');
@@ -257,6 +271,14 @@ export class ActionBroker {
           authorizationScopeDecision=certificate.safe?'allow':'deny';
         }catch{ authorizationScopeDecision='deny'; }
       }else authorizationScopeDecision='deny';
+      if(requireLifecycleTraceCertificate){
+        lifecycleTrace=clone(trustedAdapter.lifecycleTraces[actionName]??trustedAdapter.lifecycleTraces['*']??null);
+        if(lifecycleTrace){
+          lifecycleTraceCommitment=sha256(canonicalize({v:1,adapter:adapterName,action:actionName,lifecycleTrace}));
+          try{ lifecycleTraceDecision=certifyLifecycleTraceAuthorization({worlds:transaction.worlds,globalAuthorization:transaction.globalAuthorization,traces:lifecycleTrace}).safe?'allow':'deny'; }
+          catch{ lifecycleTraceDecision='deny'; }
+        }else lifecycleTraceDecision='deny';
+      }
     }
     const ticket={
       id:`action_${crypto.randomBytes(24).toString('base64url')}`,
@@ -268,6 +290,10 @@ export class ActionBroker {
       localAuthorizationCommitment,
       localAuthorization,
       authorizationScopeDecision,
+      requireLifecycleTraceCertificate:Boolean(requireLifecycleTraceCertificate),
+      lifecycleTrace,
+      lifecycleTraceCommitment,
+      lifecycleTraceDecision,
       createdAt:now,expiresAt:now+ttl(ttlMs),approvedAt:null,deniedAt:null,denialReason:null,consumedAt:null,attemptedAt:null,receipt:null,consent:null,requestHash:null
     };
     const requestBinding={
@@ -278,6 +304,10 @@ export class ActionBroker {
       requestBinding.transactionId=ticket.transactionId;
       requestBinding.globalAuthorizationCommitment=ticket.globalAuthorizationCommitment;
       requestBinding.localAuthorizationCommitment=ticket.localAuthorizationCommitment;
+      if(ticket.requireLifecycleTraceCertificate){
+        requestBinding.requireLifecycleTraceCertificate=true;
+        requestBinding.lifecycleTraceCommitment=ticket.lifecycleTraceCommitment;
+      }
     }
     ticket.requestHash=sha256(canonicalize(requestBinding));
 
@@ -334,6 +364,17 @@ export class ActionBroker {
     const currentCommitment=sha256(canonicalize({v:1,adapter:ticket.adapter,action:ticket.action,localAuthorization:currentLocal}));
     const snapshotCommitment=sha256(canonicalize({v:1,adapter:ticket.adapter,action:ticket.action,localAuthorization:ticket.localAuthorization}));
     if(currentCommitment!==ticket.localAuthorizationCommitment||snapshotCommitment!==ticket.localAuthorizationCommitment) return {safe:false,reason:'LOCAL_AUTHORIZATION_COMMITMENT_MISMATCH'};
+    if(ticket.requireLifecycleTraceCertificate){
+      const currentTrace=adapter.lifecycleTraces[ticket.action]??adapter.lifecycleTraces['*']??null;
+      if(!currentTrace) return {safe:false,reason:'LIFECYCLE_TRACE_SCOPE_MISSING'};
+      const currentTraceCommitment=sha256(canonicalize({v:1,adapter:ticket.adapter,action:ticket.action,lifecycleTrace:currentTrace}));
+      const snapshotTraceCommitment=sha256(canonicalize({v:1,adapter:ticket.adapter,action:ticket.action,lifecycleTrace:ticket.lifecycleTrace}));
+      if(currentTraceCommitment!==ticket.lifecycleTraceCommitment||snapshotTraceCommitment!==ticket.lifecycleTraceCommitment) return {safe:false,reason:'LIFECYCLE_TRACE_COMMITMENT_MISMATCH'};
+      try{
+        const lifecycle=certifyLifecycleTraceAuthorization({worlds:transaction.worlds,globalAuthorization:transaction.globalAuthorization,traces:ticket.lifecycleTrace});
+        if(!lifecycle.safe) return {safe:false,reason:lifecycle.reason,witness:lifecycle.witness};
+      }catch{ return {safe:false,reason:'LIFECYCLE_TRACE_SCOPE_INVALID'}; }
+    }
     try{
       const certificate=certifyCumulativeAuthorization({
         worlds:transaction.worlds,
