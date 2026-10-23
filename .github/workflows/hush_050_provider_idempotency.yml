@@ -1,0 +1,26 @@
+name: HUSH-PCC-050 provider idempotency and crash contrast
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - "research/pcc-v2/HUSH_050_*"
+      - "test/action-broker-provider-idempotency.test.js"
+      - ".github/workflows/hush_050_provider_idempotency.yml"
+  workflow_dispatch:
+jobs:
+  receiver-idempotency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check and real local HTTP adversarial regression
+        run: |
+          node --check test/action-broker-provider-idempotency.test.js
+          node --test test/action-broker-provider-idempotency.test.js test/action-broker-crash-retry-duplicate.test.js test/action-broker-postdispatch-close.test.js
+      - name: Explicit release boundary
+        run: |
+          echo 'Receiver-owned idempotency is tested in a local model only.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No production egress mediation, third-party provider atomicity, or external review is established.' >> "$GITHUB_STEP_SUMMARY"
