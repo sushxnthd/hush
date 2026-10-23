@@ -1,0 +1,20 @@
+name: HUSH-048 fresh-process crash/ack-loss counterexample
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - "research/pcc-v2/HUSH_048_*"
+      - "test/action-broker-crash-retry-duplicate.test.js"
+      - ".github/workflows/hush_048_crash.yml"
+  workflow_dispatch:
+jobs:
+  real-process-restart:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Execute real HTTP crash/restart duplicate-effect witness
+        run: node --test test/action-broker-crash-retry-duplicate.test.js
