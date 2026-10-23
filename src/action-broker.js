@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import {atomicWriteJson,canonicalize,decryptJson,detectSensitive,encryptJson,sha256} from './core.js';
 import {certifyCumulativeAuthorization} from './cumulative-authorization-contract.js';
 import {certifyLifecycleTraceAuthorization} from './lifecycle-trace-contract.js';
+import {certifyObservableClosure} from './observable-closure-contract.js';
 
 const DEFAULT_TTL=5*60*1000;
 const MAX_TTL=15*60*1000;
@@ -68,6 +69,10 @@ function safeReceipt(ticket,result,status,now){
       lifecycleTraceCommitment:ticket.lifecycleTraceCommitment,
       lifecycleTraceDecision:ticket.lifecycleTraceDecision
     }:{}),
+    ...(ticket.requireObservableClosureCertificate?{
+      observableClosureCommitment:ticket.observableClosureCommitment,
+      observableClosureDecision:ticket.observableClosureDecision
+    }:{}),
     status,
     credentialCount:ticket.credentialRefs.length,
     rawCredentialIncluded:false,
@@ -106,6 +111,11 @@ function safeTicket(ticket){
       lifecycleTraceCommitment:ticket.lifecycleTraceCommitment,
       lifecycleTraceDecision:ticket.lifecycleTraceDecision
     }:{}),
+    ...(ticket.requireObservableClosureCertificate?{
+      requireObservableClosureCertificate:true,
+      observableClosureCommitment:ticket.observableClosureCommitment,
+      observableClosureDecision:ticket.observableClosureDecision
+    }:{}),
     argumentKeys:Object.keys(ticket.arguments??{}).sort(),
     credentialCount:ticket.credentialRefs.length,
     createdAt:iso(ticket.createdAt),
@@ -141,12 +151,14 @@ export class EncryptedAuthorizationStateStore {
  * registered by trusted local application code, not by AI-facing tools.
  */
 export class ActionBroker {
-  constructor({consentRegistry=null,secretResolver=null,now=()=>Date.now(),authorizationStateStore=null}={}){
+  constructor({consentRegistry=null,secretResolver=null,now=()=>Date.now(),authorizationStateStore=null,observableBoundaries={}}={}){
     this.consentRegistry=consentRegistry;
     this.secretResolver=secretResolver;
     this.now=now;
     this.adapters=new Map();
     this.authorizationStateStore=authorizationStateStore;
+    if(!observableBoundaries||typeof observableBoundaries!=='object'||Array.isArray(observableBoundaries)) throw new Error('observableBoundaries must be a broker-configured object');
+    this.observableBoundaries=clone(observableBoundaries);
     this.authorizationTransactions=this._loadAuthorizationTransactions();
     this.tickets=new Map();
     this.receipts=[];
@@ -224,6 +236,10 @@ export class ActionBroker {
     return {transactionId:transaction.id,globalAuthorizationCommitment:transaction.commitment,closed:true};
   }
 
+  _observableBoundary(adapter,action){
+    return clone(this.observableBoundaries[String(adapter)]?.[String(action)]??this.observableBoundaries[String(adapter)]?.['*']??null);
+  }
+
   _adapter(name,action){
     const adapter=this.adapters.get(String(name));
     if(!adapter) throw new Error('Action adapter is not registered locally');
@@ -231,7 +247,7 @@ export class ActionBroker {
     return adapter;
   }
 
-  request({adapter,action,agent='unknown-agent',sink='unknown-sink',purpose='unspecified',category='general',resource='*',arguments:args={},credentialRefs=[],ttlMs=DEFAULT_TTL,transactionId=null,requireLifecycleTraceCertificate=false}={}){
+  request({adapter,action,agent='unknown-agent',sink='unknown-sink',purpose='unspecified',category='general',resource='*',arguments:args={},credentialRefs=[],ttlMs=DEFAULT_TTL,transactionId=null,requireLifecycleTraceCertificate=false,requireObservableClosureCertificate=false}={}){
     const adapterName=text(adapter,'',120);
     const actionName=text(action,'',160);
     if(!adapterName||!actionName) throw new Error('adapter and action are required');
@@ -259,6 +275,9 @@ export class ActionBroker {
     let lifecycleTrace=null;
     let lifecycleTraceCommitment=null;
     let lifecycleTraceDecision=null;
+    let observableBoundary=null;
+    let observableClosureCommitment=null;
+    let observableClosureDecision=null;
     if(transactionId!=null){
       transaction=this.authorizationTransactions.get(String(transactionId));
       if(!transaction) throw new Error('Authorization transaction not found');
@@ -279,6 +298,14 @@ export class ActionBroker {
           catch{ lifecycleTraceDecision='deny'; }
         }else lifecycleTraceDecision='deny';
       }
+      if(requireObservableClosureCertificate){
+        observableBoundary=this._observableBoundary(adapterName,actionName);
+        try{
+          const certificate=certifyObservableClosure({worlds:transaction.worlds,globalAuthorization:transaction.globalAuthorization,...observableBoundary});
+          observableClosureDecision=certificate.safe?'allow':'deny';
+          observableClosureCommitment=certificate.safe?certificate.commitment:null;
+        }catch{ observableClosureDecision='deny'; }
+      }
     }
     const ticket={
       id:`action_${crypto.randomBytes(24).toString('base64url')}`,
@@ -294,6 +321,10 @@ export class ActionBroker {
       lifecycleTrace,
       lifecycleTraceCommitment,
       lifecycleTraceDecision,
+      requireObservableClosureCertificate:Boolean(requireObservableClosureCertificate),
+      observableBoundary,
+      observableClosureCommitment,
+      observableClosureDecision,
       createdAt:now,expiresAt:now+ttl(ttlMs),approvedAt:null,deniedAt:null,denialReason:null,consumedAt:null,attemptedAt:null,receipt:null,consent:null,requestHash:null
     };
     const requestBinding={
@@ -307,6 +338,10 @@ export class ActionBroker {
       if(ticket.requireLifecycleTraceCertificate){
         requestBinding.requireLifecycleTraceCertificate=true;
         requestBinding.lifecycleTraceCommitment=ticket.lifecycleTraceCommitment;
+      }
+      if(ticket.requireObservableClosureCertificate){
+        requestBinding.requireObservableClosureCertificate=true;
+        requestBinding.observableClosureCommitment=ticket.observableClosureCommitment;
       }
     }
     ticket.requestHash=sha256(canonicalize(requestBinding));
@@ -374,6 +409,17 @@ export class ActionBroker {
         const lifecycle=certifyLifecycleTraceAuthorization({worlds:transaction.worlds,globalAuthorization:transaction.globalAuthorization,traces:ticket.lifecycleTrace});
         if(!lifecycle.safe) return {safe:false,reason:lifecycle.reason,witness:lifecycle.witness};
       }catch{ return {safe:false,reason:'LIFECYCLE_TRACE_SCOPE_INVALID'}; }
+    }
+    if(ticket.requireObservableClosureCertificate){
+      const currentBoundary=this._observableBoundary(ticket.adapter,ticket.action);
+      if(!currentBoundary) return {safe:false,reason:'OBSERVABLE_CLOSURE_INCOMPLETE'};
+      try{
+        const certificate=certifyObservableClosure({worlds:transaction.worlds,globalAuthorization:transaction.globalAuthorization,...currentBoundary});
+        if(!certificate.safe) return {safe:false,reason:certificate.reason,witness:certificate.witness};
+        if(!ticket.observableBoundary||certificate.commitment!==ticket.observableClosureCommitment) return {safe:false,reason:'OBSERVABLE_CLOSURE_COMMITMENT_MISMATCH'};
+        const snapshot=certifyObservableClosure({worlds:transaction.worlds,globalAuthorization:transaction.globalAuthorization,...ticket.observableBoundary});
+        if(!snapshot.safe||snapshot.commitment!==ticket.observableClosureCommitment) return {safe:false,reason:'OBSERVABLE_CLOSURE_COMMITMENT_MISMATCH'};
+      }catch{ return {safe:false,reason:'OBSERVABLE_CLOSURE_INVALID'}; }
     }
     try{
       const certificate=certifyCumulativeAuthorization({
