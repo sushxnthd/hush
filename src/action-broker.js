@@ -458,14 +458,19 @@ export class ActionBroker {
     if(!scopeVerdict.safe) return this._denyBeforeDispatch(ticket,scopeVerdict);
 
     const adapter=this._adapter(ticket.adapter,ticket.action);
-    const credentials=[];
-    if(ticket.credentialRefs.length){
-      if(typeof this.secretResolver!=='function') throw new Error('No local credential resolver is configured');
-      for(const ref of ticket.credentialRefs) credentials.push(await this.secretResolver(ref));
-    }
-
+    // Synchronously reserve the one-use ticket before any await. Otherwise two
+    // concurrent execute() calls can both pass the initial attemptedAt guard.
     ticket.attemptedAt=this.now();
+    const credentials=[];
     try{
+      if(ticket.credentialRefs.length){
+        if(typeof this.secretResolver!=='function') throw new Error('No local credential resolver is configured');
+        for(const ref of ticket.credentialRefs) credentials.push(await this.secretResolver(ref));
+      }
+      // Credential resolution is asynchronous. Transaction closure or a scope
+      // change during that await must be checked again before adapter dispatch.
+      const dispatchVerdict=this._scopeVerdict(ticket);
+      if(!dispatchVerdict.safe) return this._denyBeforeDispatch(ticket,dispatchVerdict);
       const rawResult=await adapter.execute({
         action:ticket.action,
         arguments:clone(ticket.arguments),
