@@ -1,6 +1,6 @@
 # HUSH-PCC-049 — post-dispatch cancellation boundary
 
-**Date: 2026-10-23. Frozen before execution at `c166c8a`. Evidence tier: executable real-loopback HTTP adversarial test, currently awaiting independent hosted execution.** No deployment readiness or external security review is claimed.
+**Date: 2026-10-23. Frozen before execution at `c166c8a`. Evidence tier: executable real-loopback HTTP adversarial test, independently reproduced in hosted GitHub Actions.** No deployment readiness or external security review is claimed.
 
 ## Mechanism and predicted counterexample
 
@@ -37,6 +37,6 @@ node --test test/action-broker-concurrency-closure.test.js
 node --test test/action-broker-crash-retry-duplicate.test.js
 ```
 
-Dedicated CI: [HUSH-049 run 40004005586](https://github.com/sushxnthd/hush/actions/runs/40004005586). **Status at report creation: queued; no passing outcome claimed.** The dedicated workflow runs the new real-HTTP test and both prior race/crash regression suites.
+Dedicated CI: [HUSH-049 run 40004005586](https://github.com/sushxnthd/hush/actions/runs/40004005586). **CI 40004005586 completed successfully** on the test/workflow commit `2aa4e5a`, running the new real-HTTP counterexample and both prior race/crash regression suites. This success verifies the expected failure witness, not production security. Later documentation-only CI runs have separate statuses. The dedicated workflow runs the new real-HTTP test and both prior race/crash regression suites.
 
 This is a classical lifecycle/TOCTOU boundary, not a novel general noninterference theorem. Hush draft PR #45 remains unmerged and not production-ready.
