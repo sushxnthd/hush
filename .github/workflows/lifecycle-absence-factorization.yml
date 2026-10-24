@@ -1,0 +1,55 @@
+name: lifecycle-absence-factorization
+
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - src/action-broker.js
+      - src/lifecycle-trace-contract.js
+      - test/lifecycle-trace-*.test.js
+      - test/transaction-scope-*.test.js
+      - research/pcc-runtime-product/*lifecycle_absence_factorization*
+      - research/pcc-runtime-product/LIFECYCLE_ABSENCE_FACTORING_*.md
+      - .github/workflows/lifecycle-absence-factorization.yml
+  pull_request:
+    paths:
+      - src/action-broker.js
+      - src/lifecycle-trace-contract.js
+      - test/lifecycle-trace-*.test.js
+      - test/transaction-scope-*.test.js
+      - research/pcc-runtime-product/*lifecycle_absence_factorization*
+      - research/pcc-runtime-product/LIFECYCLE_ABSENCE_FACTORING_*.md
+      - .github/workflows/lifecycle-absence-factorization.yml
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reproduce exact primary artifact twice
+        run: |
+          node research/pcc-runtime-product/run_lifecycle_absence_factorization.mjs /tmp/result-1.json
+          node research/pcc-runtime-product/run_lifecycle_absence_factorization.mjs /tmp/result-2.json
+          cmp /tmp/result-1.json /tmp/result-2.json
+          cmp /tmp/result-1.json research/pcc-runtime-product/lifecycle_absence_factorization.json
+      - name: Independent checker
+        run: |
+          python3 research/pcc-runtime-product/audit_lifecycle_absence_factorization.py /tmp/result-1.json --output /tmp/audit.json
+          cmp /tmp/audit.json research/pcc-runtime-product/lifecycle_absence_factorization_audit.json
+      - name: Focused and predecessor tests
+        run: |
+          node --test \
+            test/lifecycle-trace-contract.test.js \
+            test/lifecycle-trace-enforcement.test.js \
+            test/transaction-scope-enforcement.test.js \
+            test/transaction-scope-recovery.test.js
