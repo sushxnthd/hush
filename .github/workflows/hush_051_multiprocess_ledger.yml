@@ -1,0 +1,29 @@
+name: HUSH-PCC-051 multi-worker provider idempotency falsification
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - "research/pcc-v2/HUSH_051_*"
+      - "test/action-broker-provider-multiprocess-ledger.test.js"
+      - ".github/workflows/hush_051_multiprocess_ledger.yml"
+  workflow_dispatch:
+jobs:
+  multi-worker-negative-control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compile and run HUSH-051 real HTTP multi-process falsification
+        run: |
+          node --check test/action-broker-provider-multiprocess-ledger.test.js
+          node --test test/action-broker-provider-multiprocess-ledger.test.js
+      - name: Preserve previous HUSH-048 through HUSH-050 contrasts
+        run: |
+          node --test test/action-broker-crash-retry-duplicate.test.js test/action-broker-postdispatch-close.test.js test/action-broker-provider-idempotency.test.js
+      - name: Explicit release boundary
+        run: |
+          echo 'A fsynced JSON receiver ledger is not a linearizable cross-worker idempotency store.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Do not claim exactly-once effects, runtime egress mediation, or production readiness.' >> "$GITHUB_STEP_SUMMARY"
