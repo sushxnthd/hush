@@ -1,0 +1,21 @@
+name: HUSH-052 preapproval completion-order information flow
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - "research/pcc-v2/HUSH_052_*"
+      - "test/action-broker-preapproval-order-channel.test.js"
+      - ".github/workflows/hush-052-preapproval-order.yml"
+  workflow_dispatch:
+jobs:
+  adversarial-http-order:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check executable experiment
+        run: node --check test/action-broker-preapproval-order-channel.test.js
+      - name: Real ActionBroker and HTTP completion-order counterexample
+        run: node --test test/action-broker-preapproval-order-channel.test.js
+      - name: Prior end-to-end authorization failure controls
+        run: node --test test/action-broker-real-network-counterexample.test.js test/action-broker-postdispatch-close.test.js
