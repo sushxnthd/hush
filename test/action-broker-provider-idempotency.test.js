@@ -21,8 +21,13 @@ function persistLedger(file,ledger){
     fsyncSync(fd);
   }finally{closeSync(fd);}
   renameSync(tmp,file);
-  const dir=openSync(dirname(file),'r');
-  try{fsyncSync(dir);}finally{closeSync(dir);}
+  // Directory fsync is a POSIX durability primitive. Windows does not expose
+  // an equivalent directory handle through Node's fs API; the file itself is
+  // already fsynced before the atomic rename.
+  if(process.platform!=='win32'){
+    const dir=openSync(dirname(file),'r');
+    try{fsyncSync(dir);}finally{closeSync(dir);}
+  }
 }
 async function receiver(file){
   const ledger=readLedger(file);
