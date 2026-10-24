@@ -6,6 +6,7 @@ on:
       - "research/pcc-v2/HUSH_052_*"
       - "test/action-broker-preapproval-order-channel.test.js"
       - ".github/workflows/hush-052-preapproval-order.yml"
+      - "scripts/production-readiness.mjs"
   workflow_dispatch:
 jobs:
   adversarial-http-order:
@@ -19,3 +20,6 @@ jobs:
         run: node --test test/action-broker-preapproval-order-channel.test.js
       - name: Prior end-to-end authorization failure controls
         run: node --test test/action-broker-real-network-counterexample.test.js test/action-broker-postdispatch-close.test.js
+      - name: Assert production gate blocks without external order/timing attestation
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; const s=fs.readFileSync('scripts/production-readiness.mjs','utf8'); if(!s.includes('runtime-observable-order.json')) process.exit(1); if(fs.existsSync('release/attestations/runtime-observable-order.json')) process.exit(2)"
