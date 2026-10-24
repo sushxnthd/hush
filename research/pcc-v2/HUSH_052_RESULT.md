@@ -41,3 +41,7 @@ The relevant compositional condition is equality of **whole externally observabl
 ## Next decisive Hush step
 
 Independent hosted CI confirmation of the actual broker integration; then extend to a **real deployed-style broker-owned effect boundary** with crash/restart/cancellation and externally observed scheduling, and obtain external security review. Do not infer whole-runtime security from finite trace parity or local wrapper tests. Preserve draft PR #45 and avoid merge.
+
+## Hosted implementation verification (post-report addendum)
+
+GitHub Actions [HUSH-052 run 40087734867](https://github.com/sushxnthd/hush/actions/runs/40087734867) completed its `adversarial-http-order` job **SUCCESS** on implementation/release-gate commit `f0a18e211f891c9e9725134638d4732de58bf449`. The real `ActionBroker` plus HTTP completion-order counterexample, HUSH-046/049 predecessor controls, and explicit missing-attestation release-blocker assertion all passed. This supersedes the initial stub-only local verification limitation for the tested source revision. The final documentation-head run 40087762427 was queued at this addendum's check. The result remains a counterexample to an intentionally insecure wrapper, **not** a deployed vulnerability or general runtime noninterference certification.
