@@ -20,7 +20,7 @@ const workerSource = [
   "let ledger=existsSync(file)?JSON.parse(readFileSync(file,'utf8')):{version:1,keys:{},effects:[]};",
   "function persist(next){const tmp=file+'.new';const fd=openSync(tmp,'w',0o600);",
   "try{writeFileSync(fd,JSON.stringify(next));fsyncSync(fd);}finally{closeSync(fd);}",
-  "renameSync(tmp,file);const d=openSync(dirname(file),'r');try{fsyncSync(d);}finally{closeSync(d);}}",
+  "renameSync(tmp,file);if(process.platform!=='win32'){const d=openSync(dirname(file),'r');try{fsyncSync(d);}finally{closeSync(d);}}}",
   "const server=createServer(async(req,res)=>{",
   "let raw='';for await(const chunk of req)raw+=chunk;",
   "const key=req.headers['idempotency-key'];",
