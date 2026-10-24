@@ -35,4 +35,4 @@ node --test test/action-broker-crash-retry-duplicate.test.js test/action-broker-
 node scripts/production-readiness.mjs --json
 ```
 
-The last command is expected to report release **BLOCK**, not PASS. This is deliberate; production attestation evidence is missing.
+The last command is expected to report release **BLOCK**, not PASS. This is deliberate; production attestation evidence is missing. **Follow-up [GitHub Actions run 40062229154](https://github.com/sushxnthd/hush/actions/runs/40062229154), commit `f50480a206e4d82cf6a7c910e78d2407a0c50877`, completed SUCCESS**, independently executing the multi-process test, all HUSH-048–050 controls, and an explicit assertion that `Authority & real actions` contains a failing provider-side linearizable-idempotency release requirement. This confirms the fail-closed release gate on the tested source revision; it does not authenticate any real provider.
