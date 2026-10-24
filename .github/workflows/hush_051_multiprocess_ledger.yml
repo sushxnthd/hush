@@ -23,6 +23,10 @@ jobs:
       - name: Preserve previous HUSH-048 through HUSH-050 contrasts
         run: |
           node --test test/action-broker-crash-retry-duplicate.test.js test/action-broker-postdispatch-close.test.js test/action-broker-provider-idempotency.test.js
+      - name: Verify explicit fail-closed production release blocker
+        run: |
+          node scripts/production-readiness.mjs --json > /tmp/hush-051-readiness.json || true
+          node -e "const r=require('/tmp/hush-051-readiness.json');const a=r.domains.find(d=>d.name==='Authority & real actions');if(r.status!=='block'||!a||!a.release.some(x=>x.label.includes('linearizable idempotency')&&!x.pass))process.exit(1);"
       - name: Explicit release boundary
         run: |
           echo 'A fsynced JSON receiver ledger is not a linearizable cross-worker idempotency store.' >> "$GITHUB_STEP_SUMMARY"
