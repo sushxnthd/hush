@@ -66,7 +66,7 @@ const dimensions=[
     release:[
       ['real provider action E2E',()=>attestation('release/attestations/real-actions-e2e.json')],
       ['independent runtime egress mediation and crash/cancel replay',()=>attestation('release/attestations/runtime-egress-mediation.json')],
-      ['independent preapproval response-order/timing noninterference evidence',()=>attestation('release/attestations/runtime-observable-order.json')],
+      ['independent preapproval public-hash/order/timing noninterference evidence',()=>attestation('release/attestations/runtime-observable-order.json')],
       ['provider-side linearizable idempotency, collision, retry and retention evidence',()=>attestation('release/attestations/provider-idempotency-linearizability.json')]
     ]
   },
