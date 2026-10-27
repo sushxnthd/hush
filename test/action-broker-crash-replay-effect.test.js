@@ -22,9 +22,13 @@ function spawnWorker(ledger,mode,policy){
   child.stderr.setEncoding('utf8');
   child.stderr.on('data',chunk=>{stderr+=chunk;});
   child.testStderr=()=>stderr;
+  child.testMessages=[];
+  child.on('message',message=>child.testMessages.push(message));
   return child;
 }
 function waitPhase(child,phase){
+  const cached=child.testMessages.find(message=>message?.phase===phase);
+  if(cached) return Promise.resolve(cached);
   return new Promise((resolve,reject)=>{
     const timeout=setTimeout(()=>finish(new Error('Timed out waiting for '+phase)),8000);
     function finish(error,message){
@@ -46,6 +50,7 @@ function waitPhase(child,phase){
 }
 async function crashAfterEffect(ledger,policy){
   const child=spawnWorker(ledger,'crash',policy);
+  const exit=once(child,'exit');
   try{
     const effect=await waitPhase(child,'effect_committed');
     const independentlyRead=ledgerRows(ledger);
@@ -53,7 +58,6 @@ async function crashAfterEffect(ledger,policy){
     assert.equal(independentlyRead[0].key,effect.requestHash);
     assert.equal(effect.applied,true);
     assert.equal(child.exitCode,null,'worker must still be running before kill');
-    const exit=once(child,'exit');
     assert.equal(child.kill('SIGKILL'),true);
     const [code,signal]=await exit;
     assert.equal(code,null);
@@ -65,10 +69,11 @@ async function crashAfterEffect(ledger,policy){
 }
 async function replayAfterCrash(ledger,policy){
   const child=spawnWorker(ledger,'replay',policy);
+  const exit=once(child,'exit');
   try{
     const effect=await waitPhase(child,'effect_committed');
     const done=await waitPhase(child,'done');
-    const [code,signal]=await once(child,'exit');
+    const [code,signal]=await exit;
     assert.equal(code,0,child.testStderr());
     assert.equal(signal,null);
     assert.equal(done.receipts,1);
