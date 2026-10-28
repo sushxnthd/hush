@@ -75,7 +75,12 @@ test('HUSH-049: transaction closure cannot retract a previously dispatched async
     assert.throws(()=>transaction(recovered),/closed/,'H2 closed state persists');
     release.resolve();
     const result=await pending;
-    assert.equal(result.decision,'allow','H4 broker reports completion');
+    // HUSH-060 closes the broker-owned result channel after revocation,
+    // while preserving HUSH-049's actual external-effect counterexample.
+    assert.equal(result.decision,'deny','H4 broker suppresses the late result');
+    assert.equal(Object.hasOwn(result,'result'),false);
+    assert.equal(result.receipt.resultDigest,null);
+    assert.match(result.reason,/after dispatch/);
     assert.deepEqual(sink.received,[{event:'post-dispatch-effect',phase:'after-close'}],
       'H3 real external effect committed after durable closure');
   }finally{
