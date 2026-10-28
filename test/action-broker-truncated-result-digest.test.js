@@ -77,5 +77,6 @@ test('HUSH-059 small explicitly approved result remains readable',async()=>{
   const a=await world(0,{small:true});
   assert.equal(a.effects,1);
   assert.equal(a.outcome.decision,'allow');
-  assert.deepEqual(a.outcome.result,{public:'small-safe'});
+  assert.equal(a.outcome.result.public,'small-safe');
+  assert.deepEqual(Object.keys(a.outcome.result),['public']);
 });
