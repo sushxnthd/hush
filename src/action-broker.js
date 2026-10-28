@@ -42,8 +42,12 @@ function replaceExactSecrets(value,secrets){
   }
   if(Array.isArray(value)) return value.map(item=>replaceExactSecrets(item,secrets));
   if(typeof value==='object'){
-    const out={};
-    for(const [key,item] of Object.entries(value)) out[key]=replaceExactSecrets(item,secrets);
+    const out=Object.create(null);
+    for(const [key,item] of Object.entries(value)){
+      const safeKey=replaceExactSecrets(key,secrets);
+      if(Object.hasOwn(out,safeKey)) throw new Error('Result keys collide after credential redaction');
+      out[safeKey]=replaceExactSecrets(item,secrets);
+    }
     return out;
   }
   return value;
@@ -488,7 +492,8 @@ export class ActionBroker {
       ticket.consumedAt=this.now();
       ticket.receipt=safeReceipt(ticket,undefined,'error',ticket.consumedAt);
       this.receipts.push(ticket.receipt);
-      return {decision:'error',reason:error?.message||'Action execution failed.',receipt:clone(ticket.receipt),rawCredentialIncluded:false};
+      // Adapter/credential-resolver exceptions are untrusted and may contain secrets.
+      return {decision:'error',reason:'Action execution failed.',receipt:clone(ticket.receipt),rawCredentialIncluded:false};
     }
   }
 
