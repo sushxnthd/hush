@@ -484,6 +484,21 @@ export class ActionBroker {
         credentials:[...credentials],
         request:{agent:ticket.agent,sink:ticket.sink,purpose:ticket.purpose,category:ticket.category,resource:ticket.resource,requestHash:ticket.requestHash}
       });
+      // HUSH-060: authorization can be revoked while an asynchronous adapter
+      // is awaiting a provider response. Do not release, redact, serialize or
+      // hash its private result until scope is revalidated at completion.
+      // This only gates broker-to-agent output; provider effects are irreversible.
+      const completionVerdict=this._scopeVerdict(ticket);
+      if(!completionVerdict.safe){
+        const at=this.now();
+        ticket.deniedAt=at;
+        ticket.consumedAt=at;
+        ticket.denialReason='Action result suppressed after dispatch because authorization is no longer valid; external effects may have occurred.';
+        ticket.receipt=safeReceipt(ticket,undefined,'deny',at);
+        this.receipts.push(ticket.receipt);
+        return {decision:'deny',reason:ticket.denialReason,
+          receipt:clone(ticket.receipt),rawCredentialIncluded:false};
+      }
       let result=replaceExactSecrets(clone(rawResult),credentials);
       const bytes=Buffer.byteLength(JSON.stringify(result));
       // Suppressed private result content must not reappear as a digest oracle.
