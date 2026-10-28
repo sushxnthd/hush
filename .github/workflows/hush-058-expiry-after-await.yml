@@ -1,0 +1,28 @@
+name: HUSH-058 async-expiry real HTTP falsification
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - 'src/action-broker.js'
+      - 'test/action-broker-expiry-after-await.test.js'
+      - '.github/workflows/hush-058-expiry-after-await.yml'
+      - 'research/pcc-v2/HUSH_058_*'
+  pull_request:
+    paths:
+      - 'src/action-broker.js'
+      - 'test/action-broker-expiry-after-await.test.js'
+      - '.github/workflows/hush-058-expiry-after-await.yml'
+  workflow_dispatch:
+jobs:
+  expiry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Frozen HUSH-058 prepatch counterexample and controls
+        run: node --test test/action-broker-expiry-after-await.test.js
+        env:
+          HUSH058_EXPECT_LEAK: '1'
