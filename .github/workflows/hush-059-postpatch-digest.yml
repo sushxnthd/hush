@@ -29,4 +29,4 @@ jobs:
       - name: Frozen HUSH-059 real HTTP postpatch noninterference and controls
         run: node --test test/action-broker-truncated-result-digest.test.js
       - name: Existing credential redaction and expiry regressions
-        run: node --test test/action-broker-credential-output.test.js test/action-broker-expiry-after-await.test.js
+        run: node --test test/action-broker-credential-output-redaction.test.js test/action-broker-expiry-after-await.test.js
