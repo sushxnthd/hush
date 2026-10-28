@@ -486,7 +486,9 @@ export class ActionBroker {
       });
       let result=replaceExactSecrets(clone(rawResult),credentials);
       const bytes=Buffer.byteLength(JSON.stringify(result));
-      if(bytes>MAX_RESULT_BYTES) result={truncated:true,reason:'Action result exceeded the Hush broker output limit.',digest:sha256(canonicalize(result))};
+      // Suppressed private result content must not reappear as a digest oracle.
+      // The receipt hashes only the public, truncated projection below.
+      if(bytes>MAX_RESULT_BYTES) result={truncated:true,reason:'Action result exceeded the Hush broker output limit.'};
       ticket.consumedAt=this.now();
       ticket.receipt=safeReceipt(ticket,result,'allow',ticket.consumedAt);
       this.receipts.push(ticket.receipt);
