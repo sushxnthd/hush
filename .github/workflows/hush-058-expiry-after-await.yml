@@ -22,7 +22,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Frozen HUSH-058 prepatch counterexample and controls
+      - name: Frozen HUSH-058 patched expiry and controls
         run: node --test test/action-broker-expiry-after-await.test.js
-        env:
-          HUSH058_EXPECT_LEAK: '1'
