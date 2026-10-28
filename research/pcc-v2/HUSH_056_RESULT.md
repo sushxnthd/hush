@@ -25,3 +25,13 @@ The test also checks that a real SIGKILL occurred, the first effect was fsynced 
 A complete broker claim must cover not only authorized return-value projections but the **joint trace** of effect, acknowledgment, crash, retry and externally visible provider state. A returned receipt is not a linearization point for an already-applied external effect. A silent crash is not a proof of non-execution. This is the familiar exactly-once/idempotency boundary in distributed systems, not a new theorem. The direct enforcement consequence is to treat post-dispatch unknown outcomes as **UNKNOWN/RECONCILE**, not automatically safe-to-retry, and to demand independently verified provider idempotency for release.
 
 [Release blocker](../pcc-runtime-product/HUSH_046_RELEASE_BLOCKER.md) now requires provider-specific crash/replay, cancellation, concurrent retry, collision and retention evidence. **Production remains BLOCKED.** Lucent E002-371's separate research branch and draft PR #26 were not modified by this Hush experiment.
+
+## Hosted independent execution verified (2026-10-28 audit of 2026-10-27 run)
+
+[GitHub Actions run 40428809747](https://github.com/sushxnthd/hush/actions/runs/40428809747), job `121941190748`, **completed successfully** on branch commit `2afa652adbcbe32579e301ad00ef17ebe21c30f1`. The hosted Node runner executed the actual ActionBroker SIGKILL/restart test with **3/3 passing** cases:
+
+1. A durable provider effect followed by process crash and unprotected reapproval/replay produced the expected duplicate effect.
+2. A durable simulated-provider idempotency key suppressed the duplicate effect.
+3. The no-retry control preserved an effect despite the missing broker receipt.
+
+The same hosted job passed **2/2 HUSH-055 receipt-hash controls** and **1/1 HUSH-053 request-hash control**. The production-readiness script returned the required `block` status. These are observed *hosted software-test* outcomes, not external provider guarantees, a new distributed-systems theorem, or deployment review. Concurrent provider retries, idempotency retention/collision and external runtime egress mediation remain unverified. **Production BLOCKED.**
