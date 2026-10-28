@@ -1,0 +1,32 @@
+name: HUSH-059 postpatch private-result noninterference
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - '.github/workflows/hush-059-postpatch-digest.yml'
+      - 'src/action-broker.js'
+      - 'test/action-broker-truncated-result-digest.test.js'
+  pull_request:
+    paths:
+      - '.github/workflows/hush-059-postpatch-digest.yml'
+      - 'src/action-broker.js'
+      - 'test/action-broker-truncated-result-digest.test.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  two-world-private-result:
+    if: github.repository == 'sushxnthd/hush'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Frozen HUSH-059 real HTTP postpatch noninterference and controls
+        run: node --test test/action-broker-truncated-result-digest.test.js
+      - name: Existing credential redaction and expiry regressions
+        run: node --test test/action-broker-credential-output.test.js test/action-broker-expiry-after-await.test.js
