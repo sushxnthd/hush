@@ -20,7 +20,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Frozen prepatch expected-leak replay
+      - name: Postpatch two-world closure and live HTTP controls
         env:
-          HUSH060_EXPECT_LEAK: '1'
+          HUSH060_EXPECT_LEAK: '0'
         run: node --test test/action-broker-postdispatch-private-result.test.js
+      - name: Earlier post-dispatch external-effect witness
+        run: node --test test/action-broker-postdispatch-close.test.js
+      - name: Expiry, concurrent closure and private-result regression
+        run: node --test test/action-broker-expiry-after-await.test.js test/action-broker-concurrency-closure.test.js test/action-broker-truncated-result-digest.test.js
