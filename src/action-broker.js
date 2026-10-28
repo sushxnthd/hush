@@ -391,6 +391,9 @@ export class ActionBroker {
   }
 
   _scopeVerdict(ticket){
+    // A ticket can expire while asynchronous credential resolution is pending.
+    // Re-evaluate at every pre-dispatch scope check, including unscoped actions.
+    if(this.now()>=ticket.expiresAt) return {safe:false,reason:'ACTION_TICKET_EXPIRED'};
     if(!ticket.transactionId) return {safe:true,reason:'UNSCOPED'};
     const transaction=this.authorizationTransactions.get(ticket.transactionId);
     if(!transaction) return {safe:false,reason:'AUTHORIZATION_TRANSACTION_MISSING'};
