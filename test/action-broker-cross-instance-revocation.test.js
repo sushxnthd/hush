@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
+import {spawnSync} from 'node:child_process';
 import {mkdtempSync,rmSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -45,8 +46,19 @@ async function scenario(bit,{closeFromOtherBroker=false,corruptStore=false,appro
     }
     await arrived.promise;
     if(closeFromOtherBroker){
-      const b=new ActionBroker({authorizationStateStore:store});
-      assert.equal(b.closeAuthorizationTransaction('tx').closed,true);
+      // Real second OS process, not merely a second instance in this event loop.
+      const moduleUrl=new URL('../src/action-broker.js',import.meta.url).href;
+      const childCode=`import {ActionBroker,EncryptedAuthorizationStateStore} from ${JSON.stringify(moduleUrl)};
+const store=new EncryptedAuthorizationStateStore({file:process.env.HUSH061_FILE,key:Buffer.from(process.env.HUSH061_KEY,'hex')});
+const broker=new ActionBroker({authorizationStateStore:store});
+if(!broker.closeAuthorizationTransaction('tx').closed)process.exit(2);
+process.stdout.write('durably-closed');`;
+      const child=spawnSync(process.execPath,['--input-type=module','-e',childCode],{
+        env:{...process.env,HUSH061_FILE:stateFile,HUSH061_KEY:key.toString('hex')},
+        encoding:'utf8',timeout:10000
+      });
+      assert.equal(child.status,0,'separate process must durably close: '+child.stderr);
+      assert.equal(child.stdout,'durably-closed');
       const c=new ActionBroker({authorizationStateStore:store});
       assert.throws(()=>c.registerAuthorizationTransaction({transactionId:'tx',worlds,globalAuthorization:parity}),/closed/);
       assert.equal(a.authorizationTransactions.get('tx').closedAt,null,'A deliberately holds stale authorization');
