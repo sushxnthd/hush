@@ -30,3 +30,7 @@ The [prepatch GitHub Actions run 40813437683](https://github.com/sushxnthd/hush/
 6. **Independent replay/review:** an external security review, a precise deployed threat model, production audit logging and fail-closed integration tests are absent.
 
 **Enforcement consequence:** Treat a durable close detected at the completion cut as a content-free denial with null result digest. Do not advertise cross-process revocation safety, provider-side secrecy or deployment readiness. Hush production remains BLOCKED. Lucent E002-371 human validation remains primary and untouched.
+
+## Hosted verification update
+
+[Postpatch hosted run 40813456838](https://github.com/sushxnthd/hush/actions/runs/40813456838) completed successfully on patch commit `4a344c1`, confirming the original separate-instance real-HTTP regression and existing HUSH-058/060 controls. The stronger second-OS-process version in [run 40813484511](https://github.com/sushxnthd/hush/actions/runs/40813484511) remained queued at this update; do not extrapolate the in-process success to hosted child-process verification. The prepatch failure remains preserved.
