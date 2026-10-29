@@ -163,3 +163,50 @@ await store.withExclusiveLockAsync(async()=>{process.stdout.write('HELD');proces
     assert.equal(closeInIndependentProcess(file,key),'CLOSED');
   }finally{rmSync(dir,{recursive:true,force:true});}
 });
+
+test('HUSH-066 negative control: provider can commit queued effect after durable revocation',{timeout:30000},async()=>{
+  for(const secret of ['HUSH066_DELAYED_ZERO','HUSH066_DELAYED_ONE']){
+    const dir=mkdtempSync(join(tmpdir(),'hush066-delayed-'));
+    const file=join(dir,'auth.json'),key=randomBytes(32),queue=[],committed=[];
+    const server=createServer(async(req,res)=>{
+      let body='';
+      for await(const chunk of req) body+=chunk.toString('utf8');
+      queue.push(JSON.parse(body));
+      res.writeHead(202,{'content-type':'application/json'});
+      res.end(JSON.stringify({accepted:true}));
+    });
+    await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+    try{
+      const broker=new EffectFencedActionBroker({
+        authorizationStateStore:new EncryptedAuthorizationStateStore({file,key}),
+        secretResolver:async()=>secret
+      });
+      broker.registerAuthorizationTransaction(auth);
+      broker.registerAdapter({name:'queue066',actions:['enqueue'],authorizationScopes:{enqueue:parity},
+        execute:async({credentials})=>{
+          const response=await fetch('http://127.0.0.1:'+server.address().port+'/enqueue',{
+            method:'POST',headers:{'content-type':'application/json'},
+            body:JSON.stringify({credential:credentials[0]})
+          });
+          return response.json();
+        }
+      });
+      const ticket=broker.request({adapter:'queue066',action:'enqueue',
+        transactionId:'tx',agent:'agent066',sink:'sink066',credentialRefs:['opaque-066']});
+      broker.approve(ticket.actionId);
+      const result=await broker.execute({actionId:ticket.actionId,agent:'agent066',sink:'sink066'});
+      assert.equal(result.decision,'allow');
+      assert.equal(queue.length,1);
+      assert.equal(committed.length,0);
+      assert.equal(closeInIndependentProcess(file,key),'CLOSED');
+      // Model a provider worker processing a previously accepted job only now.
+      committed.push(queue.shift());
+      assert.deepEqual(committed,[{credential:secret}],
+        'a queued provider-side effect can occur after durable revocation');
+      assert.equal(JSON.stringify(result).includes(secret),false);
+    }finally{
+      await new Promise(resolve=>server.close(resolve));
+      rmSync(dir,{recursive:true,force:true});
+    }
+  }
+});
