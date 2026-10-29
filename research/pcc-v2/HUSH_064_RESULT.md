@@ -23,3 +23,10 @@ This patch only serializes **durable authorization map mutations** among coopera
 **Release blocker:** do not enable multi-process broker execution or claim end-to-end authorization noninterference. Next: adversarial revocation-versus-`execute` race with real provider effects, crash/restart recovery under a controlled operator procedure, cancellation/expiry boundaries, independent replay and external security review. The next enforcement design needs a linearizable authorization check at the effect boundary, not merely atomic persistence.
 
 No Lucent files, branch, PR or schedule were changed. No merge or force push.
+## Hosted verification closure (2026-10-29)
+
+The dedicated [HUSH-064 CI run 40901029244](https://github.com/sushxnthd/hush/actions/runs/40901029244) completed successfully on `5e44a855`, verifying the separate-process checked-save race, stale-broker denial and orphan-lock controls. This supersedes the initial *pending* status above without changing the frozen protocol.
+
+The full `npm test` job on the same head failed only because Node 22 recursively discovered the deliberately argument-requiring `test/fixtures/hush056-crash-worker.mjs` as an executable test. Commit [`505aebd`](https://github.com/sushxnthd/hush/commit/505aebd64fa9d5b09b4c4bee31632b1134b79043) changed the package `test` and `check` scripts to explicitly discover `test/**/*.test.js`. The selection was independently smoke-tested on Node 22.16.0 against a deliberately throwing fixture. [Cross-platform CI run 40927988428](https://github.com/sushxnthd/hush/actions/runs/40927988428) **passed** on commit `505aebd`: Windows, Ubuntu, macOS and benchmark jobs all concluded success. This verifies test discovery and the existing suite, not end-to-end revocation-versus-provider-dispatch safety.
+
+**Release remains BLOCKED:** already-dispatched effects, cancellation, clock rollback, hostile local writers, shared-filesystem semantics and independent external security review are not covered by HUSH-064. No general compositional information-flow law or production readiness is claimed.
