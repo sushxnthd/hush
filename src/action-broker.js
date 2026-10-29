@@ -395,6 +395,36 @@ export class ActionBroker {
     // Re-evaluate at every pre-dispatch scope check, including unscoped actions.
     if(this.now()>=ticket.expiresAt) return {safe:false,reason:'ACTION_TICKET_EXPIRED'};
     if(!ticket.transactionId) return {safe:true,reason:'UNSCOPED'};
+    // HUSH-061: a different broker may have durably revoked this transaction
+    // while this instance was awaiting credentials or an HTTP adapter. The
+    // in-memory map alone is not a revocation authority across instances.
+    // This synchronous read is fail-closed but NOT a linearizable revocation
+    // protocol: another writer can close immediately after the final read.
+    if(this.authorizationStateStore){
+      let persisted;
+      try{
+        const state=this.authorizationStateStore.load();
+        if(state?.v!==1||!Array.isArray(state.transactions))
+          return {safe:false,reason:'AUTHORIZATION_STATE_INVALID'};
+        const matches=state.transactions.filter(record=>record?.id===ticket.transactionId);
+        if(matches.length!==1)
+          return {safe:false,reason:'AUTHORIZATION_STATE_TRANSACTION_MISSING_OR_DUPLICATED'};
+        persisted=matches[0];
+        if(!Object.hasOwn(persisted,'closedAt'))
+          return {safe:false,reason:'AUTHORIZATION_STATE_INVALID'};
+        if(persisted.closedAt!==null)
+          return {safe:false,reason:'AUTHORIZATION_TRANSACTION_CLOSED'};
+        const durableCommitment=sha256(canonicalize({
+          v:1,transactionId:persisted.id,
+          worlds:persisted.worlds,globalAuthorization:persisted.globalAuthorization
+        }));
+        if(durableCommitment!==persisted.commitment||
+           persisted.commitment!==ticket.globalAuthorizationCommitment)
+          return {safe:false,reason:'DURABLE_AUTHORIZATION_COMMITMENT_MISMATCH'};
+      }catch{
+        return {safe:false,reason:'AUTHORIZATION_STATE_UNAVAILABLE'};
+      }
+    }
     const transaction=this.authorizationTransactions.get(ticket.transactionId);
     if(!transaction) return {safe:false,reason:'AUTHORIZATION_TRANSACTION_MISSING'};
     if(transaction.closedAt) return {safe:false,reason:'AUTHORIZATION_TRANSACTION_CLOSED'};
