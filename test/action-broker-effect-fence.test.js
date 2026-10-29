@@ -210,3 +210,39 @@ test('HUSH-066 negative control: provider can commit queued effect after durable
     }
   }
 });
+
+test('HUSH-066: wrong principal cannot consume a fenced ticket',{timeout:30000},async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'hush066-principal-'));
+  try{
+    const store=new EncryptedAuthorizationStateStore({file:join(dir,'auth.json'),key:randomBytes(32)});
+    const broker=new EffectFencedActionBroker({authorizationStateStore:store});
+    broker.registerAuthorizationTransaction(auth);
+    let effects=0;
+    broker.registerAdapter({name:'principal066',actions:['send'],authorizationScopes:{send:parity},
+      execute:async()=>{effects++;return {ok:true};}});
+    const ticket=broker.request({adapter:'principal066',action:'send',
+      transactionId:'tx',agent:'agent066',sink:'sink066'});
+    broker.approve(ticket.actionId);
+    await assert.rejects(broker.execute({actionId:ticket.actionId,agent:'wrong',sink:'sink066'}),/another agent or sink/);
+    assert.equal(effects,0);
+    const valid=await broker.execute({actionId:ticket.actionId,agent:'agent066',sink:'sink066'});
+    assert.equal(valid.decision,'allow');
+    assert.equal(effects,1);
+  }finally{rmSync(dir,{recursive:true,force:true});}
+});
+
+test('HUSH-066: absent durable store and unscoped ticket are denied before effect',async()=>{
+  const broker=new EffectFencedActionBroker();
+  broker.registerAuthorizationTransaction(auth);
+  let effects=0;
+  broker.registerAdapter({name:'missing066',actions:['send'],authorizationScopes:{send:parity},
+    execute:async()=>{effects++;return {ok:true};}});
+  for(const transactionId of ['tx',null]){
+    const ticket=broker.request({adapter:'missing066',action:'send',
+      transactionId,agent:'agent066',sink:'sink066'});
+    broker.approve(ticket.actionId);
+    const result=await broker.execute({actionId:ticket.actionId,agent:'agent066',sink:'sink066'});
+    assert.equal(result.decision,'deny');
+  }
+  assert.equal(effects,0);
+});
