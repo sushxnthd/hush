@@ -47,3 +47,18 @@ Release reviewers must additionally verify that a pending asynchronous resolutio
 [Prepatch run 40679591613](https://github.com/sushxnthd/hush/actions/runs/40679591613) passed the **expected-counterexample** assertions: one actual local HTTP effect after expiry during deferred credential resolution. [Patched run 40679628111](https://github.com/sushxnthd/hush/actions/runs/40679628111) passed the **required-denial** assertions: zero adapter entries and zero local HTTP effects, with `ACTION_TICKET_EXPIRED`; valid delayed execution retained one allowed effect. See [verified result](../pcc-v2/HUSH_058_RESULT.md). The older pending language above is preserved as historical preregistration state, not the current CI status.
 
 **Release blocker remains:** post-await expiry checking is not atomic with a real external effect, does not provide cancellation/revocation after dispatch, and assumes a trustworthy monotone clock. Require independent real-provider idempotency/revocation, cancellation at in-flight boundaries, crash/restart, OS-level egress mediation and external security review before changing the blocked status. Never equate a green local loopback test with end-to-end authorization closure.
+
+
+## HUSH-062 stale-writer authorization resurrection blocker (2026-10-29)
+
+[Preregistered HUSH-062 attack](../pcc-v2/HUSH_062_FROZEN.md), [separate-OS-process real-broker regression](../../test/action-broker-stale-writer-resurrection.test.js), [narrow patch](https://github.com/sushxnthd/hush/commit/7b12911be56f7b75d7198d487a08506a90429935) and [result report](../pcc-v2/HUSH_062_RESULT.md) address a deterministic rollback: an unrelated stale writer could replace a durably closed authorization with its own open snapshot, then a fresh broker could release private HTTP data. The patch checks durable state before whole-map writes and rejects known stale closure, missing IDs and conflicting commitments. It **does not** provide atomic compare-and-swap, a linearizable revocation order or protection against two writers interleaving between check and save. Hosted verification is pending and must be inspected separately.
+
+**Mandatory release-blocker checklist (all must be externally evidenced, not self-attested):**
+- [ ] Durable authorization writes use a **linearizable** compare-and-swap/transaction or a demonstrably single-writer authority; concurrent stale writer cannot resurrect a closed transaction.
+- [ ] Crash/restart, lost/corrupt file, partial write, duplicate IDs, rollback/replay and OS-process restart cannot silently bootstrap a previously revoked transaction.
+- [ ] Adversarial schedule places revocation between the final authorization read and private-result emission; observable result and digest remain noninterfering under the declared ordering guarantee.
+- [ ] Provider-side effects, cancellation and retries have separately verified scope/idempotency semantics; denial after dispatch is not represented as absence of an external effect.
+- [ ] Independent replay covers two private worlds, real loopback HTTP, separate processes, timing/absence/error channels and the explicit deployment threat model.
+- [ ] External security reviewer approves the enforcement architecture and confirms all known residual races are either eliminated or explicitly excluded by enforceable deployment constraints.
+
+Until all are independently satisfied, **production BLOCKED**. Do not treat HUSH-062 deterministic rollback protection as a general compositional noninterference theorem or a production-safe revocation protocol.
