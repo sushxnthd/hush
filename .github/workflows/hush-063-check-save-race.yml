@@ -1,0 +1,29 @@
+name: HUSH-063 cross-process checked-save race falsification
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - '.github/workflows/hush-063-check-save-race.yml'
+      - 'test/action-broker-check-save-race.test.js'
+      - 'src/action-broker.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hush-063-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  checked-save-race:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Expected-vulnerability schedule with real second OS process
+        run: node --test test/action-broker-check-save-race.test.js
+      - name: HUSH-062 baseline regression
+        run: node --test test/action-broker-stale-writer-resurrection.test.js
