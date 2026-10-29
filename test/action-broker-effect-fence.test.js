@@ -1,0 +1,128 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createServer} from 'node:http';
+import {spawnSync} from 'node:child_process';
+import {mkdtempSync,rmSync,writeFileSync,unlinkSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {randomBytes} from 'node:crypto';
+import {EncryptedAuthorizationStateStore} from '../src/action-broker.js';
+import {EffectFencedActionBroker} from '../src/effect-fenced-action-broker.js';
+
+const worlds=['00','01','10','11'];
+const parity={'00':0,'01':1,'10':1,'11':0};
+const auth={transactionId:'tx',worlds,globalAuthorization:parity};
+
+function closeInIndependentProcess(file,key){
+  const moduleUrl=new URL('../src/action-broker.js',import.meta.url).href;
+  const code=`import {ActionBroker,EncryptedAuthorizationStateStore} from ${JSON.stringify(moduleUrl)};
+try {
+  const store=new EncryptedAuthorizationStateStore({file:process.env.HUSH066_FILE,key:Buffer.from(process.env.HUSH066_KEY,'hex')});
+  const broker=new ActionBroker({authorizationStateStore:store});
+  if(!broker.closeAuthorizationTransaction('tx').closed) process.exit(8);
+  process.stdout.write('CLOSED');
+} catch(error) {
+  if(error.message==='AUTHORIZATION_STATE_LOCKED') {process.stdout.write('LOCKED');process.exit(0);}
+  process.stderr.write(error.message);process.exit(9);
+}`;
+  const child=spawnSync(process.execPath,['--input-type=module','-e',code],{
+    env:{...process.env,HUSH066_FILE:file,HUSH066_KEY:key.toString('hex')},
+    encoding:'utf8',timeout:10000
+  });
+  assert.equal(child.status,0,'independent closer failed: '+child.stderr);
+  return child.stdout;
+}
+
+async function scenario(secret,mode){
+  const dir=mkdtempSync(join(tmpdir(),'hush066-'));
+  const file=join(dir,'auth.json'),key=randomBytes(32),received=[];
+  const server=createServer(async(req,res)=>{
+    let body='';
+    for await(const chunk of req) body+=chunk.toString('utf8');
+    received.push({body,method:req.method});
+    res.writeHead(200,{'content-type':'application/json'});
+    res.end(JSON.stringify({providerPrivate:'HUSH066_PROVIDER_ONLY'}));
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  try{
+    const store=new EncryptedAuthorizationStateStore({file,key});
+    const broker=new EffectFencedActionBroker({authorizationStateStore:store,secretResolver:async()=>secret});
+    broker.registerAuthorizationTransaction(auth);
+    const closers=[];
+    const originalLoad=store.load.bind(store);
+    let loads=0;
+    store.load=()=>{
+      loads++;
+      const snapshot=originalLoad();
+      if(mode==='during'&&loads===2){
+        assert.equal(snapshot.transactions.find(x=>x.id==='tx').closedAt,null);
+        closers.push(closeInIndependentProcess(file,key));
+        assert.equal(originalLoad().transactions.find(x=>x.id==='tx').closedAt,null);
+      }
+      return snapshot;
+    };
+    broker.registerAdapter({
+      name:'provider066',actions:['send'],authorizationScopes:{send:parity},
+      execute:async({credentials})=>{
+        const durable=originalLoad();
+        assert.equal(durable.transactions.find(x=>x.id==='tx').closedAt,null);
+        if(mode==='reject') throw new Error('HUSH066_SECRET_SHOULD_NOT_LEAK_'+secret);
+        const response=await fetch('http://127.0.0.1:'+server.address().port+'/provider',{
+          method:'POST',headers:{'content-type':'application/json'},
+          body:JSON.stringify({credential:credentials[0]})
+        });
+        return response.json();
+      }
+    });
+    const ticket=broker.request({adapter:'provider066',action:'send',
+      transactionId:'tx',agent:'agent066',sink:'sink066',credentialRefs:['opaque-066']});
+    assert.equal(ticket.decision,'ask');
+    broker.approve(ticket.actionId);
+    if(mode==='before') closers.push(closeInIndependentProcess(file,key));
+    if(mode==='orphan') writeFileSync(file+'.lock','ORPHAN\n');
+    const result=await broker.execute({actionId:ticket.actionId,agent:'agent066',sink:'sink066'});
+    if(mode==='orphan') unlinkSync(file+'.lock');
+    assert.equal(JSON.stringify(result).includes(secret),false);
+    assert.equal(JSON.stringify(result).includes('HUSH066_PROVIDER_ONLY'),false);
+    if(mode==='during'||mode==='reject') closers.push(closeInIndependentProcess(file,key));
+    return {decision:result.decision,reason:result.reason??null,received,closers,loads};
+  }finally{
+    await new Promise(resolve=>server.close(resolve));
+    rmSync(dir,{recursive:true,force:true});
+  }
+}
+
+test('HUSH-066: durable close before lock denies with zero provider effects in two worlds',{timeout:30000},async()=>{
+  for(const secret of ['HUSH066_ZERO','HUSH066_ONE']){
+    const r=await scenario(secret,'before');
+    assert.equal(r.decision,'deny');
+    assert.deepEqual(r.closers,['CLOSED']);
+    assert.equal(r.received.length,0);
+  }
+});
+
+test('HUSH-066: in-fence close cannot commit; effect precedes later durable closure',{timeout:30000},async()=>{
+  for(const secret of ['HUSH066_ZERO','HUSH066_ONE']){
+    const r=await scenario(secret,'during');
+    assert.equal(r.decision,'allow');
+    assert.deepEqual(r.closers,['LOCKED','CLOSED']);
+    assert.equal(r.received.length,1);
+    assert.equal(r.received[0].method,'POST');
+    assert.deepEqual(JSON.parse(r.received[0].body),{credential:secret});
+    assert.ok(r.loads>=3);
+  }
+});
+
+test('HUSH-066: orphan lock denies with zero effects',{timeout:30000},async()=>{
+  const r=await scenario('HUSH066_ORPHAN','orphan');
+  assert.equal(r.decision,'deny');
+  assert.match(r.reason,/EFFECT_FENCE_LOCK_UNAVAILABLE/);
+  assert.equal(r.received.length,0);
+});
+
+test('HUSH-066: rejected adapter settles and releases lock for later closure',{timeout:30000},async()=>{
+  const r=await scenario('HUSH066_REJECT','reject');
+  assert.equal(r.decision,'error');
+  assert.equal(r.received.length,0);
+  assert.deepEqual(r.closers,['CLOSED']);
+});
