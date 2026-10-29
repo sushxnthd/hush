@@ -212,36 +212,35 @@ export class ActionBroker {
 
   _persistAuthorizationTransactions(){
     if(!this.authorizationStateStore) return;
-    // HUSH-062: reject deterministic stale-writer rollback. A different
-    // broker may have closed a transaction or registered another one since
-    // this instance loaded its in-memory map. Never overwrite those records
-    // with a stale whole-map snapshot. This read/check/write is NOT atomic
-    // across processes and is NOT a substitute for a linearizable store.
+    // HUSH-062/064: reject stale-writer rollback while holding a cooperative
+    // cross-process local-filesystem lock across the entire read/check/save.
+    // This serializes map writes, NOT action dispatch or revocation versus
+    // provider effects; it is not an end-to-end linearizable authorization gate.
     if(typeof this.authorizationStateStore.withExclusiveLock!=='function')
       throw new Error('AUTHORIZATION_STATE_ATOMICITY_UNSUPPORTED');
     return this.authorizationStateStore.withExclusiveLock(()=>{
-    const durable=this.authorizationStateStore.load();
-    if(durable?.v!==1||!Array.isArray(durable.transactions))
-      throw new Error('AUTHORIZATION_STATE_STALE_WRITER_CONFLICT');
-    const seen=new Set();
-    for(const record of durable.transactions){
-      if(!record||typeof record.id!=='string'||!record.id||
-         seen.has(record.id)||!Object.hasOwn(record,'closedAt')||
-         !(record.closedAt===null||(typeof record.closedAt==='number'&&Number.isFinite(record.closedAt))))
+      const durable=this.authorizationStateStore.load();
+      if(durable?.v!==1||!Array.isArray(durable.transactions))
         throw new Error('AUTHORIZATION_STATE_STALE_WRITER_CONFLICT');
-      seen.add(record.id);
-      const local=this.authorizationTransactions.get(record.id);
-      if(!local||local.commitment!==record.commitment||
-         (record.closedAt!==null&&local.closedAt===null))
-        throw new Error('AUTHORIZATION_STATE_STALE_WRITER_CONFLICT');
-    }
-    for(const id of this._knownDurableAuthorizationIds){
-      if(!seen.has(id)) throw new Error('AUTHORIZATION_STATE_STALE_WRITER_CONFLICT');
-    }
-    const transactions=[...this.authorizationTransactions.values()]
-      .sort((a,b)=>a.id.localeCompare(b.id)).map(clone);
-    this.authorizationStateStore.save({v:1,transactions});
-    this._knownDurableAuthorizationIds=new Set(transactions.map(x=>x.id));
+      const seen=new Set();
+      for(const record of durable.transactions){
+        if(!record||typeof record.id!=='string'||!record.id||
+           seen.has(record.id)||!Object.hasOwn(record,'closedAt')||
+           !(record.closedAt===null||(typeof record.closedAt==='number'&&Number.isFinite(record.closedAt))))
+          throw new Error('AUTHORIZATION_STATE_STALE_WRITER_CONFLICT');
+        seen.add(record.id);
+        const local=this.authorizationTransactions.get(record.id);
+        if(!local||local.commitment!==record.commitment||
+           (record.closedAt!==null&&local.closedAt===null))
+          throw new Error('AUTHORIZATION_STATE_STALE_WRITER_CONFLICT');
+      }
+      for(const id of this._knownDurableAuthorizationIds){
+        if(!seen.has(id)) throw new Error('AUTHORIZATION_STATE_STALE_WRITER_CONFLICT');
+      }
+      const transactions=[...this.authorizationTransactions.values()]
+        .sort((a,b)=>a.id.localeCompare(b.id)).map(clone);
+      this.authorizationStateStore.save({v:1,transactions});
+      this._knownDurableAuthorizationIds=new Set(transactions.map(x=>x.id));
     });
   }
 
