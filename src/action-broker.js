@@ -147,6 +147,26 @@ export class EncryptedAuthorizationStateStore {
     return state;
   }
   save(state){ atomicWriteJson(this.file,encryptJson(state,this.key)); }
+  // HUSH-064: one local-filesystem writer at a time. An orphan lock remains
+  // intentionally fail-closed until an authorized operator investigates it.
+  // Never infer ownership from a PID or remove a lock because it looks old.
+  withExclusiveLock(fn){
+    const lockFile=this.file+'.lock';
+    let fd;
+    try{ fd=fs.openSync(lockFile,'wx',0o600); }
+    catch(error){
+      if(error?.code==='EEXIST') throw new Error('AUTHORIZATION_STATE_LOCKED');
+      throw error;
+    }
+    try{
+      fs.writeSync(fd,String(process.pid)+'\n');
+      fs.fsyncSync(fd);
+      return fn();
+    }finally{
+      try{ fs.closeSync(fd); }
+      finally{ fs.unlinkSync(lockFile); }
+    }
+  }
 }
 
 /**
@@ -197,6 +217,9 @@ export class ActionBroker {
     // this instance loaded its in-memory map. Never overwrite those records
     // with a stale whole-map snapshot. This read/check/write is NOT atomic
     // across processes and is NOT a substitute for a linearizable store.
+    if(typeof this.authorizationStateStore.withExclusiveLock!=='function')
+      throw new Error('AUTHORIZATION_STATE_ATOMICITY_UNSUPPORTED');
+    return this.authorizationStateStore.withExclusiveLock(()=>{
     const durable=this.authorizationStateStore.load();
     if(durable?.v!==1||!Array.isArray(durable.transactions))
       throw new Error('AUTHORIZATION_STATE_STALE_WRITER_CONFLICT');
@@ -219,6 +242,7 @@ export class ActionBroker {
       .sort((a,b)=>a.id.localeCompare(b.id)).map(clone);
     this.authorizationStateStore.save({v:1,transactions});
     this._knownDurableAuthorizationIds=new Set(transactions.map(x=>x.id));
+    });
   }
 
   registerAdapter({name,actions=['*'],execute,description='',authorizationScopes={},lifecycleTraces={}}={}){
