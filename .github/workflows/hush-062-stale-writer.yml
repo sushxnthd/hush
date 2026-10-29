@@ -23,7 +23,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Prepatch expected real HTTP resurrection
-        env:
-          HUSH062_EXPECT_RESURRECTION: '1'
+      - name: Postpatch real HTTP stale-writer denial and fresh-writer control
         run: node --test test/action-broker-stale-writer-resurrection.test.js
