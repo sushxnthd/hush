@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {mkdtempSync,rmSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {mkdtempSync,rmSync,unlinkSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {randomBytes} from 'node:crypto';
@@ -14,7 +15,9 @@ const auth=(transactionId)=>({transactionId,worlds,globalAuthorization:parity});
 
 async function attack(bit){
   const dir=mkdtempSync(join(tmpdir(),'hush062-'));
-  const store=new EncryptedAuthorizationStateStore({file:join(dir,'auth.json'),key:randomBytes(32)});
+  const stateFile=join(dir,'auth.json');
+  const key=randomBytes(32);
+  const store=new EncryptedAuthorizationStateStore({file:stateFile,key});
   let effects=0;
   const server=createServer((_req,res)=>{
     effects++;
@@ -27,7 +30,19 @@ async function attack(bit){
     a.registerAuthorizationTransaction(auth('tx'));
     const b=new ActionBroker({authorizationStateStore:store});
     assert.equal(b.authorizationTransactions.get('tx').closedAt,null);
-    assert.equal(a.closeAuthorizationTransaction('tx').closed,true);
+    // Real second OS process commits closure; broker B keeps a stale snapshot.
+    const moduleUrl=new URL('../src/action-broker.js',import.meta.url).href;
+    const childCode=`import {ActionBroker,EncryptedAuthorizationStateStore} from ${JSON.stringify(moduleUrl)};
+const store=new EncryptedAuthorizationStateStore({file:process.env.HUSH062_FILE,key:Buffer.from(process.env.HUSH062_KEY,'hex')});
+const broker=new ActionBroker({authorizationStateStore:store});
+if(!broker.closeAuthorizationTransaction('tx').closed)process.exit(2);
+process.stdout.write('closed');`;
+    const child=spawnSync(process.execPath,['--input-type=module','-e',childCode],{
+      env:{...process.env,HUSH062_FILE:stateFile,HUSH062_KEY:key.toString('hex')},
+      encoding:'utf8',timeout:10000
+    });
+    assert.equal(child.status,0,'separate process must close transaction: '+child.stderr);
+    assert.equal(child.stdout,'closed');
     const observer=new ActionBroker({authorizationStateStore:store});
     assert.throws(()=>observer.registerAuthorizationTransaction(auth('tx')),/closed/);
     let staleWriteRejected=false;
@@ -91,6 +106,22 @@ test('HUSH-062: fresh broker can persist new transaction without reopening closu
     const c=new ActionBroker({authorizationStateStore:store});
     assert.throws(()=>c.registerAuthorizationTransaction(auth('tx')),/closed/);
     assert.equal(c.registerAuthorizationTransaction(auth('tx2')).closed,false);
+  }finally{
+    rmSync(dir,{recursive:true,force:true});
+  }
+});
+
+
+test('HUSH-062: disappearing known durable state cannot bootstrap stale open state',()=>{
+  const dir=mkdtempSync(join(tmpdir(),'hush062-missing-'));
+  try{
+    const file=join(dir,'auth.json');
+    const store=new EncryptedAuthorizationStateStore({file,key:randomBytes(32)});
+    const a=new ActionBroker({authorizationStateStore:store});
+    a.registerAuthorizationTransaction(auth('tx'));
+    const stale=new ActionBroker({authorizationStateStore:store});
+    unlinkSync(file);
+    assert.throws(()=>stale.registerAuthorizationTransaction(auth('tx2')),/STALE_WRITER_CONFLICT/);
   }finally{
     rmSync(dir,{recursive:true,force:true});
   }
