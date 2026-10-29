@@ -13,6 +13,12 @@ import {ActionBroker} from './action-broker.js';
 export class EffectFencedActionBroker extends ActionBroker {
   async execute(input={}){
     const ticket=this._ticket(input.actionId);
+    // Preserve the base broker's principal binding *before* the catch block:
+    // an unauthorized caller must not be able to consume a valid ticket by
+    // triggering an exception inside the fenced critical section.
+    if(ticket.agent!==String(input.agent??'unknown-agent')||
+       ticket.sink!==String(input.sink??'unknown-sink'))
+      throw new Error('Action ticket is bound to another agent or sink');
     // Already-consumed/denied tickets cannot dispatch again.
     if(ticket.deniedAt||ticket.attemptedAt||ticket.consumedAt)
       return super.execute(input);
