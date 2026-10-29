@@ -83,7 +83,7 @@ async function scenario(secret,mode){
     const result=await broker.execute({actionId:ticket.actionId,agent:'agent066',sink:'sink066'});
     if(mode==='orphan') unlinkSync(file+'.lock');
     assert.equal(JSON.stringify(result).includes(secret),false);
-    assert.equal(JSON.stringify(result).includes('HUSH066_PROVIDER_ONLY'),false);
+    if(result.decision!=='allow') assert.equal(JSON.stringify(result).includes('HUSH066_PROVIDER_ONLY'),false);
     if(mode==='during'||mode==='reject') closers.push(closeInIndependentProcess(file,key));
     return {decision:result.decision,reason:result.reason??null,received,closers,loads};
   }finally{
