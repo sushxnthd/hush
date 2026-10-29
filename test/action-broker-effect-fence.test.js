@@ -126,3 +126,40 @@ test('HUSH-066: rejected adapter settles and releases lock for later closure',{t
   assert.equal(r.received.length,0);
   assert.deepEqual(r.closers,['CLOSED']);
 });
+
+test('HUSH-066: abrupt process exit leaves orphan lock; restarted broker fails closed',{timeout:30000},async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'hush066-crash-'));
+  const file=join(dir,'auth.json'),key=randomBytes(32);
+  try{
+    const first=new EffectFencedActionBroker({
+      authorizationStateStore:new EncryptedAuthorizationStateStore({file,key})
+    });
+    first.registerAuthorizationTransaction(auth);
+    const moduleUrl=new URL('../src/action-broker.js',import.meta.url).href;
+    const code=`import {EncryptedAuthorizationStateStore} from ${JSON.stringify(moduleUrl)};
+const store=new EncryptedAuthorizationStateStore({file:process.env.HUSH066_FILE,key:Buffer.from(process.env.HUSH066_KEY,'hex')});
+await store.withExclusiveLockAsync(async()=>{process.stdout.write('HELD');process.exit(66);});`;
+    const child=spawnSync(process.execPath,['--input-type=module','-e',code],{
+      env:{...process.env,HUSH066_FILE:file,HUSH066_KEY:key.toString('hex')},
+      encoding:'utf8',timeout:10000
+    });
+    assert.equal(child.status,66);
+    assert.equal(child.stdout,'HELD');
+    const store=new EncryptedAuthorizationStateStore({file,key});
+    const restarted=new EffectFencedActionBroker({authorizationStateStore:store});
+    let effects=0;
+    restarted.registerAdapter({name:'crash066',actions:['send'],authorizationScopes:{send:parity},
+      execute:async()=>{effects++;return {ok:true};}});
+    const ticket=restarted.request({adapter:'crash066',action:'send',transactionId:'tx',
+      agent:'agent066',sink:'sink066'});
+    restarted.approve(ticket.actionId);
+    const denied=await restarted.execute({actionId:ticket.actionId,agent:'agent066',sink:'sink066'});
+    assert.equal(denied.decision,'deny');
+    assert.match(denied.reason,/EFFECT_FENCE_LOCK_UNAVAILABLE/);
+    assert.equal(effects,0);
+    assert.equal(closeInIndependentProcess(file,key),'LOCKED');
+    // Manual operator intervention only. No automatic stale-lock removal.
+    unlinkSync(file+'.lock');
+    assert.equal(closeInIndependentProcess(file,key),'CLOSED');
+  }finally{rmSync(dir,{recursive:true,force:true});}
+});
