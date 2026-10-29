@@ -167,6 +167,28 @@ export class EncryptedAuthorizationStateStore {
       finally{ fs.unlinkSync(lockFile); }
     }
   }
+  // HUSH-066 research-only cooperative effect fence. Unlike the synchronous
+  // writer lock, this lock is retained until the async callback settles.
+  // It orders durable local revocation against adapter-promise execution,
+  // NOT remote provider commit, cancellation, or hostile local processes.
+  async withExclusiveLockAsync(fn){
+    if(typeof fn!=='function') throw new Error('AUTHORIZATION_STATE_ASYNC_LOCK_CALLBACK_REQUIRED');
+    const lockFile=this.file+'.lock';
+    let fd;
+    try{ fd=fs.openSync(lockFile,'wx',0o600); }
+    catch(error){
+      if(error?.code==='EEXIST') throw new Error('AUTHORIZATION_STATE_LOCKED');
+      throw error;
+    }
+    try{
+      fs.writeSync(fd,String(process.pid)+'\n');
+      fs.fsyncSync(fd);
+      return await fn();
+    }finally{
+      try{ fs.closeSync(fd); }
+      finally{ fs.unlinkSync(lockFile); }
+    }
+  }
 }
 
 /**
