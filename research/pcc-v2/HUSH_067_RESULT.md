@@ -44,3 +44,15 @@ The workflow runs Node 22 and Python 3.12 on Ubuntu, Windows and macOS, preservi
 - Release blocker: independent adversarial replay against a real provider integration, audited commit-point policy, authenticated crash recovery, cancellation/race semantics, threat-model review and production integration all remain outstanding.
 
 **Hush release remains BLOCKED; no merge or deployment.** Lucent primary E002-371 remains `ABSTAIN_UNCALIBRATED` and production BLOCKED. Lucent E002-540 hosted run 41017394685 completed successfully, verifying its synthetic code only. No new human anatomical ratings or authenticated physical camera measurements were obtained in this bounded Hush run.
+
+## Hosted verification closure (2026-10-30 UTC)
+
+[GitHub Actions run 41021990485](https://github.com/sushxnthd/hush/actions/runs/41021990485) completed **successfully** on exact executable/report head `95a79ede385bbe4190db6a872dc1ca8a43242b3e`. **3/3 OS jobs passed** (Ubuntu, Windows, macOS). Each job passed Node 22 syntax checks, both real-loopback adversarial tests (each iterating two synthetic credential worlds), and the independent Python 3.12 replay of all **4/4 sanitized event histories**. All three jobs uploaded separate sanitized trace artifacts. Artifact digests are retained by GitHub Actions; no credential-bearing trace content was intentionally emitted.
+
+- Ubuntu: `hush067-traces-ubuntu-latest`, artifact 12962440111, SHA-256 `aa949351ba9278849d120393e9997fba8810a62a2a8f085d053b5d2e06c302e4`.
+- Windows: `hush067-traces-windows-latest`, artifact 12962380839, SHA-256 `64bf06d7c2b797d9b22460a6359778c2768d6d2b57798ed22bbac38cd41b6886`.
+- macOS: `hush067-traces-macos-latest`, artifact 12962056917, SHA-256 `4bd99150323437ec54fb91b55ecc94ccfa1f549b0356ec55aa5b3d39be066a06`.
+
+**Result:** The two preregistered loopback counterexamples were reproduced across all three hosted OS environments. In the abort case, durable closure succeeded before the provider fixture committed previously accepted work. In the killed-process case, the restarted broker denied under an orphan lock and revocation remained locked, while the provider fixture could still commit previously accepted work. This is not evidence that real external providers will always commit; it disproves any **unconditional local guarantee** that client cancellation or process death retracts accepted provider work. The provider's commit was intentionally controlled by the fixture, and the replay validates fixture event order, not remote provider attestation.
+
+This closure is a **substantive runtime falsification** of a stronger product security claim, not a new compositional noninterference theorem or production-readiness validation. Hush release remains BLOCKED pending real provider commit-point enforcement, externally authenticated cancellation/recovery tests and independent review.
