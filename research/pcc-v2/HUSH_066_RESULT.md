@@ -43,3 +43,9 @@ The dedicated [HUSH-066 GitHub Actions workflow](../../.github/workflows/hush-06
 - [ ] Complete external security review, cross-platform CI and production threat-model signoff.
 
 **Hush release remains BLOCKED.** No merge, force-push or deployment. Lucent E002-371 remains the primary kernel, `ABSTAIN_UNCALIBRATED` and production BLOCKED; no new physical shutter capture or independent human anatomical rating was obtained in this bounded secondary run.
+
+## Hosted adversarial verification (2026-10-30 UTC)
+
+[GitHub Actions run 40976727233](https://github.com/sushxnthd/hush/actions/runs/40976727233) completed **successfully** on executable/test head `fb6de31e98d52299ffb0a20f4c1286a08f3fb030`. All three jobs passed on **Ubuntu, Windows and macOS**. Each job ran Node 22 syntax checks, the eight HUSH-066 adversarial test methods (including two-world closure ordering, crash-orphan fail-closed behavior, principal binding, missing-store denial and the provider-queued delayed-effect counterexample), and the historical HUSH-065 unfenced post-revocation credential-leak regression. The latter is an expected passing *attack reproduction*, not a security guarantee.
+
+This verification establishes that the tests reproduced their frozen synthetic/loopback expectations in the hosted environments. It does **not** prove remote-provider commit ordering, cancellation safety, secure recovery or production integration. The later report-only commit is not separately claimed to have passed CI.
