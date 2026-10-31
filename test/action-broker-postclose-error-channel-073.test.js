@@ -1,7 +1,7 @@
-import test from 'node:test';
+import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {mkdtempSync,rmSync} from 'node:fs';
+import {mkdtempSync,rmSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {randomBytes} from 'node:crypto';
@@ -10,6 +10,18 @@ import {ActionBroker,EncryptedAuthorizationStateStore} from '../src/action-broke
 // HUSH-073: the adapter's *settlement kind* is private, but authorization is
 // durably closed before settlement. Only the broker's public projection is tested.
 const EXPECT_LEAK=process.env.HUSH073_EXPECT_LEAK==='1';
+const TRACE=process.env.HUSH073_TRACE_FILE;
+const traces=[];
+function record(name,x){
+  traces.push({name,decision:x.decision,receiptStatus:x.receiptStatus,
+    digestNull:x.resultDigest===null,hasResult:x.hasResult,
+    requests:x.requests,closed:x.closed});
+}
+after(()=>{
+  if(TRACE) writeFileSync(TRACE,JSON.stringify({
+    schema:'hush-073-trace-v1',expectedLeak:EXPECT_LEAK,scenarios:traces
+  },null,2)+'\n');
+});
 const worlds=['00','01','10','11'];
 const parity={'00':0,'01':1,'10':1,'11':0};
 function deferred(){
@@ -90,6 +102,7 @@ async function world(privateBit,{closeDuringRequest=true,approve=true}={}){
 
 test('HUSH-073: post-close success versus failure must not leak through status', {timeout:30000},async()=>{
   const zero=await world(0),one=await world(1);
+  record('closed_0',zero);record('closed_1',one);
   for(const x of [zero,one]){
     assert.equal(x.requests,1);
     assert.equal(x.closed,true);
@@ -113,6 +126,7 @@ test('HUSH-073: post-close success versus failure must not leak through status',
 test('HUSH-073: open authorization preserves authorized success/error distinction', {timeout:30000},async()=>{
   const zero=await world(0,{closeDuringRequest:false});
   const one=await world(1,{closeDuringRequest:false});
+  record('open_0',zero);record('open_1',one);
   assert.equal(zero.decision,'allow');
   assert.equal(zero.result.privateBit,0);
   assert.equal(one.decision,'error');
@@ -123,6 +137,7 @@ test('HUSH-073: open authorization preserves authorized success/error distinctio
 
 test('HUSH-073: unapproved ticket does not contact provider', {timeout:30000},async()=>{
   const x=await world(1,{approve:false});
+  record('unapproved_1',x);
   assert.equal(x.decision,'ask');
   assert.equal(x.requests,0);
 });
