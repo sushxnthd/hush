@@ -1,0 +1,36 @@
+name: Hush PCC-056 real crash/restart provider-effect replay
+on:
+  push:
+    branches:
+      - breakthrough-engine/transaction-scope-recovery-20261021
+    paths:
+      - 'test/action-broker-crash-replay-effect.test.js'
+      - 'test/fixtures/hush056-crash-worker.mjs'
+      - 'research/pcc-v2/HUSH_056_*.md'
+      - 'src/action-broker.js'
+      - 'scripts/production-readiness.mjs'
+      - '.github/workflows/hush-056-crash-replay.yml'
+  workflow_dispatch:
+jobs:
+  crash-restart-falsification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify SIGKILL after durable provider effect and replay controls
+        run: node --test test/action-broker-crash-replay-effect.test.js
+      - name: Preserve receipt-hash and request-hash leakage controls
+        run: |
+          node --test test/action-broker-receipt-hash-transitive-channel.test.js
+          node --test test/action-broker-preapproval-hash-channel.test.js
+      - name: Require strict production readiness to remain blocked
+        run: |
+          set +e
+          node scripts/production-readiness.mjs --json > /tmp/hush056-readiness.json
+          status=$?
+          set -e
+          test "$status" -ne 0
+          node -e "const r=require('/tmp/hush056-readiness.json');if(r.status!=='block')process.exit(1)"

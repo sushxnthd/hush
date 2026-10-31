@@ -1,0 +1,57 @@
+{
+  "schema": "hush.observable-closure-sweep.v1",
+  "worlds": [
+    "00",
+    "01",
+    "10",
+    "11"
+  ],
+  "authorization": "parity",
+  "rows": [
+    {
+      "ownedCount": 1,
+      "legacyAccepted": 64,
+      "legacyFalseAccepts": 48,
+      "closureAccepted": 16
+    },
+    {
+      "ownedCount": 2,
+      "legacyAccepted": 256,
+      "legacyFalseAccepts": 192,
+      "closureAccepted": 64
+    },
+    {
+      "ownedCount": 3,
+      "legacyAccepted": 1024,
+      "legacyFalseAccepts": 768,
+      "closureAccepted": 256
+    },
+    {
+      "ownedCount": 4,
+      "legacyAccepted": 4096,
+      "legacyFalseAccepts": 3072,
+      "closureAccepted": 1024
+    },
+    {
+      "ownedCount": 5,
+      "legacyAccepted": 16384,
+      "legacyFalseAccepts": 12288,
+      "closureAccepted": 4096
+    }
+  ],
+  "totals": {
+    "legacyAccepted": 21824,
+    "legacyFalseAccepts": 16368,
+    "closureAccepted": 5456,
+    "closureFalseAccepts": 0,
+    "closureFalseRejects": 0
+  },
+  "prediction": {
+    "legacyAccepted": 21824,
+    "legacyFalseAccepts": 16368,
+    "closureAccepted": 5456,
+    "closureFalseAccepts": 0,
+    "closureFalseRejects": 0
+  },
+  "predictionsMatch": true
+}

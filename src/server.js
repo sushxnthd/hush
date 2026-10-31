@@ -27,6 +27,7 @@ import { signReceipt, verifySignedReceiptChain } from './receipt-security.js';
 import { handleOwnerContextRequest } from './owner-context-http.js';
 import {runtimePolicy} from './runtime-policy.js';
 import {readRequestBody,readJsonObject,readResponseText,sendJson} from './http-io.js';
+import {EncryptedAuthorizationStateStore} from './action-broker.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const policy=runtimePolicy();
@@ -52,7 +53,8 @@ disclosureLedger.events = store.load('disclosures.json', []);
 
 const contextPassphrase = process.env.HUSH_CONTEXT_PASSPHRASE || deriveContextPassphrase(rootKeyInfo.key);
 const contextKernel = new ContextKernel({dir:path.join(dataDir,'context'),passphrase:contextPassphrase});
-const providerOnboarding = new ProviderOnboarding({vault,kernel:contextKernel,port});
+const authorizationStateStore=new EncryptedAuthorizationStateStore({file:path.join(dataDir,'authorization-transactions.enc.json'),key:rootKeyInfo.key});
+const providerOnboarding = new ProviderOnboarding({vault,kernel:contextKernel,port,authorizationStateStore});
 
 let startupAudit=verifySignedReceiptChain(store.receipts,publicKey);
 if(!startupAudit.valid&&policy.production) throw new Error(`Hush audit chain failed verification: ${startupAudit.reason}`);
