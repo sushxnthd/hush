@@ -1,0 +1,30 @@
+name: HUSH-073 post-revocation error-status channel
+on:
+  push:
+    branches:
+      - breakthrough-engine/transaction-scope-recovery-20261021
+    paths:
+      - 'test/action-broker-postclose-error-channel-073.test.js'
+      - 'src/action-broker.js'
+      - '.github/workflows/hush-073-postclose-error.yml'
+      - 'research/pcc-v2/HUSH_073_*'
+  workflow_dispatch:
+jobs:
+  adversarial-postclose-error:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: node --check test/action-broker-postclose-error-channel-073.test.js
+      - name: Prepatch counterexample (frozen expected leak)
+        env:
+          HUSH073_EXPECT_LEAK: '1'
+        run: node --test test/action-broker-postclose-error-channel-073.test.js
