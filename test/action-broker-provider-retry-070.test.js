@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
-import {mkdtempSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,writeFileSync,readFileSync,rmSync,appendFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -25,6 +25,10 @@ async function stop(rep){
   const done=new Promise(r=>rep.child.once('exit',r));rep.child.kill();await Promise.race([done,sleep(2000)]);
 }
 function state(file){return JSON.parse(readFileSync(file,'utf8'));}
+function trace(kind,before,after){
+  const record={case:kind,effects_after_first:before,effects_after_retry:after};
+  if(process.env.HUSH070_TRACE_OUT)appendFileSync(process.env.HUSH070_TRACE_OUT,JSON.stringify(record)+'\n');
+}
 async function execute(base,key){
   const secret='HUSH070_TEST_CREDENTIAL';
   const broker=new ActionBroker({secretResolver:async()=>secret});
@@ -52,6 +56,7 @@ test('HUSH-070 post-effect lost ACK duplicates effect under naive provider retry
     assert.equal(state(file).effects,1);
     p=await restart();const second=await execute(p.base,'HUSH070_CASE_A');
     assert.equal(second.decision,'allow');assert.equal(state(file).effects,2);
+    trace('naive_post_effect_crash',1,2);
   });
 });
 
@@ -62,6 +67,7 @@ test('HUSH-070 provider idempotency prevents duplicate after crash/restart',{tim
     assert.equal(state(file).effects,1);assert.deepEqual(state(file).keys,['HUSH070_CASE_B']);
     p=await restart();const second=await execute(p.base,'HUSH070_CASE_B');
     assert.equal(second.decision,'allow');assert.equal(state(file).effects,1);
+    trace('guarded_post_effect_crash',1,1);
   });
 });
 
@@ -70,6 +76,7 @@ test('HUSH-070 normal guarded execution is single effect',{timeout:30000},async(
     const first=await execute(p.base,'HUSH070_CASE_C');assert.equal(first.decision,'allow');
     const second=await execute(p.base,'HUSH070_CASE_C');assert.equal(second.decision,'allow');
     assert.equal(state(file).effects,1);
+    trace('guarded_normal',1,1);
   });
 });
 
@@ -78,5 +85,6 @@ test('HUSH-070 provider rejects invalid operation key',{timeout:30000},async()=>
     const r=await fetch(p.base+'/effect',{method:'POST',headers:{'content-type':'application/json'},
       body:JSON.stringify({idempotency_key:'bad',credential:'HUSH070_TEST_CREDENTIAL'})});
     assert.equal(r.status,400);assert.equal(state(file).effects,0);
+    trace('invalid_key',0,0);
   });
 });
