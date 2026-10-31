@@ -611,6 +611,22 @@ export class ActionBroker {
       this.receipts.push(ticket.receipt);
       return {decision:'allow',result,receipt:clone(ticket.receipt),rawCredentialIncluded:false};
     }catch(error){
+      // HUSH-073: adapter rejection is itself an outcome-dependent observable.
+      // A post-revocation success already becomes a generic denial above; an
+      // equally late failure must not disclose a private bit via status=error.
+      // Treat an unavailable/throwing scope verifier as closed, never open.
+      let stillAuthorized=false;
+      try{ stillAuthorized=this._scopeVerdict(ticket).safe===true; }catch{}
+      if(!stillAuthorized){
+        const at=this.now();
+        ticket.deniedAt=at;
+        ticket.consumedAt=at;
+        ticket.denialReason='Action result suppressed after dispatch because authorization is no longer valid; external effects may have occurred.';
+        ticket.receipt=safeReceipt(ticket,undefined,'deny',at);
+        this.receipts.push(ticket.receipt);
+        return {decision:'deny',reason:ticket.denialReason,
+          receipt:clone(ticket.receipt),rawCredentialIncluded:false};
+      }
       ticket.consumedAt=this.now();
       ticket.receipt=safeReceipt(ticket,undefined,'error',ticket.consumedAt);
       this.receipts.push(ticket.receipt);
