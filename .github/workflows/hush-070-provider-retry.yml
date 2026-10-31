@@ -6,6 +6,7 @@ on:
       - '.github/workflows/hush-070-provider-retry.yml'
       - 'research/pcc-v2/hush_070_provider.mjs'
       - 'test/action-broker-provider-retry-070.test.js'
+      - 'research/pcc-v2/hush_070_independent_replay.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,6 +22,8 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
+    env:
+      HUSH070_TRACE_OUT: hush070-trace.ndjson
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,8 +31,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Validate syntax and execute real ActionBroker tests
         run: |
           node --check research/pcc-v2/hush_070_provider.mjs
           node --check test/action-broker-provider-retry-070.test.js
           node --test test/action-broker-provider-retry-070.test.js
+      - name: Independently replay sanitized crash/retry histories
+        run: python research/pcc-v2/hush_070_independent_replay.py hush070-trace.ndjson
