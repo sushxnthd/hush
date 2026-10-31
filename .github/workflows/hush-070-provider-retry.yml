@@ -1,0 +1,35 @@
+name: HUSH-070 real ActionBroker crash-before-ack retry
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - '.github/workflows/hush-070-provider-retry.yml'
+      - 'research/pcc-v2/hush_070_provider.mjs'
+      - 'test/action-broker-provider-retry-070.test.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hush-070-provider-retry
+  cancel-in-progress: false
+jobs:
+  real-broker-crash-retry:
+    if: github.repository == 'sushxnthd/hush'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate syntax and execute real ActionBroker tests
+        run: |
+          node --check research/pcc-v2/hush_070_provider.mjs
+          node --check test/action-broker-provider-retry-070.test.js
+          node --test test/action-broker-provider-retry-070.test.js
