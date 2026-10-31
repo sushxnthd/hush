@@ -8,6 +8,7 @@ on:
       - 'src/action-broker.js'
       - '.github/workflows/hush-073-postclose-error.yml'
       - 'research/pcc-v2/HUSH_073_*'
+      - 'research/pcc-v2/hush_073_*'
   workflow_dispatch:
 jobs:
   adversarial-postclose-error:
@@ -24,7 +25,16 @@ jobs:
           node-version: '22'
       - name: Syntax check
         run: node --check test/action-broker-postclose-error-channel-073.test.js
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Postpatch closed-world status noninterference and controls
+        env:
+          HUSH073_TRACE_FILE: hush073_trace.json
         run: node --test test/action-broker-postclose-error-channel-073.test.js
+      - name: Independent status-trace replay
+        run: python research/pcc-v2/hush_073_independent_replay.py hush073_trace.json
+      - name: Independent replay tamper controls
+        run: python research/pcc-v2/hush_073_independent_replay.py --self-test
       - name: Prior post-dispatch and cancellation regressions
         run: node --test test/action-broker-postdispatch-private-result.test.js test/action-broker-client-abort-provider-072.test.js test/action-broker-expiry-after-await.test.js
