@@ -15,7 +15,7 @@ In `naive` mode, the provider stores only an effect count. After restarting the 
 | Guarded normal repeated request | 1 effect, success | **1 effect** |
 | Invalid operation key | 0 effects, rejection | Not retried |
 
-**Local verification:** 4/4 Node tests passed using a minimal ActionBroker-compatible stub; the test source imports the actual `src/action-broker.js` in the repository. Real ActionBroker CI was queued at report creation and is **not claimed passed**. The fixture is an intentionally simple single-provider local-file model, not a distributed transaction implementation. Its effect counter and idempotency ledger are in the same file; this favorable assumption fails for many real external APIs.
+**Local verification:** 4/4 Node tests passed using a minimal ActionBroker-compatible stub; four sanitized traces passed a separate Python event-count replay; the test source imports the actual `src/action-broker.js` in the repository. Real ActionBroker CI was queued at report creation and is **not claimed passed**. The fixture is an intentionally simple single-provider local-file model, not a distributed transaction implementation. Its effect counter and idempotency ledger are in the same file; this favorable assumption fails for many real external APIs.
 
 ## Scientific interpretation
 
@@ -23,7 +23,7 @@ This is a standard lost-acknowledgement / exactly-once impossibility boundary, n
 
 ## Release blockers
 
-- Confirm real ActionBroker tests on all hosted OS runners; preserve any failures and logs.
+- Confirm real ActionBroker tests and independent Python replay on all hosted OS runners; preserve any failures and logs.
 - Prove identity/key scoping across principals, payloads, authorizations, expiration and revocation; prevent cross-operation replay or key substitution.
 - Test cancellation racing with commit, crash before and after external effect, provider retry after restart, duplicate HTTP delivery, provider replica races and lost acknowledgements.
 - Verify provider's real idempotency semantics and atomicity of effects versus receipts. Local rename is not fsync durability, nor an atomic external API transaction.
