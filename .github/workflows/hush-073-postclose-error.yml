@@ -24,7 +24,7 @@ jobs:
           node-version: '22'
       - name: Syntax check
         run: node --check test/action-broker-postclose-error-channel-073.test.js
-      - name: Prepatch counterexample (frozen expected leak)
-        env:
-          HUSH073_EXPECT_LEAK: '1'
+      - name: Postpatch closed-world status noninterference and controls
         run: node --test test/action-broker-postclose-error-channel-073.test.js
+      - name: Prior post-dispatch and cancellation regressions
+        run: node --test test/action-broker-postdispatch-private-result.test.js test/action-broker-client-abort-provider-072.test.js test/action-broker-expiry-after-await.test.js
