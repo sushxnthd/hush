@@ -1,4 +1,4 @@
-name: HUSH-074 mandatory-certificate omission counterexample
+name: HUSH-074 mandatory-certificate fail-closed enforcement
 on:
   push:
     branches:
@@ -20,8 +20,7 @@ jobs:
           node-version: '22'
       - name: Syntax
         run: node --check test/action-broker-required-certificate-074.test.js
-      - name: Expected prepatch counterexample on actual broker and loopback HTTP
+      - name: Patched real-broker enforcement and legitimate action controls
         env:
-          HUSH074_EXPECT_BYPASS: '1'
           HUSH074_TRACE_FILE: hush074_trace.json
         run: node --test test/action-broker-required-certificate-074.test.js
