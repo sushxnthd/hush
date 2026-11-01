@@ -1,0 +1,27 @@
+name: HUSH-074 mandatory-certificate omission counterexample
+on:
+  push:
+    branches:
+      - breakthrough-engine/transaction-scope-recovery-20261021
+    paths:
+      - 'src/action-broker.js'
+      - 'test/action-broker-required-certificate-074.test.js'
+      - '.github/workflows/hush-074-required-certificate.yml'
+      - 'research/pcc-v2/HUSH_074_*'
+  workflow_dispatch:
+jobs:
+  mandatory-certificate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: node --check test/action-broker-required-certificate-074.test.js
+      - name: Expected prepatch counterexample on actual broker and loopback HTTP
+        env:
+          HUSH074_EXPECT_BYPASS: '1'
+          HUSH074_TRACE_FILE: hush074_trace.json
+        run: node --test test/action-broker-required-certificate-074.test.js
