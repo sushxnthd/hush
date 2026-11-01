@@ -24,3 +24,12 @@ jobs:
         env:
           HUSH074_TRACE_FILE: hush074_trace.json
         run: node --test test/action-broker-required-certificate-074.test.js
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent observed-trace replay
+        run: python research/pcc-v2/hush_074_independent_replay.py hush074_trace.json
+      - name: Independent tamper controls
+        run: python research/pcc-v2/hush_074_independent_replay.py --self-test
+      - name: Existing scoped authorization and broker regressions
+        run: node --test test/action-broker.test.js test/action-broker-postclose-error-channel-073.test.js
