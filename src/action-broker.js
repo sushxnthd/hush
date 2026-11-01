@@ -328,6 +328,10 @@ export class ActionBroker {
     const actionName=text(action,'',160);
     if(!adapterName||!actionName) throw new Error('adapter and action are required');
     const trustedAdapter=this._adapter(adapterName,actionName);
+    // HUSH-074: an explicitly mandatory certificate is never optional merely
+    // because the caller omitted the transaction that would certify it.
+    if(transactionId==null && (requireLifecycleTraceCertificate || requireObservableClosureCertificate))
+      throw new Error('MANDATORY_CERTIFICATE_REQUIRES_TRANSACTION');
 
     const argumentsCopy=clone(args??{});
     const argumentBytes=Buffer.byteLength(JSON.stringify(argumentsCopy));
@@ -466,6 +470,9 @@ export class ActionBroker {
     // A ticket can expire while asynchronous credential resolution is pending.
     // Re-evaluate at every pre-dispatch scope check, including unscoped actions.
     if(this.now()>=ticket.expiresAt) return {safe:false,reason:'ACTION_TICKET_EXPIRED'};
+    // HUSH-074: independently enforce the invariant for prepatch/legacy tickets.
+    if(!ticket.transactionId && (ticket.requireLifecycleTraceCertificate || ticket.requireObservableClosureCertificate))
+      return {safe:false,reason:'REQUIRED_CERTIFICATE_WITHOUT_TRANSACTION'};
     if(!ticket.transactionId) return {safe:true,reason:'UNSCOPED'};
     // HUSH-061: a different broker may have durably revoked this transaction
     // while this instance was awaiting credentials or an HTTP adapter. The
