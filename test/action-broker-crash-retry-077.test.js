@@ -56,6 +56,7 @@ async function scenario({revokeBeforeRetry}){
   const file=path.join(dir,'state.enc.json');
   const key=crypto.randomBytes(32);
   const effects=[];
+  const events=[];
   let firstResolve;
   const firstHit=new Promise(resolve=>{firstResolve=resolve;});
   let pendingResponse=null;
@@ -65,6 +66,7 @@ async function scenario({revokeBeforeRetry}){
       let body='';
       for await(const chunk of req) body+=chunk.toString('utf8');
       effects.push(body);
+      events.push({event:'provider_http_effect',ordinal:effects.length});
       if(effects.length===1){
         pendingResponse=res;
         firstResolve();
@@ -100,14 +102,17 @@ async function scenario({revokeBeforeRetry}){
     assert.equal(child.kill('SIGKILL'),true);
     const killed=await timeout(exit,10000);
     assert.equal(killed.signal,'SIGKILL');
+    events.push({event:'broker_sigkill'});
     // The receiver observed the irreversible effect, but the worker never
     // received a provider response or produced an accessible broker receipt.
     pendingResponse?.end('{"public":"late"}');
     pendingResponse=null;
     const recovered=makeBroker(file,key,url);
+    events.push({event:'broker_restart'});
     assert.equal(recovered.authorizationTransactions.get('tx77')?.closedAt,null);
     if(revokeBeforeRetry){
       recovered.closeAuthorizationTransaction('tx77');
+      events.push({event:'durable_revoke'});
       const restarted=makeBroker(file,key,url);
       assert.throws(()=>restarted.request({
         adapter:'provider77',action:'send',agent:'actor77',
@@ -121,9 +126,10 @@ async function scenario({revokeBeforeRetry}){
       assert.equal(result.receipt.status,'allow');
       assert.deepEqual(effects,[logicalBody,logicalBody]);
       assert.equal(recovered.receiptLog().length,1);
+      events.push({event:'retry_receipt'});
     }
     return {effectCount:effects.length,revoked:revokeBeforeRetry,
-      firstReceiptRecovered:false,postRestartReceiptCount:revokeBeforeRetry?0:1};
+      firstReceiptRecovered:false,postRestartReceiptCount:revokeBeforeRetry?0:1,events};
   }finally{
     if(child&&!child.killed) child.kill('SIGKILL');
     pendingResponse?.end();
@@ -138,11 +144,11 @@ if(process.argv[2]==='--worker'){
   test('actual crash after HTTP effect permits duplicate with fresh explicit approval',async()=>{
     const outcome=await scenario({revokeBeforeRetry:false});
     assert.equal(outcome.effectCount,2);
-    console.log('HUSH077_RESTART_DUPLICATE '+JSON.stringify(outcome));
+    console.log('HUSH077_TRACE '+JSON.stringify(outcome));
   });
   test('durable revocation before retry blocks the second HTTP effect',async()=>{
     const outcome=await scenario({revokeBeforeRetry:true});
     assert.equal(outcome.effectCount,1);
-    console.log('HUSH077_REVOKED_CONTROL '+JSON.stringify(outcome));
+    console.log('HUSH077_TRACE '+JSON.stringify(outcome));
   });
 }
