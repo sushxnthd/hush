@@ -4,6 +4,7 @@ on:
     paths:
       - 'src/action-broker.js'
       - 'test/action-broker-trusted-enforcement-076.test.js'
+      - 'test/transaction-scope-enforcement.test.js'
       - '.github/workflows/hush-076-trusted-enforcement.yml'
       - 'research/pcc-v2/HUSH_076_*'
   workflow_dispatch:
