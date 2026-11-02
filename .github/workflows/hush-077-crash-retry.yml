@@ -1,0 +1,22 @@
+name: HUSH-077 crash-after-effect recovery limit
+on:
+  pull_request:
+    paths:
+      - 'test/action-broker-crash-retry-077.test.js'
+      - 'research/pcc-v2/HUSH_077_*'
+      - '.github/workflows/hush-077-crash-retry.yml'
+      - 'src/action-broker.js'
+  workflow_dispatch:
+jobs:
+  crash-retry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Real child-process SIGKILL and loopback HTTP receiver
+        run: node --test test/action-broker-crash-retry-077.test.js
+      - name: Trusted enforcement and durable scope regressions
+        run: node --test test/action-broker-trusted-enforcement-076.test.js test/transaction-scope-enforcement.test.js
