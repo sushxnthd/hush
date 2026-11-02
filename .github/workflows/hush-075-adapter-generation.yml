@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Frozen prepatch expected-bypass assertions
-        env:
-          HUSH075_EXPECT_BYPASS: '1'
+      - name: Patched fail-closed real HTTP assertions
         run: node --test test/action-broker-adapter-generation-075.test.js
+      - name: Existing scoped authorization and broker regressions
+        run: node --test test/action-broker-required-certificate-074.test.js test/action-broker-revocation-dispatch-race.test.js test/action-broker-observable-closure.test.js
