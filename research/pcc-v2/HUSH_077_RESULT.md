@@ -1,22 +1,25 @@
-# HUSH-PCC-077 | Post-crash retry of a provider-accepted operation
+# HUSH-PCC-077 | Verified post-crash duplicate provider effect after explicit retry
 
-Date: 2026-11-02. Secondary Hush workstream. Frozen protocol commit `9537d6189d900576c9fb828cd3876058111e7db7`. **Evidence status: EXECUTABLE TEST AND INDEPENDENT REPLAY COMMITTED; HOSTED TEST RESULT PENDING. Do not claim the predicted duplicate has been observed until CI is inspected.**
+**Status (2026-11-03): prospective hosted real-HTTP/process-kill experiment PASSED.** Secondary Hush workstream. Frozen protocol commit [9537d61](https://github.com/sushxnthd/hush/commit/9537d6189d900576c9fb828cd3876058111e7db7). [Hosted run #41488942333](https://github.com/sushxnthd/hush/actions/runs/41488942333), completed 2026-11-02 UTC, job `crash-retry` success.
 
-## Distinct question and prior result
-[HUSH-067](HUSH_067_RESULT.md) already demonstrated, on three operating systems, that a provider fixture can commit work after a broker abort or crash. That observation and the standard HTTP ambiguity of non-idempotent retries (RFC 9110 §9.2.2) are **prior art**, not new HUSH-077 novelty: https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2 .
+## Confirmed observations
 
-HUSH-077 adds the **durable-state recovery and explicit re-approval step**: after the first HTTP effect and a killed broker, does a restarted broker with the *same open durable authorization transaction* admit a fresh ticket that causes a second identical provider POST? The negative control durably revokes the transaction before retry. This tests the product's recovery boundary, not an authorization bypass. Two approvals for the same logical operation remain two approvals from the broker's perspective.
+The hosted Node 22 test used a real loopback HTTP receiver and a separate broker OS process. After the receiver accepted a full first POST body but withheld the response, the broker was killed by `SIGKILL`. On broker restart using the same encrypted durable authorization store and still-open transaction, a **fresh explicitly approved ticket** for the same logical operation produced a **second full provider HTTP POST body**.
 
-## Exact reproducible test
-- [Node test](../../test/action-broker-crash-retry-077.test.js) uses a real loopback HTTP receiver, a separate OS process, `SIGKILL` only after full first POST body receipt, a persisted encrypted authorization store, broker reconstruction, fresh ticket and explicit approval.
-- The positive arm predicts two completed provider POST bodies, one post-restart receipt and **no recoverable first receipt**.
-- The negative arm predicts one POST, durable transaction closure, and a rejected post-restart request.
-- [Independent Python replay](hush_077_independent_replay.py) rejects missing arms, unexpected fields, mismatched counts and incorrect crash/restart ordering in sanitized Node test logs.
-- [Hosted workflow](../../.github/workflows/hush-077-crash-retry.yml) executes the two arms and independent replay on Node 22 / Python 3.12, plus selected existing trusted-enforcement and scope regressions. No external service, paid resource, credential or production integration is involved.
+- **Positive arm:** `effectCount=2`, `revoked=false`, `firstReceiptRecovered=false`, `postRestartReceiptCount=1`. Event order: first provider HTTP effect, broker SIGKILL, restart, second provider HTTP effect, retry receipt. Node test **PASS**.
+- **Negative arm:** durable transaction revoked before restart retry; `effectCount=1`, `revoked=true`, `firstReceiptRecovered=false`, `postRestartReceiptCount=0`. Event order: first provider effect, SIGKILL, restart, durable revoke. Node test **PASS**.
+- [Independent Python sanitized-trace verifier](hush_077_independent_replay.py) confirmed `{"crash_retry_duplicate":true,"experiment":"HUSH-077","provider_independently_attested":false,"replayed":2,"revoked_retry_blocked":true}`. Two primary Node tests passed, plus **13/13** selected trusted-enforcement/scope regression tests.
 
-## Predicted release consequence
-A broker-local ticket/receipt and an open authorization transaction do not constitute an externally enforced exactly-once operation ID. An accepted-but-unacknowledged provider effect creates an **unknown-outcome state**. The conservative product response is no automatic non-idempotent retry until provider-side idempotency or independent reconciliation is demonstrated. Revocation before retry can prevent a new broker dispatch, but cannot undo the first accepted effect. The test's local fixture is not an independent provider audit.
+The observations confirm the **predicted crash/retry duplication** within the local real-HTTP fixture. They **do not** establish that a malicious caller bypassed approval: the second operation was separately and explicitly approved. Nor do they show exactly-once was promised by the existing broker.
 
-This is an operational falsification / release-blocker experiment, **not a new information-flow theorem**. HUSH-067's post-crash provider-commit counterexample remains the stronger established prior observation. External provider integration, trusted commit-point mediation, actual crash/restart recovery, cancellation semantics, and external security review remain mandatory before release.
+## Scientific and enforcement interpretation
 
-**Status:** CI outcome unverified at report creation; Hush production BLOCKED. Lucent primary branch/PR unchanged; E002-371 still lacks physical/human validation.
+An accepted-but-unacknowledged provider effect and an identical state with no accepted effect can be **indistinguishable to a restarted broker** when the durable state omits the provider's commit outcome. Consequently, broker-local one-use tickets, local receipts and an open authorization transaction **cannot alone certify externally exactly-once effects**. This is a standard distributed-systems ambiguity, not a novel information-flow theorem or new universal impossibility proof. HUSH-067 already established that provider work can survive broker death. RFC 9110 §9.2.2 discusses idempotent HTTP retry semantics: https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2 .
+
+**Direct product rule:** A non-idempotent operation whose provider commit status is uncertain after a crash must transition to `UNKNOWN_EXTERNAL_OUTCOME`; automatic re-dispatch is blocked until a durable provider-side idempotency key, verified provider status reconciliation, or trusted transactional/outbox mediator proves safe continuation. Revoking the transaction prevents a *new* dispatch but cannot undo a prior provider effect. Fresh human approval alone does not make a repeated non-idempotent effect safe.
+
+## Limits and remaining release blockers
+
+The provider was a local test HTTP fixture, not an independent production service; no independent provider-side audit was performed. The test does not cover malicious provider behavior, real external provider deduplication, all cancellation/race windows, provider-side durable idempotency, end-to-end transactional mediation, or external security review. It demonstrates one adversarial recovery execution and one revoked control, not exhaustive lifecycle closure. The threat model must distinguish broker-visible outputs, external side effects and timing observables.
+
+**Production BLOCKED; no deployment readiness claim.** Existing Hush branch and draft PR #45 remain unmerged. Lucent primary branch and PR #26 were not modified by this secondary update.
