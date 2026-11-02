@@ -272,14 +272,14 @@ export class ActionBroker {
     if(typeof execute!=='function') throw new Error('Action adapter execute function is required');
     if(!authorizationScopes||typeof authorizationScopes!=='object'||Array.isArray(authorizationScopes)) throw new Error('authorizationScopes must be an action-to-map object');
     if(!lifecycleTraces||typeof lifecycleTraces!=='object'||Array.isArray(lifecycleTraces)) throw new Error('lifecycleTraces must be an action-to-map object');
-    const normalized={name:id,actions:unique(actions).sort(),execute,description:text(description,'',240),authorizationScopes:clone(authorizationScopes),lifecycleTraces:clone(lifecycleTraces)};
+    const normalized={name:id,actions:unique(actions).sort(),execute,description:text(description,'',240),authorizationScopes:clone(authorizationScopes),lifecycleTraces:clone(lifecycleTraces),registrationEpoch:crypto.randomBytes(16).toString('hex')};
     if(!normalized.actions.length) throw new Error('Action adapter must declare at least one supported action');
     this.adapters.set(id,normalized);
     return {name:normalized.name,actions:[...normalized.actions],description:normalized.description};
   }
 
   removeAdapter(name){ return this.adapters.delete(String(name)); }
-  listAdapters(){ return [...this.adapters.values()].map(({execute,authorizationScopes,lifecycleTraces,...adapter})=>clone(adapter)).sort((a,b)=>a.name.localeCompare(b.name)); }
+  listAdapters(){ return [...this.adapters.values()].map(({execute,authorizationScopes,lifecycleTraces,registrationEpoch,...adapter})=>clone(adapter)).sort((a,b)=>a.name.localeCompare(b.name)); }
 
   registerAuthorizationTransaction({transactionId,worlds,globalAuthorization}={}){
     const id=text(transactionId,'',160);
@@ -390,6 +390,7 @@ export class ActionBroker {
     const ticket={
       id:`action_${crypto.randomBytes(24).toString('base64url')}`,
       adapter:adapterName,action:actionName,
+      adapterRegistrationEpoch:trustedAdapter.registrationEpoch,
       agent:text(agent,'unknown-agent'),sink:text(sink,'unknown-sink'),purpose:text(purpose,'unspecified'),category:text(category,'general'),resource:text(resource,'*'),
       arguments:argumentsCopy,credentialRefs:refs,
       transactionId:transaction?.id??null,
@@ -408,7 +409,7 @@ export class ActionBroker {
       createdAt:now,expiresAt:now+ttl(ttlMs),approvedAt:null,deniedAt:null,denialReason:null,consumedAt:null,attemptedAt:null,receipt:null,consent:null,requestHash:null
     };
     const requestBinding={
-      adapter:ticket.adapter,action:ticket.action,agent:ticket.agent,sink:ticket.sink,purpose:ticket.purpose,category:ticket.category,resource:ticket.resource,
+      adapter:ticket.adapter,action:ticket.action,adapterRegistrationEpoch:ticket.adapterRegistrationEpoch,agent:ticket.agent,sink:ticket.sink,purpose:ticket.purpose,category:ticket.category,resource:ticket.resource,
       arguments:ticket.arguments,credentialRefs:ticket.credentialRefs.map(ref=>sha256(String(ref)))
     };
     if(ticket.transactionId){
@@ -470,6 +471,14 @@ export class ActionBroker {
     // A ticket can expire while asynchronous credential resolution is pending.
     // Re-evaluate at every pre-dispatch scope check, including unscoped actions.
     if(this.now()>=ticket.expiresAt) return {safe:false,reason:'ACTION_TICKET_EXPIRED'};
+    // HUSH-075: executable identity is part of the approval boundary.
+    // Check unscoped tickets too; scope-equivalent adapter replacement is not
+    // approval-equivalent. This is a local generation guard, not code attestation.
+    let currentAdapter;
+    try{ currentAdapter=this._adapter(ticket.adapter,ticket.action); }
+    catch{ return {safe:false,reason:'ADAPTER_REGISTRATION_MISSING'}; }
+    if(currentAdapter.registrationEpoch!==ticket.adapterRegistrationEpoch)
+      return {safe:false,reason:'ADAPTER_REGISTRATION_CHANGED'};
     // HUSH-074: independently enforce the invariant for prepatch/legacy tickets.
     if(!ticket.transactionId && (ticket.requireLifecycleTraceCertificate || ticket.requireObservableClosureCertificate))
       return {safe:false,reason:'REQUIRED_CERTIFICATE_WITHOUT_TRANSACTION'};
@@ -509,7 +518,7 @@ export class ActionBroker {
     if(transaction.closedAt) return {safe:false,reason:'AUTHORIZATION_TRANSACTION_CLOSED'};
     const currentGlobalCommitment=sha256(canonicalize({v:1,transactionId:transaction.id,worlds:transaction.worlds,globalAuthorization:transaction.globalAuthorization}));
     if(currentGlobalCommitment!==transaction.commitment||transaction.commitment!==ticket.globalAuthorizationCommitment) return {safe:false,reason:'GLOBAL_AUTHORIZATION_COMMITMENT_MISMATCH'};
-    const adapter=this._adapter(ticket.adapter,ticket.action);
+    const adapter=currentAdapter;
     const currentLocal=adapter.authorizationScopes[ticket.action]??adapter.authorizationScopes['*']??null;
     if(!currentLocal) return {safe:false,reason:'LOCAL_AUTHORIZATION_SCOPE_MISSING'};
     const currentCommitment=sha256(canonicalize({v:1,adapter:ticket.adapter,action:ticket.action,localAuthorization:currentLocal}));
