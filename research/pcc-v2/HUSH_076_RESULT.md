@@ -1,6 +1,6 @@
 # HUSH-PCC-076 | Trusted mandatory-certification policy resists caller downgrade
 
-Date: 2026-11-02. Secondary Hush workstream. Evidence tier: **REAL PREPATCH LOOPBACK HTTP COUNTEREXAMPLE CONFIRMED; PATCH COMMITTED; HOSTED PATCH VERIFICATION PENDING**.
+Date: 2026-11-02. Secondary Hush workstream. Evidence tier: **REAL PREPATCH LOOPBACK HTTP COUNTEREXAMPLE CONFIRMED; PATCHED ADVERSARIAL TESTS PASSED; FULL REGRESSION RERUN PENDING**.
 
 ## Observed counterexample (not a general theorem)
 
@@ -17,7 +17,7 @@ This is a **configuration downgrade**, not evidence that all legacy unscoped act
 - The dispatch/completion scope verifier rejects forged or legacy tickets that omit a trusted-required transaction or certificate. HUSH-075's registration-generation check remains in place.
 - A missing broker-owned closure must deny before adapter execution. A correctly certified scoped request and an ordinary unscoped adapter must remain functional.
 
-The [real HTTP adversarial test](../../test/action-broker-trusted-enforcement-076.test.js) and [dedicated workflow](../../.github/workflows/hush-076-trusted-enforcement.yml) include positive, negative, malformed-policy, legacy-tampering and compatibility cases, plus the existing broker, HUSH-074/075, transaction and observable-closure regression suites. The patched workflow was committed at `61f303c`. **Hosted patched CI has not yet been confirmed**, so the above are implementation properties under test, not established production guarantees.
+The [real HTTP adversarial test](../../test/action-broker-trusted-enforcement-076.test.js) and [dedicated workflow](../../.github/workflows/hush-076-trusted-enforcement.yml) include positive, negative, malformed-policy, legacy-tampering and compatibility cases, plus the existing broker, HUSH-074/075, transaction and observable-closure regression suites. The patched workflow was committed at `61f303c`. [First patched hosted run #41433603947](https://github.com/sushxnthd/hush/actions/runs/41433603947) executed the five HUSH-076 real-HTTP and tampering tests **successfully (5/5)**. The broader regression step **failed (1/28)** because a pre-HUSH-075 test demanded the older `LOCAL_AUTHORIZATION_COMMITMENT_MISMATCH` error even though the newer adapter-generation guard correctly denied first with `ADAPTER_REGISTRATION_CHANGED`; no unauthorized HTTP effect was observed in that failed assertion. [Test expectation correction `5e911cb`](https://github.com/sushxnthd/hush/commit/5e911cb7d17913bc61a377e2db12e0e5ad7868f5) accepts either fail-closed reason while retaining the zero-effect assertion. The full rerun is **pending**. Do not interpret the first patched workflow as an overall pass or production certification.
 
 ## Compositional interpretation and release consequence
 
