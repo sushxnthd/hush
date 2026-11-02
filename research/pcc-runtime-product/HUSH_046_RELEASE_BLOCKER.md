@@ -62,3 +62,17 @@ Release reviewers must additionally verify that a pending asynchronous resolutio
 - [ ] External security reviewer approves the enforcement architecture and confirms all known residual races are either eliminated or explicitly excluded by enforceable deployment constraints.
 
 Until all are independently satisfied, **production BLOCKED**. Do not treat HUSH-062 deterministic rollback protection as a general compositional noninterference theorem or a production-safe revocation protocol.
+
+## HUSH-076 trusted certificate policy downgrade blocker (2026-11-02)
+
+The [prepatch real-HTTP test](../../test/action-broker-trusted-enforcement-076.test.js) passed on [hosted run #41433489457](https://github.com/sushxnthd/hush/actions/runs/41433489457): caller omission of all certification flags bypassed configured scope/trace/closure *metadata* and, after local approval, produced one real loopback HTTP effect. This is a conditional trusted-configuration downgrade, not proof that every legacy unscoped action is unsafe. [HUSH-076 result](../pcc-v2/HUSH_076_RESULT.md) records the patch and verification status.
+
+Before any protected adapter is deployed, an independent reviewer must verify:
+- [ ] Every protected action has a **trusted-registration-owned** mandatory enforcement policy, not only caller-supplied flags or optional scope metadata.
+- [ ] Missing transaction and missing mandatory trace/closure certificate are denied at request **and** pre-dispatch, including forged/legacy tickets and re-registration.
+- [ ] Mandatory certificate evaluation is actually performed for the registered action, with a broker-owned complete observable-channel boundary; a configured but unverified trace declaration is insufficient.
+- [ ] A real HTTP two-world test exercises omitted flags, missing closure, credential-await races, cancellation, crash/restart and external-effect timing with zero forbidden effects; allowed controls remain functional.
+- [ ] The protected/unprotected adapter inventory and migration plan are reviewed. Default compatibility for legacy unscoped adapters is **not** proof that protected routes are covered.
+- [ ] External security review covers the remaining runtime-egress and provider-commit limitations.
+
+**Release remains BLOCKED** regardless of local test success. This patch is a scoped trusted-policy floor, not OS egress mediation or a general compositional information-flow theorem.
