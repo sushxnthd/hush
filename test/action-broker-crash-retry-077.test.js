@@ -92,7 +92,9 @@ async function scenario({revokeBeforeRetry}){
       stdio:['ignore','pipe','pipe']
     });
     let stderr='';
+    let stdout='';
     child.stderr.on('data',data=>{stderr+=data.toString();});
+    child.stdout.on('data',data=>{stdout+=data.toString();});
     const exit=new Promise(resolve=>child.once('exit',(code,signal)=>resolve({code,signal})));
     await timeout(Promise.race([
       firstHit,
@@ -102,6 +104,7 @@ async function scenario({revokeBeforeRetry}){
     assert.equal(child.kill('SIGKILL'),true);
     const killed=await timeout(exit,10000);
     assert.equal(killed.signal,'SIGKILL');
+    assert.equal(stdout,'','Killed worker unexpectedly returned a broker outcome');
     events.push({event:'broker_sigkill'});
     // The receiver observed the irreversible effect, but the worker never
     // received a provider response or produced an accessible broker receipt.
@@ -109,6 +112,8 @@ async function scenario({revokeBeforeRetry}){
     pendingResponse=null;
     const recovered=makeBroker(file,key,url);
     events.push({event:'broker_restart'});
+    const firstReceiptRecovered=stdout.length>0||recovered.receiptLog().length>0;
+    assert.equal(firstReceiptRecovered,false);
     assert.equal(recovered.authorizationTransactions.get('tx77')?.closedAt,null);
     if(revokeBeforeRetry){
       recovered.closeAuthorizationTransaction('tx77');
@@ -129,7 +134,7 @@ async function scenario({revokeBeforeRetry}){
       events.push({event:'retry_receipt'});
     }
     return {effectCount:effects.length,revoked:revokeBeforeRetry,
-      firstReceiptRecovered:false,postRestartReceiptCount:revokeBeforeRetry?0:1,events};
+      firstReceiptRecovered,postRestartReceiptCount:revokeBeforeRetry?0:1,events};
   }finally{
     if(child&&!child.killed) child.kill('SIGKILL');
     pendingResponse?.end();
