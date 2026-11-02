@@ -1,0 +1,26 @@
+name: HUSH-049 post-dispatch cancellation boundary
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - "test/action-broker-postdispatch-close.test.js"
+      - "research/pcc-v2/HUSH_049_*"
+      - ".github/workflows/hush_049_postdispatch_close.yml"
+      - "src/action-broker.js"
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Real HTTP post-dispatch closure and pre-dispatch control
+        run: node --test test/action-broker-postdispatch-close.test.js
+      - name: Preserve prior concurrent dispatch/closure regression
+        run: node --test test/action-broker-concurrency-closure.test.js
+      - name: Preserve crash-retry duplicate-effect witness
+        run: node --test test/action-broker-crash-retry-duplicate.test.js

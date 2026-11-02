@@ -1,0 +1,35 @@
+name: Hush PCC-053 preapproval request-hash channel
+on:
+  push:
+    branches:
+      - breakthrough-engine/transaction-scope-recovery-20261021
+    paths:
+      - 'test/action-broker-preapproval-hash-channel.test.js'
+      - 'research/pcc-v2/HUSH_053_*.md'
+      - '.github/workflows/hush-053-preapproval-hash.yml'
+      - 'src/action-broker.js'
+      - 'src/core.js'
+  workflow_dispatch:
+jobs:
+  adversarial-preapproval-hash:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify actual broker with loopback HTTP and independent offline dictionary
+        run: node --test test/action-broker-preapproval-hash-channel.test.js
+      - name: Preserve HUSH-052 completion-order negative control
+        run: node --test test/action-broker-preapproval-order-channel.test.js
+      - name: Preserve HUSH-046 unmediated-egress negative control
+        run: node --test test/action-broker-real-network-counterexample.test.js
+      - name: Verify production release remains blocked
+        run: |
+          set +e
+          node scripts/production-readiness.mjs --json > /tmp/hush053-readiness.json
+          status=$?
+          set -e
+          test "$status" -ne 0
+          node -e "const r=require('/tmp/hush053-readiness.json');if(r.status!=='block')process.exit(1)"

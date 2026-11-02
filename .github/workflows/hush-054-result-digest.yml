@@ -1,0 +1,34 @@
+name: Hush PCC-054 postapproval result-digest channel
+on:
+  push:
+    branches:
+      - breakthrough-engine/transaction-scope-recovery-20261021
+    paths:
+      - 'test/action-broker-postapproval-result-digest-channel.test.js'
+      - 'research/pcc-v2/HUSH_054_*.md'
+      - '.github/workflows/hush-054-result-digest.yml'
+      - 'scripts/production-readiness.mjs'
+      - 'src/action-broker.js'
+      - 'src/core.js'
+  workflow_dispatch:
+jobs:
+  adversarial-result-digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify real broker postapproval private-result dictionary channel
+        run: node --test test/action-broker-postapproval-result-digest-channel.test.js
+      - name: Preserve preapproval request-hash negative control
+        run: node --test test/action-broker-preapproval-hash-channel.test.js
+      - name: Verify strict release remains blocked
+        run: |
+          set +e
+          node scripts/production-readiness.mjs --json > /tmp/hush054-readiness.json
+          status=$?
+          set -e
+          test "$status" -ne 0
+          node -e "const r=require('/tmp/hush054-readiness.json');if(r.status!=='block')process.exit(1)"

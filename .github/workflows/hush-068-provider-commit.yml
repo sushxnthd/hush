@@ -1,0 +1,28 @@
+name: HUSH-068 provider commit-point revocation
+on:
+  push:
+    paths:
+      - 'test/action-broker-provider-commit-068.test.js'
+      - 'research/pcc-v2/HUSH_068_*'
+      - '.github/workflows/hush-068-provider-commit.yml'
+  pull_request:
+    paths:
+      - 'test/action-broker-provider-commit-068.test.js'
+      - 'research/pcc-v2/HUSH_068_*'
+      - '.github/workflows/hush-068-provider-commit.yml'
+  workflow_dispatch:
+
+jobs:
+  provider-commit:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check test/action-broker-provider-commit-068.test.js
+      - run: node --test test/action-broker-provider-commit-068.test.js

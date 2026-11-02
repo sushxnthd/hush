@@ -11,8 +11,8 @@ const evidenceResults=new Map();
 function attestation(file){
   const name=path.basename(file,'.json');
   const legal=name==='legal-support-surface';
-  const requireIndependent=['privacy-reproduction','independent-reproduction','security-review'].includes(name);
-  const requireArtifacts=['platform-keystore','real-actions-e2e','reliability-soak','recovery-drill','distribution-signing','update-rollback','sbom-checksums'].includes(name);
+  const requireIndependent=['privacy-reproduction','independent-reproduction','security-review','runtime-egress-mediation','runtime-observable-order','provider-idempotency-linearizability'].includes(name);
+  const requireArtifacts=['platform-keystore','real-actions-e2e','runtime-egress-mediation','runtime-observable-order','provider-idempotency-linearizability','reliability-soak','recovery-drill','distribution-signing','update-rollback','sbom-checksums'].includes(name);
   const paths=legal?['scripts/write-product-site.mjs','scripts/reference-pages.mjs','PRIVACY.md','TERMS.md','SUPPORT.md','SECURITY.md']:['src','clients','public','package.json','scripts/build-release.mjs','scripts/release-verify.mjs','scripts/release-runtime-smoke.mjs',...(requireIndependent?['research','bench']:[])];
   let result={pass:false,reason:'evidence file missing'};
   if(exists(file)){try{result=validateReleaseEvidence(JSON.parse(text(file)),{root,paths,requireIndependent,requireArtifacts,requirement:name});}catch{result={pass:false,reason:'invalid evidence JSON'};}}
@@ -63,7 +63,12 @@ const dimensions=[
       ['universal consent engine',()=>exists('src/consent.js')],
       ['action benchmark',()=>exists('bench/secretless-action-broker.js')]
     ],
-    release:[['real provider action E2E',()=>attestation('release/attestations/real-actions-e2e.json')]]
+    release:[
+      ['real provider action E2E',()=>attestation('release/attestations/real-actions-e2e.json')],
+      ['independent runtime egress mediation and crash/cancel replay',()=>attestation('release/attestations/runtime-egress-mediation.json')],
+      ['independent preapproval hash/order/timing and postapproval private-result/digest/derived-receipt-hash noninterference evidence',()=>attestation('release/attestations/runtime-observable-order.json')],
+      ['provider-side linearizable idempotency, collision, retry and retention evidence',()=>attestation('release/attestations/provider-idempotency-linearizability.json')]
+    ]
   },
   {
     name:'Reliability & data durability',
