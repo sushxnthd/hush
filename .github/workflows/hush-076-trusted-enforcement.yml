@@ -1,0 +1,22 @@
+name: HUSH-076 trusted certificate enforcement
+on:
+  pull_request:
+    paths:
+      - 'src/action-broker.js'
+      - 'test/action-broker-trusted-enforcement-076.test.js'
+      - '.github/workflows/hush-076-trusted-enforcement.yml'
+      - 'research/pcc-v2/HUSH_076_*'
+  workflow_dispatch:
+jobs:
+  adversarial-broker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Frozen prepatch HTTP bypass
+        env:
+          HUSH076_EXPECT_BYPASS: '1'
+        run: node --test test/action-broker-trusted-enforcement-076.test.js
