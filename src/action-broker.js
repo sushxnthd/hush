@@ -24,6 +24,21 @@ function ttl(value){
 function clone(value){ return structuredClone(value); }
 function unique(values=[]){ return [...new Set((values??[]).map(value=>String(value)).filter(Boolean))]; }
 function iso(value){ return value==null?null:new Date(value).toISOString(); }
+// HUSH-076: only trusted registration code can mandate certificates. The
+// AI-facing request may ask for more checking, never opt out of this floor.
+function adapterEnforcement(value){
+  if(!value||typeof value!=='object'||Array.isArray(value))
+    throw new Error('INVALID_ADAPTER_ENFORCEMENT');
+  const keys=['transactionRequired','lifecycleTraceRequired','observableClosureRequired'];
+  if(Object.keys(value).some(k=>!keys.includes(k))||
+     Object.values(value).some(v=>typeof v!=='boolean'))
+    throw new Error('INVALID_ADAPTER_ENFORCEMENT');
+  const policy=Object.fromEntries(keys.map(k=>[k,value[k]??false]));
+  if((policy.lifecycleTraceRequired||policy.observableClosureRequired)&&
+     !policy.transactionRequired)
+    throw new Error('INVALID_ADAPTER_ENFORCEMENT');
+  return policy;
+}
 function credentialLikeHits(value){
   const raw=JSON.stringify(value??{});
   return detectSensitive(raw).filter(hit=>hit.type!=='email');
@@ -266,13 +281,13 @@ export class ActionBroker {
     });
   }
 
-  registerAdapter({name,actions=['*'],execute,description='',authorizationScopes={},lifecycleTraces={}}={}){
+  registerAdapter({name,actions=['*'],execute,description='',authorizationScopes={},lifecycleTraces={},enforcement={}}={}){
     const id=text(name,'',120);
     if(!id) throw new Error('Action adapter name is required');
     if(typeof execute!=='function') throw new Error('Action adapter execute function is required');
     if(!authorizationScopes||typeof authorizationScopes!=='object'||Array.isArray(authorizationScopes)) throw new Error('authorizationScopes must be an action-to-map object');
     if(!lifecycleTraces||typeof lifecycleTraces!=='object'||Array.isArray(lifecycleTraces)) throw new Error('lifecycleTraces must be an action-to-map object');
-    const normalized={name:id,actions:unique(actions).sort(),execute,description:text(description,'',240),authorizationScopes:clone(authorizationScopes),lifecycleTraces:clone(lifecycleTraces),registrationEpoch:crypto.randomBytes(16).toString('hex')};
+    const normalized={name:id,actions:unique(actions).sort(),execute,description:text(description,'',240),authorizationScopes:clone(authorizationScopes),lifecycleTraces:clone(lifecycleTraces),enforcement:adapterEnforcement(enforcement),registrationEpoch:crypto.randomBytes(16).toString('hex')};
     if(!normalized.actions.length) throw new Error('Action adapter must declare at least one supported action');
     this.adapters.set(id,normalized);
     return {name:normalized.name,actions:[...normalized.actions],description:normalized.description};
@@ -328,9 +343,13 @@ export class ActionBroker {
     const actionName=text(action,'',160);
     if(!adapterName||!actionName) throw new Error('adapter and action are required');
     const trustedAdapter=this._adapter(adapterName,actionName);
-    // HUSH-074: an explicitly mandatory certificate is never optional merely
-    // because the caller omitted the transaction that would certify it.
-    if(transactionId==null && (requireLifecycleTraceCertificate || requireObservableClosureCertificate))
+    // HUSH-076: the trusted adapter policy is a mandatory floor; caller flags
+    // may strengthen but never downgrade it.
+    const effectiveLifecycle=Boolean(requireLifecycleTraceCertificate||trustedAdapter.enforcement.lifecycleTraceRequired);
+    const effectiveClosure=Boolean(requireObservableClosureCertificate||trustedAdapter.enforcement.observableClosureRequired);
+    if(transactionId==null && trustedAdapter.enforcement.transactionRequired)
+      throw new Error('ADAPTER_REQUIRES_AUTHORIZATION_TRANSACTION');
+    if(transactionId==null && (effectiveLifecycle || effectiveClosure))
       throw new Error('MANDATORY_CERTIFICATE_REQUIRES_TRANSACTION');
 
     const argumentsCopy=clone(args??{});
@@ -370,7 +389,7 @@ export class ActionBroker {
           authorizationScopeDecision=certificate.safe?'allow':'deny';
         }catch{ authorizationScopeDecision='deny'; }
       }else authorizationScopeDecision='deny';
-      if(requireLifecycleTraceCertificate){
+      if(effectiveLifecycle){
         lifecycleTrace=clone(trustedAdapter.lifecycleTraces[actionName]??trustedAdapter.lifecycleTraces['*']??null);
         if(lifecycleTrace){
           lifecycleTraceCommitment=sha256(canonicalize({v:1,adapter:adapterName,action:actionName,lifecycleTrace}));
@@ -378,7 +397,7 @@ export class ActionBroker {
           catch{ lifecycleTraceDecision='deny'; }
         }else lifecycleTraceDecision='deny';
       }
-      if(requireObservableClosureCertificate){
+      if(effectiveClosure){
         observableBoundary=this._observableBoundary(adapterName,actionName);
         try{
           const certificate=certifyObservableClosure({worlds:transaction.worlds,globalAuthorization:transaction.globalAuthorization,...observableBoundary});
@@ -398,11 +417,11 @@ export class ActionBroker {
       localAuthorizationCommitment,
       localAuthorization,
       authorizationScopeDecision,
-      requireLifecycleTraceCertificate:Boolean(requireLifecycleTraceCertificate),
+      requireLifecycleTraceCertificate:effectiveLifecycle,
       lifecycleTrace,
       lifecycleTraceCommitment,
       lifecycleTraceDecision,
-      requireObservableClosureCertificate:Boolean(requireObservableClosureCertificate),
+      requireObservableClosureCertificate:effectiveClosure,
       observableBoundary,
       observableClosureCommitment,
       observableClosureDecision,
@@ -479,6 +498,12 @@ export class ActionBroker {
     catch{ return {safe:false,reason:'ADAPTER_REGISTRATION_MISSING'}; }
     if(currentAdapter.registrationEpoch!==ticket.adapterRegistrationEpoch)
       return {safe:false,reason:'ADAPTER_REGISTRATION_CHANGED'};
+    // HUSH-076: legacy/mutated tickets cannot erase the trusted policy.
+    if(currentAdapter.enforcement.transactionRequired&&!ticket.transactionId)
+      return {safe:false,reason:'ADAPTER_REQUIRES_AUTHORIZATION_TRANSACTION'};
+    if((currentAdapter.enforcement.lifecycleTraceRequired&&!ticket.requireLifecycleTraceCertificate)||
+       (currentAdapter.enforcement.observableClosureRequired&&!ticket.requireObservableClosureCertificate))
+      return {safe:false,reason:'ADAPTER_REQUIRED_CERTIFICATE_OMITTED'};
     // HUSH-074: independently enforce the invariant for prepatch/legacy tickets.
     if(!ticket.transactionId && (ticket.requireLifecycleTraceCertificate || ticket.requireObservableClosureCertificate))
       return {safe:false,reason:'REQUIRED_CERTIFICATE_WITHOUT_TRANSACTION'};
