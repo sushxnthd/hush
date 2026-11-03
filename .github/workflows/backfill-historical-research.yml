@@ -1,0 +1,31 @@
+name: Backfill real historical research commits
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/backfill-historical-research.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Cherry-pick two add-only historical research records
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin breakthrough-engine/transaction-scope-recovery-20261021
+          git cherry-pick 297a1f2be067f2b43f440a9a7cc4b9b9c910d4e6
+          git cherry-pick bc6e81f6895a4ffdd84510e0ae5b01286a69276c
+          git push origin HEAD:main
