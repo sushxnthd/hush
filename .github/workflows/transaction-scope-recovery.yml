@@ -1,0 +1,44 @@
+name: transaction-scope-recovery
+
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+  pull_request:
+    paths:
+      - src/action-broker.js
+      - src/provider-onboarding.js
+      - src/server.js
+      - scripts/verify-transaction-scope-recovery.mjs
+      - scripts/audit-transaction-scope-recovery.mjs
+      - test/transaction-scope-recovery.test.js
+      - research/pcc-runtime-product/TRANSACTION_SCOPE_RECOVERY_*.md
+      - research/pcc-runtime-product/transaction_scope_recovery*
+      - .github/workflows/transaction-scope-recovery.yml
+  workflow_dispatch:
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: npm install --ignore-scripts
+      - name: Reproduce fresh-process crash artifact twice
+        run: |
+          node scripts/verify-transaction-scope-recovery.mjs /tmp/recovery-1.json
+          node scripts/verify-transaction-scope-recovery.mjs /tmp/recovery-2.json
+          cmp /tmp/recovery-1.json /tmp/recovery-2.json
+          cmp /tmp/recovery-1.json research/pcc-runtime-product/transaction_scope_recovery.json
+      - name: Run independent checker
+        run: |
+          node scripts/audit-transaction-scope-recovery.mjs \
+            --primary research/pcc-runtime-product/transaction_scope_recovery.json \
+            --output /tmp/recovery-audit.json
+          cmp /tmp/recovery-audit.json research/pcc-runtime-product/transaction_scope_recovery_audit.json
+      - name: Run focused broker tests
+        run: node --test test/transaction-scope-recovery.test.js test/transaction-scope-enforcement.test.js test/action-broker.test.js
+      - run: npm test

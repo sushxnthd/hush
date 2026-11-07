@@ -1,0 +1,43 @@
+name: HUSH-072 real broker HTTP client-abort/provider commit
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - '.github/workflows/hush-072-client-abort.yml'
+      - 'test/action-broker-client-abort-provider-072.test.js'
+      - 'research/pcc-v2/hush_072_provider.mjs'
+      - 'research/pcc-v2/hush_072_independent_replay.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hush-072-client-abort
+  cancel-in-progress: false
+jobs:
+  cancellation-provider-commit:
+    if: github.repository == 'sushxnthd/hush'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      HUSH072_TRACE_FILE: hush072-trace.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check syntax and execute real broker with forked HTTP provider
+        run: |
+          node --check research/pcc-v2/hush_072_provider.mjs
+          node --check test/action-broker-client-abort-provider-072.test.js
+          node --test test/action-broker-client-abort-provider-072.test.js
+      - name: Independent sanitized trace replay
+        run: python research/pcc-v2/hush_072_independent_replay.py --trace hush072-trace.json

@@ -1,0 +1,30 @@
+name: HUSH-077 crash-after-effect recovery limit
+on:
+  pull_request:
+    paths:
+      - 'test/action-broker-crash-retry-077.test.js'
+      - 'research/pcc-v2/HUSH_077_*'
+      - 'research/pcc-v2/hush_077_independent_replay.py'
+      - '.github/workflows/hush-077-crash-retry.yml'
+      - 'src/action-broker.js'
+  workflow_dispatch:
+jobs:
+  crash-retry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Real SIGKILL, loopback HTTP and independent replay
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test test/action-broker-crash-retry-077.test.js | tee hush077-test.log
+          python research/pcc-v2/hush_077_independent_replay.py hush077-test.log
+      - name: Trusted enforcement and durable scope regressions
+        run: node --test test/action-broker-trusted-enforcement-076.test.js test/transaction-scope-enforcement.test.js

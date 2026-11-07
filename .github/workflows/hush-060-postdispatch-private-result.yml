@@ -1,0 +1,30 @@
+name: HUSH-060 post-dispatch private-result falsification
+on:
+  push:
+    branches:
+      - breakthrough-engine/transaction-scope-recovery-20261021
+    paths:
+      - 'src/action-broker.js'
+      - 'test/action-broker-postdispatch-private-result.test.js'
+      - 'test/action-broker-postdispatch-close.test.js'
+      - '.github/workflows/hush-060-postdispatch-private-result.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  two-world-postdispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Postpatch two-world closure and live HTTP controls
+        env:
+          HUSH060_EXPECT_LEAK: '0'
+        run: node --test test/action-broker-postdispatch-private-result.test.js
+      - name: Earlier post-dispatch external-effect witness
+        run: node --test test/action-broker-postdispatch-close.test.js
+      - name: Expiry, concurrent closure and private-result regression
+        run: node --test test/action-broker-expiry-after-await.test.js test/action-broker-concurrency-closure.test.js test/action-broker-truncated-result-digest.test.js

@@ -1,0 +1,25 @@
+name: HUSH-059 prepatch oversized-result digest oracle
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - '.github/workflows/hush-059-prepatch-digest.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  expected-prepatch-leak:
+    if: github.repository == 'sushxnthd/hush'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assert frozen expected prepatch two-world digest reconstruction
+        env:
+          HUSH059_EXPECT_LEAK: '1'
+        run: node --test test/action-broker-truncated-result-digest.test.js

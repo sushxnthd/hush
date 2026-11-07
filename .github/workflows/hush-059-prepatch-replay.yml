@@ -1,0 +1,32 @@
+name: HUSH-059 historical prepatch real HTTP replay
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - '.github/workflows/hush-059-prepatch-replay.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  historical-prepatch:
+    if: github.repository == 'sushxnthd/hush'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restore only frozen prepatch broker into ephemeral checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show c63684fe9f15a03253ea86a017a7943e0f4dfaa7:src/action-broker.js > src/action-broker.js
+          grep -F "digest:sha256(canonicalize(result))" src/action-broker.js
+      - name: Assert expected real-broker private-bit digest recovery
+        env:
+          HUSH059_EXPECT_LEAK: '1'
+        run: node --test test/action-broker-truncated-result-digest.test.js

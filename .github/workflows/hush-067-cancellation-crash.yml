@@ -1,0 +1,57 @@
+name: HUSH-067 post-acceptance abort and broker-crash falsification
+
+on:
+  push:
+    branches:
+      - breakthrough-engine/transaction-scope-recovery-20261021
+    paths:
+      - 'test/action-broker-cancellation-crash-067.test.js'
+      - 'research/pcc-v2/HUSH_067_*'
+      - 'research/pcc-v2/hush_067_independent_replay.py'
+      - '.github/workflows/hush-067-cancellation-crash.yml'
+      - 'src/action-broker.js'
+      - 'src/effect-fenced-action-broker.js'
+  pull_request:
+    paths:
+      - 'test/action-broker-cancellation-crash-067.test.js'
+      - 'research/pcc-v2/HUSH_067_*'
+      - 'research/pcc-v2/hush_067_independent_replay.py'
+      - '.github/workflows/hush-067-cancellation-crash.yml'
+      - 'src/action-broker.js'
+      - 'src/effect-fenced-action-broker.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  adversarial-runtime:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      HUSH067_TRACE_OUT: hush067-trace.ndjson
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check syntax
+        run: node --check test/action-broker-cancellation-crash-067.test.js
+      - name: Exercise real abort, crash, and restart with synthetic secrets
+        run: node --test test/action-broker-cancellation-crash-067.test.js
+      - name: Independent Python replay of sanitized event order
+        run: python research/pcc-v2/hush_067_independent_replay.py hush067-trace.ndjson
+      - name: Preserve synthetic event evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hush067-traces-${{ matrix.os }}
+          path: hush067-trace.ndjson
+          if-no-files-found: warn

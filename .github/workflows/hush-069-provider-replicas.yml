@@ -1,0 +1,43 @@
+name: HUSH-069 cross-process provider revocation race
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - '.github/workflows/hush-069-provider-replicas.yml'
+      - 'test/action-broker-provider-replica-069.test.js'
+      - 'research/pcc-v2/hush_069_provider_replica.mjs'
+      - 'research/pcc-v2/hush_069_independent_replay.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hush-069-replica-race
+  cancel-in-progress: false
+jobs:
+  real-broker-provider-replicas:
+    if: github.repository == 'sushxnthd/hush'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      HUSH069_TRACE_OUT: hush069-trace.ndjson
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check syntax and run real broker / two-process provider tests
+        run: |
+          node --check research/pcc-v2/hush_069_provider_replica.mjs
+          node --check test/action-broker-provider-replica-069.test.js
+          node --test test/action-broker-provider-replica-069.test.js
+      - name: Independent Python event-order replay
+        run: python research/pcc-v2/hush_069_independent_replay.py hush069-trace.ndjson
