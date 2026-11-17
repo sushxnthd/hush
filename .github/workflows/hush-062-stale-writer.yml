@@ -1,0 +1,27 @@
+name: HUSH-062 real broker stale-writer resurrection
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - '.github/workflows/hush-062-stale-writer.yml'
+      - 'test/action-broker-stale-writer-resurrection.test.js'
+      - 'src/action-broker.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hush-062-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  stale-writer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Postpatch real HTTP stale-writer denial and fresh-writer control
+        run: node --test test/action-broker-stale-writer-resurrection.test.js

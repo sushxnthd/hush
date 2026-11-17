@@ -1,0 +1,19 @@
+{
+  "protocol": "hush.transaction-scope-recovery.audit.v1",
+  "classification": "INDEPENDENT_FINITE_MAP_AND_SOURCE_ORDER_AUDIT",
+  "checks": {
+    "primaryGate": true,
+    "independentIdentityAllows": true,
+    "independentParityDenies": true,
+    "exactDecisions": true,
+    "noParityDispatch": true,
+    "authenticatedEncryptionPresent": true,
+    "commitmentRecomputedOnLoad": true,
+    "registrationPersistsSynchronously": true,
+    "closurePersistsSynchronously": true,
+    "restoreBeforeUse": true
+  },
+  "passed": 10,
+  "total": 10,
+  "allPass": true
+}

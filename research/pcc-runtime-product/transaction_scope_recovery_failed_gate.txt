@@ -1,0 +1,12 @@
+First independent-audit execution: FAIL (checker defect).
+
+The registration ordering check used `source.indexOf('this._persistAuthorizationTransactions();')`,
+which matched the helper method declaration region before the registration method rather than
+the call following `authorizationTransactions.set`. The primary fresh-process result passed
+all frozen dynamic gates and was not changed. The checker was narrowed to the source slice
+beginning at `registerAuthorizationTransaction` before rerunning.
+
+Second independent-audit execution: FAIL (checker defect). The exact-decision comparison
+used JSON object insertion order, while the primary artifact is canonically key-sorted.
+The checker was changed to compare each named field and array directly. Again, no mechanism,
+primary result, threshold, or expected decision changed.

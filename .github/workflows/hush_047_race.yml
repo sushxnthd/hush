@@ -1,0 +1,25 @@
+name: HUSH-047 ticket reservation and transaction-closure race
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - 'src/action-broker.js'
+      - 'test/action-broker-concurrency-closure.test.js'
+      - 'research/pcc-v2/HUSH_047_*'
+      - '.github/workflows/hush_047_race.yml'
+  pull_request:
+    paths:
+      - 'src/action-broker.js'
+      - 'test/action-broker-concurrency-closure.test.js'
+      - 'research/pcc-v2/HUSH_047_*'
+      - '.github/workflows/hush_047_race.yml'
+jobs:
+  adversarial-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test test/action-broker-concurrency-closure.test.js test/action-broker-real-network-counterexample.test.js

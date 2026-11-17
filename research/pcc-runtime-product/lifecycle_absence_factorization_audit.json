@@ -1,0 +1,20 @@
+{
+  "checks": {
+    "enumeration_rows": true,
+    "legacy_unchanged": true,
+    "missing_fails_closed": true,
+    "primary_gates": true,
+    "restart_attack_present": true,
+    "safe_control": true,
+    "schema": true,
+    "slot_count": true,
+    "totals": true,
+    "unsafe_pre_dispatch": true
+  },
+  "digest": "8267961faf2d1fbe5098de88b8099b099b0809cc0cbc9b98e1768546f6d169db",
+  "independentImplementation": "python_no_primary_import",
+  "passed": 10,
+  "schema": "hush.lifecycle-absence-factorization.audit.v1",
+  "status": "PASS",
+  "total": 10
+}

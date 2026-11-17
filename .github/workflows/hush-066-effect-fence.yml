@@ -1,0 +1,44 @@
+name: HUSH-066 cooperative async effect fence (research-only)
+
+on:
+  push:
+    branches:
+      - breakthrough-engine/transaction-scope-recovery-20261021
+    paths:
+      - 'src/action-broker.js'
+      - 'src/effect-fenced-action-broker.js'
+      - 'test/action-broker-effect-fence.test.js'
+      - 'research/pcc-v2/HUSH_066_*'
+      - '.github/workflows/hush-066-effect-fence.yml'
+  pull_request:
+    paths:
+      - 'src/action-broker.js'
+      - 'src/effect-fenced-action-broker.js'
+      - 'test/action-broker-effect-fence.test.js'
+      - 'research/pcc-v2/HUSH_066_*'
+      - '.github/workflows/hush-066-effect-fence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fenced-effect-interval:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and frozen adversarial tests
+        run: |
+          node --check src/action-broker.js
+          node --check src/effect-fenced-action-broker.js
+          node --test test/action-broker-effect-fence.test.js
+      - name: Historical unfenced counterexample must remain visible
+        run: node --test test/action-broker-revocation-dispatch-race.test.js

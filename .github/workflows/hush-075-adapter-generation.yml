@@ -1,0 +1,29 @@
+name: HUSH-075 adapter-generation substitution
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - 'src/action-broker.js'
+      - 'test/action-broker-adapter-generation-075.test.js'
+      - 'research/pcc-v2/HUSH_075_*'
+      - '.github/workflows/hush-075-adapter-generation.yml'
+  pull_request:
+    paths:
+      - 'src/action-broker.js'
+      - 'test/action-broker-adapter-generation-075.test.js'
+      - 'research/pcc-v2/HUSH_075_*'
+      - '.github/workflows/hush-075-adapter-generation.yml'
+  workflow_dispatch:
+jobs:
+  real-loopback-adapter-substitution:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patched fail-closed real HTTP assertions
+        run: node --test test/action-broker-adapter-generation-075.test.js
+      - name: Existing scoped authorization and broker regressions
+        run: node --test test/action-broker-required-certificate-074.test.js test/action-broker-revocation-dispatch-race.test.js test/action-broker-observable-closure.test.js

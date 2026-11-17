@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "method": "closed-form independent checker",
+  "expected": {
+    "legacyAccepted": 21824,
+    "legacyFalseAccepts": 16368,
+    "closureAccepted": 5456,
+    "closureFalseAccepts": 0,
+    "closureFalseRejects": 0
+  },
+  "digest": "a5206c94b0c069627f4321a4e18daa3e07fbddc3c53141f4928cd5d8ab5e745e"
+}

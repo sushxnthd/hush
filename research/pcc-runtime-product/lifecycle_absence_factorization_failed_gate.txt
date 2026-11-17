@@ -1,0 +1,14 @@
+Preserved pre-outcome implementation failure
+===========================================
+
+The first invocation of the frozen experiment stopped before enumeration or any
+runtime outcome because unquoted binary-looking object keys (`00`, `01`, `10`,
+`11`) are invalid octal literals in a strict JavaScript module.
+
+Observed failure:
+
+    SyntaxError: Octal literals are not allowed in strict mode
+
+Correction: quote the four world identifiers as strings. No protocol, expected
+count, trace declaration, gate, seed, or outcome was changed. The first
+outcome-bearing run passed the frozen gates.

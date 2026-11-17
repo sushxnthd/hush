@@ -61,7 +61,7 @@ export function createPkcePair(){
 }
 
 export class ProviderOnboarding {
-  constructor({vault,kernel=null,fetchImpl=globalThis.fetch,env=process.env,port=8787,now=()=>Date.now()}={}){
+  constructor({vault,kernel=null,fetchImpl=globalThis.fetch,env=process.env,port=8787,now=()=>Date.now(),authorizationStateStore=null}={}){
     assertVault(vault); assertFetch(fetchImpl);
     this.vault=vault;
     this.kernel=kernel;
@@ -70,7 +70,7 @@ export class ProviderOnboarding {
     this.port=Number(port);
     this.now=now;
     this.sessions=new Map();
-    this.actionBroker=new ActionBroker({now});
+    this.actionBroker=new ActionBroker({now,authorizationStateStore});
     registerGoogleActionAdapter({broker:this.actionBroker,getAccessToken:()=>this.accessToken('google'),fetchImpl:this.fetchImpl});
   }
 

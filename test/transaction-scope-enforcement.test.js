@@ -75,7 +75,9 @@ test('adapter scope mutation after approval fails the commitment check',async()=
   });
   const out=await broker.execute({actionId:requested.actionId,agent:'fixture',sink:'local'});
   assert.equal(out.decision,'deny');
-  assert.match(out.reason,/LOCAL_AUTHORIZATION_COMMITMENT_MISMATCH/);
+  // HUSH-075 may reject the replacement executable before reaching the older
+  // local-scope commitment check. Either denial is fail-closed; effects stay zero.
+  assert.match(out.reason,/ADAPTER_REGISTRATION_CHANGED|LOCAL_AUTHORIZATION_COMMITMENT_MISMATCH/);
   assert.deepEqual(calls,[]);
 });
 

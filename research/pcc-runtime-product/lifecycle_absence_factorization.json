@@ -1,0 +1,151 @@
+{
+  "schema": "hush.lifecycle-absence-factorization.v1",
+  "classification": "EXACT_THEOREM_AND_PROSPECTIVE_RUNTIME",
+  "frozen": {
+    "worlds": [
+      "00",
+      "01",
+      "10",
+      "11"
+    ],
+    "globalAuthorization": "parity",
+    "alphabet": [
+      "BOTTOM",
+      0,
+      1
+    ],
+    "phaseCounts": [
+      1,
+      2,
+      3
+    ]
+  },
+  "enumeration": [
+    {
+      "phases": 1,
+      "candidates": 49,
+      "safe": 9,
+      "payloadOnlyFalseAccepts": 40,
+      "oracleDisagreements": 0
+    },
+    {
+      "phases": 2,
+      "candidates": 2401,
+      "safe": 81,
+      "payloadOnlyFalseAccepts": 2320,
+      "oracleDisagreements": 0
+    },
+    {
+      "phases": 3,
+      "candidates": 117649,
+      "safe": 729,
+      "payloadOnlyFalseAccepts": 116920,
+      "oracleDisagreements": 0
+    }
+  ],
+  "totals": {
+    "candidates": 120099,
+    "safe": 819,
+    "falseAccepts": 119280,
+    "oracleDisagreements": 0
+  },
+  "firstPayloadOnlyFalseAccept": {
+    "phases": 1,
+    "traces": {
+      "10": [
+        null
+      ],
+      "11": [
+        0
+      ],
+      "00": [
+        null
+      ],
+      "01": [
+        null
+      ]
+    }
+  },
+  "scenarios": [
+    {
+      "name": "secret_dependent_existence",
+      "requestDecision": "deny",
+      "decision": "deny",
+      "reason": "Transaction authorization denied before dispatch: LIFECYCLE_TRACE_REFINEMENT",
+      "dispatches": 0,
+      "credentialResolutions": 0,
+      "receiptStatus": "deny"
+    },
+    {
+      "name": "secret_dependent_terminal",
+      "requestDecision": "deny",
+      "decision": "deny",
+      "reason": "Transaction authorization denied before dispatch: LIFECYCLE_TRACE_REFINEMENT",
+      "dispatches": 0,
+      "credentialResolutions": 0,
+      "receiptStatus": "deny"
+    },
+    {
+      "name": "secret_dependent_cancellation",
+      "requestDecision": "deny",
+      "decision": "deny",
+      "reason": "Transaction authorization denied before dispatch: LIFECYCLE_TRACE_REFINEMENT",
+      "dispatches": 0,
+      "credentialResolutions": 0,
+      "receiptStatus": "deny"
+    },
+    {
+      "name": "secret_dependent_race_order",
+      "requestDecision": "deny",
+      "decision": "deny",
+      "reason": "Transaction authorization denied before dispatch: LIFECYCLE_TRACE_REFINEMENT",
+      "dispatches": 0,
+      "credentialResolutions": 0,
+      "receiptStatus": "deny"
+    },
+    {
+      "name": "secret_dependent_crash_recovery",
+      "requestDecision": "deny",
+      "decision": "deny",
+      "reason": "Transaction authorization denied before dispatch: LIFECYCLE_TRACE_REFINEMENT",
+      "dispatches": 0,
+      "credentialResolutions": 0,
+      "receiptStatus": "deny"
+    },
+    {
+      "name": "authorization_factored_trace",
+      "requestDecision": "allow",
+      "decision": "allow",
+      "reason": null,
+      "dispatches": 1,
+      "credentialResolutions": 1,
+      "receiptStatus": "allow"
+    },
+    {
+      "name": "missing_required_declaration",
+      "requestDecision": "deny",
+      "decision": "deny",
+      "reason": "Transaction authorization denied before dispatch: LIFECYCLE_TRACE_SCOPE_MISSING",
+      "dispatches": 0,
+      "credentialResolutions": 0,
+      "receiptStatus": "deny"
+    },
+    {
+      "name": "legacy_opt_out_unchanged",
+      "requestHashEqual": true,
+      "decisionA": "allow",
+      "decisionB": "allow",
+      "dispatches": 2
+    }
+  ],
+  "gates": {
+    "exactCounts": true,
+    "zeroOracleDisagreements": true,
+    "unsafeDeniedBeforeCredentialsOrDispatch": true,
+    "safeControlAllowed": true,
+    "missingDeclarationFailsClosed": true,
+    "legacyOptOutUnchanged": true
+  },
+  "status": "PASS",
+  "resultDigest": "65cc023f4e4e75987b46d68cc526c9357be911e5c675e78f967d7d08d40d93d0"
+}

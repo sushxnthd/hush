@@ -1,0 +1,53 @@
+name: observable-closure
+
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - src/action-broker.js
+      - src/observable-closure-contract.js
+      - test/action-broker-observable-closure.test.js
+      - test/observable-closure-*.test.js
+      - research/observable-closure/**
+      - docs/OBSERVABLE_CLOSURE_RESULT.md
+      - .github/workflows/observable-closure.yml
+  pull_request:
+    paths:
+      - src/action-broker.js
+      - src/observable-closure-contract.js
+      - test/action-broker-observable-closure.test.js
+      - test/observable-closure-*.test.js
+      - research/observable-closure/**
+      - docs/OBSERVABLE_CLOSURE_RESULT.md
+      - .github/workflows/observable-closure.yml
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Reproduce exact sweep twice
+        run: |
+          node research/observable-closure/run-sweep.mjs /tmp/closure-1.json
+          node research/observable-closure/run-sweep.mjs /tmp/closure-2.json
+          cmp /tmp/closure-1.json /tmp/closure-2.json
+          cmp /tmp/closure-1.json research/observable-closure/raw/sweep.json
+      - name: Independent closed-form checker
+        run: |
+          node research/observable-closure/independent-check.mjs /tmp/closure-1.json > /tmp/closure-check.json
+          cmp /tmp/closure-check.json research/observable-closure/derived/independent-check.json
+      - name: Adversarial broker and contract tests
+        run: |
+          node --test \
+            test/observable-closure-contract.test.js \
+            test/action-broker-observable-closure.test.js \
+            test/observable-closure-sweep.test.js \
+            test/lifecycle-trace-enforcement.test.js \
+            test/transaction-scope-enforcement.test.js

@@ -1,0 +1,30 @@
+name: HUSH-064 fail-closed authorization persistence
+on:
+  push:
+    branches: [breakthrough-engine/transaction-scope-recovery-20261021]
+    paths:
+      - '.github/workflows/hush-064-atomic-persistence.yml'
+      - 'src/action-broker.js'
+      - 'test/action-broker-check-save-race.test.js'
+      - 'test/action-broker-stale-writer-resurrection.test.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hush-064-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  cross-process:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: HUSH-064 separate-process race and crash-lock regressions
+        run: node --test test/action-broker-check-save-race.test.js
+      - name: HUSH-062 stale-writer baseline
+        run: node --test test/action-broker-stale-writer-resurrection.test.js
